@@ -81,6 +81,7 @@
 //- Programmer switch must be in MIDI BUS positior for both midi and pg-200 to work at the same time.
 
 //TODO: 
+//- Change counters when changing Xtal!
 //- Reset counter to 0 if an unknown CC number is received
 //- Allow variable boundaries for switch midi input
 //- Check if we need to send not 2*midi value but 2*midi value +1 or something, to get proper tuning from centerable pots like osc2 tune.
@@ -131,13 +132,20 @@ char rxWritePtr;
 //IF MIDI_ROUTE_TO_PG200, incoming midi bytes are treated as PG200 data
 char midiRouting;
 
-char outputMode = OUTPUTMODE_INSTANT_SWITCH;
+// default mode.
+char outputMode = OUTPUTMODE_REVERT_TO_MIDI;
 
 // last change from PG200 to MIDI mode has settled if this is 1
 char clearToSendMidi = 1;
 
 // first byte of a midi message has been sent, so clear to send the remaining bytes.
 char hasSentFirstMidiByte = 0;
+
+// counter to count times timer has timed out, necessary because timer0 is too fast.
+char timer0TimeoutCount = 0;
+
+// these should be configurable via midi
+char configTimer0Overflows = 4; //20MHz: 4 timeouts approx 50ms delay after PG-200 before switching to midi (+ another 26ms before midi can be sent).
 
 void interrupt(){
   char midiByte;
@@ -147,9 +155,20 @@ void interrupt(){
     midiByte = RCREG;
     writeToRxBuffer(midiByte);
   } else if (TMR0IF_bit){
+    //timer0 is too fast, we need to let it overflow several times before
+    //we can get a long enough delay
     TMR0IF_bit = 0;
-    TMR0ON_bit = 0;
-    switchToMidi();
+    if(timer0TimeoutCount < configTimer0Overflows){
+      PORTC.F3 = 1;
+      timer0TimeoutCount++;
+      TMR0H = 0;
+      TMR0L = 0;
+    } else {
+      timer0TimeoutCount = 0;
+      PORTC.F3 = 0;
+      switchToMidi();
+      TMR0ON_bit = 0;
+    }
   } else if (TMR1IF_bit){
     TMR1IF_bit = 0;
     TMR1ON_bit = 0;
@@ -158,12 +177,11 @@ void interrupt(){
 }
 
 void startSetClearToSendTimer(){
-  if (TMR1IF_bit){
-    // timer1, 20ms
-    TMR1ON_bit = 1;
-    TMR1H = 0x3C;
-    TMR1L = 0xAF;
-  }
+  // timer1 has a max timeout of 105 ms at 20MHz.
+  // With a 1:2 prescaler, the delay is 26ms.
+  TMR1ON_bit = 1;
+  TMR1H = 0;
+  TMR1L = 0;
 }
 
 void switchToMidi(){
@@ -175,9 +193,10 @@ void switchToMidi(){
 void startSwitchToMidiTimer(){
   //if already running, do nothing.
   if(TMR0ON_bit == 0){
-    // timer0, 20ms
-    TMR0H = 0x3C;
-    TMR0L = 0xB0;
+    // timer0 has a max timeout of 13 ms at 20MHz
+    TMR0H = 0;
+    TMR0L = 0;
+
     TMR0ON_bit = 1;
   }
 }
@@ -640,7 +659,9 @@ void sendPing(){
     delay_ms(17);
     
     // prepare for receiving midi
-    switchTxMode(TXMODE_MIDI);
+    if(outputMode != OUTPUTMODE_BLOCK_MIDI){
+      switchTxMode(TXMODE_MIDI);
+    }
 }
 
 void setupRxBuffer(){
@@ -655,18 +676,20 @@ void setupMidi(){
   midiRouting = MIDI_ROUTE_TO_THRU;
 }
 
-void setupUsart(){
+void setupInterrupts(){
   //enable interrupts. NB: PEIE/GIE also affects timer0/1
-  INTCON.PEIE = 1;
-  INTCON.GIE = 1;
-  PIE1.RCIE = 1;            // enable USART RX interrupt
+  PEIE_bit = 1;
+  GIE_bit = 1;
+  RCIE_bit = 1;            // enable USART RX interrupt
+}
+
+void setupUsart(){
   UART1_Init(31250);        // initialize USART module
   Delay_ms(100);            // Wait for UART module to stabilize
 }
 
-void setupTxMode(){
+void setupTxPort(){
   TXMODE_TRIS = 0;
-  switchTxMode(TXMODE_MIDI);
 }
 
 void flashStatus(char times){
@@ -696,7 +719,7 @@ void readSwitch(){
       PORTC.F5 = 0;
       delay_ms(1000);
       flashStatus(1);
-      outputMode = 0;
+      outputMode = OUTPUTMODE_BLOCK_MIDI;
       delay_ms(1000);
       PORTC.F5 = 1;
     }
@@ -705,7 +728,7 @@ void readSwitch(){
       PORTC.F5 = 0;
       delay_ms(1000);
       flashStatus(2);
-      outputMode = 1;
+      outputMode = OUTPUTMODE_REVERT_TO_MIDI;
       delay_ms(1000);
       PORTC.F5 = 1;
     }
@@ -714,20 +737,28 @@ void readSwitch(){
       PORTC.F5 = 0;
       delay_ms(1000);
       flashStatus(3);
-      outputMode = 2;
+      outputMode = OUTPUTMODE_INSTANT_SWITCH;
       delay_ms(1000);
       PORTC.F5 = 1;
     }
   }
-  delay_ms(1000);
 }
 
-void setupTimers(){
 
+void setupTimers(){
+  PSA_bit = 0;
+  T0PS0_bit = 1;
+  T0PS1_bit = 1;
+  T0PS2_bit = 1;
+  T0CS_bit = 0;
+  TMR0ON_bit = 0;
   TMR0IF_bit = 0;
   TMR0IE_bit = 1;
-  
-  T1CKPS0_bit= 1;
+
+  T1CKPS0_bit = 1;
+  T1CKPS1_bit = 0;
+  TMR1CS_bit = 0;
+  TMR1ON_bit = 0;
   TMR1IF_bit = 0;
   TMR1IE_bit = 1;
 }
@@ -745,19 +776,19 @@ void main() {
   PORTC = 0;
 
   STATUS_TRIS = 0;
-
   flashStatus(3);
 
+  setupInterrupts();
   resetSwitchStates();
   loadPg200maps();
   setupRxBuffer();
   setupMidi();
   setupUsart();
-  setupTxMode();
   setupTimers();
+  setupTxPort();
+
 
   //Send 'ping' to JX-3P, telling it that the PG-200 is connected.
-  delay_ms(500);
   sendPing();
 
   flashStatus(3);
