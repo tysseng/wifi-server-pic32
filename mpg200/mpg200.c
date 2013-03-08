@@ -61,12 +61,12 @@
 #define PG200_PING_DATA 0
 
 //JX3P Busy data line
-#define STATUS_TRIS TRISC.F5
+#define STATUS_TRIS TRISC5_bit
 #define STATUS_PORT PORTC.F5 //Change this to real data line later. (PORTC.F5)
 #define JX3P_IS_BUSY 0
 
 //JX3P RXMODE line
-#define TXMODE_TRIS TRISC.F4
+#define TXMODE_TRIS TRISC4_bit
 #define TXMODE_PORT PORTC.F4 //Change this to real data line later. (PORTC.F5)
 #define TXMODE_MIDI 1
 #define TXMODE_PG200 0
@@ -131,8 +131,12 @@ char rxWritePtr;
 //IF MIDI_ROUTE_TO_PG200, incoming midi bytes are treated as PG200 data
 char midiRouting;
 
-char outputMode = 0;
-char txmodeSignalSettled = 1;
+char outputMode = OUTPUTMODE_INSTANT_SWITCH;
+
+// last change from PG200 to MIDI mode has settled if this is 1
+char clearToSendMidi = 1;
+
+// first byte of a midi message has been sent, so clear to send the remaining bytes.
 char hasSentFirstMidiByte = 0;
 
 void interrupt(){
@@ -142,10 +146,45 @@ void interrupt(){
   if (PIR1.RCIF){
     midiByte = RCREG;
     writeToRxBuffer(midiByte);
+  } else if (TMR0IF_bit){
+    TMR0IF_bit = 0;
+    TMR0ON_bit = 0;
+    switchToMidi();
+  } else if (TMR1IF_bit){
+    TMR1IF_bit = 0;
+    TMR1ON_bit = 0;
+    clearToSendMidi = 1;
   }
 }
 
-// TODO: discard midi if txmode != midi and outputMode == REVERT_TO_MIDI
+void startSetClearToSendTimer(){
+  if (TMR1IF_bit){
+    // timer1, 20ms
+    TMR1ON_bit = 1;
+    TMR1H = 0x3C;
+    TMR1L = 0xAF;
+  }
+}
+
+void switchToMidi(){
+  clearToSendMidi = 0;
+  TXMODE_PORT = TXMODE_MIDI;
+  startSetClearToSendTimer();
+}
+
+void startSwitchToMidiTimer(){
+  //if already running, do nothing.
+  if(TMR0ON_bit == 0){
+    // timer0, 20ms
+    TMR0H = 0x3C;
+    TMR0L = 0xB0;
+    TMR0ON_bit = 1;
+  }
+}
+
+void stopSwitchToMidiTimer(){
+    TMR0ON_bit = 0;
+}
 
 void switchTxMode(char newMode){
   if(outputMode == OUTPUTMODE_BLOCK_MIDI){
@@ -157,8 +196,12 @@ void switchTxMode(char newMode){
         delay_ms(20); //wait 20 seconds for JX3P to detect mode change before trying to send PG200 message
       } else { // new mode is midi. wait a little in case more PG200 messages arrive in quick succession.
         // start / reset switch-to-midi timer
-        // when timer times out, switch to midi, start second timer to block midi untill it is safe to send again.
-        //
+        startSwitchToMidiTimer();
+      }
+    } else {
+      if(newMode == TXMODE_PG200){
+        // stop any running switch-to-midi timers. A new one will be set once the data has been transmitted.
+        stopSwitchToMidiTimer();
       }
     }
   } else { //mode == instant switch
@@ -357,7 +400,20 @@ void treatMidiByte(char midiByte){
       midiByteCounter = 1;
     } else {
       midiRouting = MIDI_ROUTE_TO_THRU;
-      transmit(midiByte, TYPE_IGNORED, TXMODE_MIDI);
+      
+      if(OUTPUTMODE_INSTANT_SWITCH || TXMODE_PORT == TXMODE_MIDI && clearToSendMidi == 1){
+        //we have switched to midi mode and waited the necessary time for the signal to settle
+        
+        transmit(midiByte, TYPE_IGNORED, TXMODE_MIDI);
+        
+        // when this is one, we know that the first midi byte has been sent and that we are ok to send more
+        // midi bytes. If we did not check this, it would be possible that the first midi byte was blocked
+        // while the second/third etc were not. This would lead to errors.
+        hasSentFirstMidiByte = 1;
+      } else {
+        //do not send midi, tell the world that the first byte was not send in order to block subsequent bytes.
+        hasSentFirstMidiByte = 0;
+      }
     }
   } else { // data byte
     if(midiRouting == MIDI_ROUTE_TO_PG200){
@@ -372,7 +428,9 @@ void treatMidiByte(char midiByte){
       }
     } else {
       //normal midi message, pass through without altering
-      transmit(midiByte, TYPE_IGNORED, TXMODE_MIDI);
+      if(TXMODE_PORT == TXMODE_MIDI && hasSentFirstMidiByte == 1){ //block message unless first midi message has been sent.
+        transmit(midiByte, TYPE_IGNORED, TXMODE_MIDI);
+      }
     }
   }
 }
@@ -551,6 +609,11 @@ void transmit(char input, char pg200type, char txmode){
 
   // write data to JX3P
   UART1_Write(input);
+
+  // if output mode is revert to midi, switch to midi after sending pg200 message.
+  if(outputMode == OUTPUTMODE_REVERT_TO_MIDI){
+    switchTxMode(TXMODE_MIDI);
+  }
 }
 
 void resetSwitchStates(){
@@ -593,7 +656,7 @@ void setupMidi(){
 }
 
 void setupUsart(){
-  //enable interrupts
+  //enable interrupts. NB: PEIE/GIE also affects timer0/1
   INTCON.PEIE = 1;
   INTCON.GIE = 1;
   PIE1.RCIE = 1;            // enable USART RX interrupt
@@ -616,6 +679,7 @@ void flashStatus(char times){
   }
 }
 
+// read switch and change output mode.
 void readSwitch(){
 
   char line1;
@@ -628,34 +692,44 @@ void readSwitch(){
   TRISC2_bit=1;
 
   if(PORTC.F0 == 1){
-//    if(outputMode != 0){
+    if(outputMode != 0){
       PORTC.F5 = 0;
       delay_ms(1000);
       flashStatus(1);
       outputMode = 0;
       delay_ms(1000);
       PORTC.F5 = 1;
-//    }
+    }
   } else if(PORTC.F1 == 1){
-//    if(outputMode != 1){
+    if(outputMode != 1){
       PORTC.F5 = 0;
       delay_ms(1000);
       flashStatus(2);
       outputMode = 1;
       delay_ms(1000);
       PORTC.F5 = 1;
-//    }
+    }
   } else if(PORTC.F2 == 1){
-//    if(outputMode != 2){
+    if(outputMode != 2){
       PORTC.F5 = 0;
       delay_ms(1000);
       flashStatus(3);
       outputMode = 2;
       delay_ms(1000);
       PORTC.F5 = 1;
-//    }
+    }
   }
   delay_ms(1000);
+}
+
+void setupTimers(){
+
+  TMR0IF_bit = 0;
+  TMR0IE_bit = 1;
+  
+  T1CKPS0_bit= 1;
+  TMR1IF_bit = 0;
+  TMR1IE_bit = 1;
 }
 
 void main() {
@@ -680,6 +754,7 @@ void main() {
   setupMidi();
   setupUsart();
   setupTxMode();
+  setupTimers();
 
   //Send 'ping' to JX-3P, telling it that the PG-200 is connected.
   delay_ms(500);

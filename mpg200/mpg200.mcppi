@@ -24,11 +24,8 @@ Count=0
 Count=0
 ActiveImageIndex=-1
 [OPENED_FILES]
-Count=4
+Count=1
 File0=mpg200.c
-File1=mpg200.asm
-File2=mpg200.h
-File3=..\..\..\Users\Public\Documents\Mikroelektronika\mikroC PRO for PIC\Defs\P18F258.c
 [EEPROM]
 Count=0
 [ACTIVE_COMMENTS_FILES]
@@ -36,12 +33,13 @@ Count=0
 [OTHER_FILES]
 Count=0
 [SEARCH_PATH]
-Count=5
+Count=6
 Path0=C:\Users\Public\Documents\Mikroelektronika\mikroC PRO for PIC\defs\
 Path1=C:\Users\Public\Documents\Mikroelektronika\mikroC PRO for PIC\uses\P18\
-Path2=C:\Elektro\mikroC\PIC28 - mpg200\
-Path3=C:\Elektro\mikroC\mpg200\
-Path4=C:\Elektro\mikroC\mpg200- crapped up\
+Path2=C:\git\mikroc\mpg200\
+Path3=C:\Elektro\mikroC\PIC28 - mpg200\
+Path4=C:\Elektro\mikroC\mpg200\
+Path5=C:\Elektro\mikroC\mpg200- crapped up\
 [HEADER_PATH]
 Count=0
 [HEADERS]
@@ -49,7 +47,7 @@ Count=0
 [PLDS]
 Count=0
 [Useses]
-Count=35
+Count=55
 File0=ADC
 File1=Button
 File2=CAN_SPI
@@ -85,7 +83,26 @@ File31=Sprintl
 File32=Time
 File33=Trigonometry
 File34=UART
+File35=CAN
+File36=Compact_Flash
+File37=Compact_Flash_FAT16
+File38=EPSON_S1D13700
+File39=Glcd
+File40=Keypad4x4
+File41=Mmc
+File42=Mmc_FAT16
+File43=Mmc_Fat16_Config
+File44=PrintOut
+File45=SPI_Ethernet
+File46=SPI_Ethernet_24j600
+File47=Sprintf
+File48=T6963C
+File49=TFT
+File50=TFT_16bit
+File51=TFT_16bit_Defs
+File52=TFT_Defs
+File53=TFT_TouchPanel
+File54=TouchPanel
 [EXPANDED NODES]
 Node1=Sources
-Node2=Output Files
-Count=2
+Count=1

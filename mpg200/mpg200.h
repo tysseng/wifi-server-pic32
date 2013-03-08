@@ -1,3 +1,5 @@
+void switchToMidi();
+void startSetClearToSendTimer();
 void resetSwitchStates();
 void loadPg200maps();
 void convertAndStoreAddress(char ccNumber);
