@@ -133,7 +133,7 @@ char rxWritePtr;
 char midiRouting;
 
 // default mode.
-char outputMode = OUTPUTMODE_REVERT_TO_MIDI;
+char outputMode = OUTPUTMODE_BLOCK_MIDI;
 
 // last change from PG200 to MIDI mode has settled if this is 1
 char clearToSendMidi = 1;
@@ -144,8 +144,11 @@ char hasSentFirstMidiByte = 0;
 // counter to count times timer has timed out, necessary because timer0 is too fast.
 char timer0TimeoutCount = 0;
 
-// these should be configurable via midi
-char configTimer0Overflows = 4; //20MHz: 4 timeouts approx 50ms delay after PG-200 before switching to midi (+ another 26ms before midi can be sent).
+// these should be configurable via midi and have defaults that can be reverted to
+#define defaultSwitchToMidiTimerOverflows 4
+#define defaultOutputMode OUTPUTMODE_BLOCK_MIDI
+char configSwitchToMidiTimerOverflows = defaultSwitchToMidiTimerOverflows; //20MHz: 4 timeouts approx 50ms delay after PG-200 before switching to midi (+ another 26ms before midi can be sent).
+char configOutputMode = defaultOutputMode; // read from config/midi instead of from switch
 
 void interrupt(){
   char midiByte;
@@ -158,7 +161,7 @@ void interrupt(){
     //timer0 is too fast, we need to let it overflow several times before
     //we can get a long enough delay
     TMR0IF_bit = 0;
-    if(timer0TimeoutCount < configTimer0Overflows){
+    if(timer0TimeoutCount < configSwitchToMidiTimerOverflows){
       PORTC.F3 = 1;
       timer0TimeoutCount++;
       TMR0H = 0;
@@ -226,6 +229,90 @@ void switchTxMode(char newMode){
   } else { //mode == instant switch
     TXMODE_PORT = newMode;
   }
+}
+
+// midi cc-to-pg200 address mapping that works with the moog little phatty (sort of)
+void loadLittlePhattyMidiMap(){
+
+  pg200midiToPg[11]  = SW_B_WAVE;    //LP osc 2 wave: 11
+  pg200midiToPg[74]  = SW_B_RANGE;   //LP osc 2 octave: 74
+  pg200midiToPg[9]   = SW_A_WAVE;    // LP osc 1 wave: 9
+  pg200midiToPg[75]  = SW_A_RANGE;   //LP osc 1 octave: 75
+  pg200midiToPg[127] = SW_A_LFO;
+  pg200midiToPg[127] = SW_A_ENV;
+  pg200midiToPg[127] = SW_B_LFO;
+  pg200midiToPg[127] = SW_B_ENV;
+  pg200midiToPg[127] = SW_VCA;
+  pg200midiToPg[127] = SW_VCF_POL;
+  pg200midiToPg[127] = SW_SYNC;
+  pg200midiToPg[127] = SW_CHORUS;
+  pg200midiToPg[127] = SW_DCO_POL;
+  pg200midiToPg[127] = SW_LFO_WAVE;
+  pg200midiToPg[127] = SW_MANUAL;
+  pg200midiToPg[127] = SW_WRITE;
+  pg200midiToPg[127] = POT_B_FINE;
+  pg200midiToPg[10]  = POT_B_TUNE;   //LP Osc 2 Freq: 10
+  pg200midiToPg[15]  = POT_DCO_ENV;  //LP Osc 1 level: 15
+  pg200midiToPg[16]  = POT_DCO_LFO;  //LP Osc 2 level: 16
+  pg200midiToPg[127] = POT_MIX;
+  pg200midiToPg[127] = POT_HPF;
+  pg200midiToPg[21]  = POT_RESONANCE;//LP Filter Res: 21
+  pg200midiToPg[19]  = POT_CUTOFF;   //LP Filter Cutoff: 19
+  pg200midiToPg[27]  = POT_VCF_ENV;  //LP Filter Env Amt: 27
+  pg200midiToPg[127] = POT_VCF_LFO;
+  pg200midiToPg[127] = POT_PITCH_FOLLOW;
+  pg200midiToPg[7]   = POT_LEVEL;    //LP Volume: 7
+  pg200midiToPg[3]   = POT_LFO_RATE; //LP LFO Rate: 3
+  pg200midiToPg[127] = POT_LFO_DELAY;
+  pg200midiToPg[28]  = POT_A;        //LP Vol A: 28
+  pg200midiToPg[29]  = POT_D;        //LP Vol D: 29
+  pg200midiToPg[30]  = POT_S;        //LP Vol S: 30
+  pg200midiToPg[31]  = POT_R;        //LP Vol R: 31
+}
+
+// default midi cc-to-pg200 address mapping.
+void loadDefaultMidiMap(){
+
+  //pots
+  pg200midiToPg[12] = POT_B_FINE;
+  pg200midiToPg[13] = POT_B_TUNE;
+  pg200midiToPg[14] = POT_DCO_ENV;
+  pg200midiToPg[15] = POT_DCO_LFO;
+  pg200midiToPg[16] = POT_MIX;
+  pg200midiToPg[17] = POT_HPF;
+  pg200midiToPg[18] = POT_RESONANCE;
+  pg200midiToPg[19] = POT_CUTOFF;
+  pg200midiToPg[20] = POT_VCF_ENV;
+  pg200midiToPg[21] = POT_VCF_LFO;
+  pg200midiToPg[22] = POT_PITCH_FOLLOW;
+  pg200midiToPg[23] = POT_LEVEL;
+  pg200midiToPg[24] = POT_LFO_RATE;
+  pg200midiToPg[25] = POT_LFO_DELAY;
+  pg200midiToPg[26] = POT_A;
+  pg200midiToPg[27] = POT_D;
+  pg200midiToPg[28] = POT_S;
+  pg200midiToPg[29] = POT_R;
+  
+  //switches
+  pg200midiToPg[72]  = SW_A_RANGE;
+  pg200midiToPg[73]  = SW_A_WAVE;
+  pg200midiToPg[74]  = SW_B_RANGE;
+  pg200midiToPg[75]  = SW_B_WAVE;
+  pg200midiToPg[76]  = SW_SYNC;
+  pg200midiToPg[77]  = SW_VCF_POL;
+  pg200midiToPg[78]  = SW_VCA;
+  pg200midiToPg[79]  = SW_B_ENV;
+  pg200midiToPg[80]  = SW_B_LFO;
+  pg200midiToPg[81]  = SW_A_ENV;
+  pg200midiToPg[82]  = SW_A_LFO;
+  pg200midiToPg[83]  = SW_LFO_WAVE;
+  pg200midiToPg[84]  = SW_DCO_POL;
+  pg200midiToPg[85]  = SW_CHORUS;
+
+  // not used
+  pg200midiToPg[127] = SW_MANUAL;
+  pg200midiToPg[127] = SW_WRITE;
+
 }
 
 void loadPg200maps(){
@@ -326,41 +413,7 @@ void loadPg200maps(){
   pg200address[POT_R] = 33; //chk - envelope release
   
   // default midi cc-to-pg200 address mapping.
-  pg200midiToPg[11]  = SW_B_WAVE;    //LP osc 2 wave: 11
-  pg200midiToPg[74]  = SW_B_RANGE;   //LP osc 2 octave: 74
-  pg200midiToPg[9]   = SW_A_WAVE;    // LP osc 1 wave: 9
-  pg200midiToPg[75]  = SW_A_RANGE;   //LP osc 1 octave: 75
-  pg200midiToPg[127] = SW_A_LFO;
-  pg200midiToPg[127] = SW_A_ENV;
-  pg200midiToPg[127] = SW_B_LFO;
-  pg200midiToPg[127] = SW_B_ENV;
-  pg200midiToPg[127] = SW_VCA;
-  pg200midiToPg[127] = SW_VCF_POL;
-  pg200midiToPg[127] = SW_SYNC;
-  pg200midiToPg[127] = SW_CHORUS;
-  pg200midiToPg[127] = SW_DCO_POL;
-  pg200midiToPg[127] = SW_LFO_WAVE;
-  pg200midiToPg[127] = SW_MANUAL;
-  pg200midiToPg[127] = SW_WRITE;
-  pg200midiToPg[127] = POT_B_FINE;
-  pg200midiToPg[10]  = POT_B_TUNE;   //LP Osc 2 Freq: 10
-  pg200midiToPg[15]  = POT_DCO_ENV;  //LP Osc 1 level: 15
-  pg200midiToPg[16]  = POT_DCO_LFO;  //LP Osc 2 level: 16
-  pg200midiToPg[127] = POT_MIX;
-  pg200midiToPg[127] = POT_HPF;
-  pg200midiToPg[21]  = POT_RESONANCE;//LP Filter Res: 21
-  pg200midiToPg[19]  = POT_CUTOFF;   //LP Filter Cutoff: 19
-  pg200midiToPg[27]  = POT_VCF_ENV;  //LP Filter Env Amt: 27
-  pg200midiToPg[127] = POT_VCF_LFO;
-  pg200midiToPg[127] = POT_PITCH_FOLLOW;
-  pg200midiToPg[7]   = POT_LEVEL;    //LP Volume: 7
-  pg200midiToPg[3]   = POT_LFO_RATE; //LP LFO Rate: 3
-  pg200midiToPg[127] = POT_LFO_DELAY;
-  pg200midiToPg[28]  = POT_A;        //LP Vol A: 28
-  pg200midiToPg[29]  = POT_D;        //LP Vol D: 29
-  pg200midiToPg[30]  = POT_S;        //LP Vol S: 30
-  pg200midiToPg[31]  = POT_R;        //LP Vol R: 31
-
+  loadLittlePhattyMidiMap();
 }
 
 // ******* [start midi input ring buffer] *******
@@ -709,36 +762,35 @@ void readSwitch(){
   char line2;
   char line3;
 
-  //Read
-  TRISC0_bit=1;
-  TRISC1_bit=1;
-  TRISC2_bit=1;
-
   if(PORTC.F0 == 1){
     if(outputMode != 0){
       PORTC.F5 = 0;
-      delay_ms(1000);
+      delay_ms(500);
       flashStatus(1);
       outputMode = OUTPUTMODE_BLOCK_MIDI;
-      delay_ms(1000);
+      TXMODE_PORT = TXMODE_PG200;
+      delay_ms(500);
       PORTC.F5 = 1;
     }
   } else if(PORTC.F1 == 1){
     if(outputMode != 1){
       PORTC.F5 = 0;
-      delay_ms(1000);
+      delay_ms(500);
       flashStatus(2);
       outputMode = OUTPUTMODE_REVERT_TO_MIDI;
-      delay_ms(1000);
+      TXMODE_PORT = TXMODE_MIDI;
+      clearToSendMidi = 1;
+      delay_ms(500);
       PORTC.F5 = 1;
     }
   } else if(PORTC.F2 == 1){
     if(outputMode != 2){
       PORTC.F5 = 0;
-      delay_ms(1000);
+      delay_ms(500);
       flashStatus(3);
       outputMode = OUTPUTMODE_INSTANT_SWITCH;
-      delay_ms(1000);
+      TXMODE_PORT = TXMODE_MIDI;
+      delay_ms(500);
       PORTC.F5 = 1;
     }
   }
@@ -775,6 +827,11 @@ void main() {
   PORTB = 0;
   PORTC = 0;
 
+  //Set read direction on switch lines
+  TRISC0_bit=1;
+  TRISC1_bit=1;
+  TRISC2_bit=1;
+  
   STATUS_TRIS = 0;
   flashStatus(3);
 
@@ -787,7 +844,6 @@ void main() {
   setupTimers();
   setupTxPort();
 
-
   //Send 'ping' to JX-3P, telling it that the PG-200 is connected.
   sendPing();
 
@@ -798,6 +854,6 @@ void main() {
     //read from the rx data and convert and transmit midi and pg-200 messages
     //to the JX-3P - for ever and ever!
     readFromRxBuffer();
-//    readSwitch();
+    readSwitch();
   }
 }
