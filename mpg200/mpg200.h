@@ -1,6 +1,7 @@
 void switchToMidi();
 void startSetClearToSendTimer();
 void resetSwitchStates();
+void sendMissingNoteOffs();
 void loadPg200maps();
 void convertAndStoreAddress(char ccNumber);
 void convertAndTransmitData(char midiValue);

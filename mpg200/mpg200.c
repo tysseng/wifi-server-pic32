@@ -9,6 +9,8 @@
 #define RX_LEN 256
 
 //midi modes
+#define MIDI_NOTE_OFF 0x80
+#define MIDI_NOTE_ON 0x90
 #define MIDI_MODE_CC 0xB0
 #define DEFAULT_MIDI_CHANNEL 0
 
@@ -76,9 +78,13 @@
 #define OUTPUTMODE_REVERT_TO_MIDI 1
 #define OUTPUTMODE_INSTANT_SWITCH 2
 
+//#define defaultSwitchToMidiTimerOverflows 4
+#define DEFAULT_SWITCH_TO_MIDI_TIMER_OVERFLOWS 4
+#define DEFAULT_OUTPUT_MODE OUTPUTMODE_REVERT_TO_MIDI
+
 //COMMENTS:
 //- Midi note messages and cc messages must not be mixed (e.g. they must originate from the same source) to prevent problems with running statuses. This should not really be a problem in real life though.
-//- Programmer switch must be in MIDI BUS positior for both midi and pg-200 to work at the same time.
+//- Programmer switch must be in MIDI BUS position for both midi and pg-200 to work at the same time.
 
 //TODO: 
 //- Change counters when changing Xtal!
@@ -133,10 +139,14 @@ char rxWritePtr;
 char midiRouting;
 
 // default mode.
-char outputMode = OUTPUTMODE_BLOCK_MIDI;
+char outputMode = DEFAULT_OUTPUT_MODE;
 
 // last change from PG200 to MIDI mode has settled if this is 1
 char clearToSendMidi = 1;
+
+// if this is 1, mode has been switched from pg200 to midi and we are ready to send midi - so
+// loop through the missing notes and send them before continuing "normal" midi sends.
+char clearToSendMissingNoteOffs = 0;
 
 // first byte of a midi message has been sent, so clear to send the remaining bytes.
 char hasSentFirstMidiByte = 0;
@@ -145,10 +155,17 @@ char hasSentFirstMidiByte = 0;
 char timer0TimeoutCount = 0;
 
 // these should be configurable via midi and have defaults that can be reverted to
-#define defaultSwitchToMidiTimerOverflows 4
-#define defaultOutputMode OUTPUTMODE_BLOCK_MIDI
-char configSwitchToMidiTimerOverflows = defaultSwitchToMidiTimerOverflows; //20MHz: 4 timeouts approx 50ms delay after PG-200 before switching to midi (+ another 26ms before midi can be sent).
-char configOutputMode = defaultOutputMode; // read from config/midi instead of from switch
+char configSwitchToMidiTimerOverflows = DEFAULT_SWITCH_TO_MIDI_TIMER_OVERFLOWS; //20MHz: 4 timeouts approx 50ms delay after PG-200 before switching to midi (+ another 26ms before midi can be sent).
+
+// array that holds notes that should have been turned off but that weren't because
+// the mpg200 was in pg200 mode when the off messages arrived. As soon as it reverts
+// back to midi, it should transmit these messages.
+char missingNoteOffs[127];
+char hasMissingNoteOffs = 0;
+
+// last received midi status and first parameter (e.g. key for note on/off)
+char lastMidiStatus = 0;
+char lastMidiParam1 = 0;
 
 void interrupt(){
   char midiByte;
@@ -161,7 +178,7 @@ void interrupt(){
     //timer0 is too fast, we need to let it overflow several times before
     //we can get a long enough delay
     TMR0IF_bit = 0;
-    if(timer0TimeoutCount < configSwitchToMidiTimerOverflows){
+    if(timer0TimeoutCount < configSwitchToMidiTimerOverflows ){
       PORTC.F3 = 1;
       timer0TimeoutCount++;
       TMR0H = 0;
@@ -175,7 +192,7 @@ void interrupt(){
   } else if (TMR1IF_bit){
     TMR1IF_bit = 0;
     TMR1ON_bit = 0;
-    clearToSendMidi = 1;
+    clearToSendMissingNoteOffs = 1; // ready to send midi, indicate that we should send any missing notes off (which in turn should set clearToSend to 1 to commence midi processing
   }
 }
 
@@ -208,6 +225,25 @@ void stopSwitchToMidiTimer(){
     TMR0ON_bit = 0;
 }
 
+// send any note off messages that were lost while the mpg200 was in pg200 mode.
+void sendMissingNoteOffs(){
+  char i=0;
+  clearToSendMissingNoteOffs = 0;
+  if(hasMissingNoteOffs == 1){
+    delay_ms(75);
+    hasMissingNoteOffs = 0;
+    for(i=0; i<127; i++){ //loop over all possible note offs.
+      if(missingNoteOffs[i] == 1){
+        missingNoteOffs[i] = 0;
+        transmit(MIDI_NOTE_OFF, TYPE_IGNORED, TXMODE_MIDI); // transmit status message note off on midi channel 0 (the only one JX-3P can receive)
+        transmit(i, TYPE_IGNORED, TXMODE_MIDI);             // transmit key
+        transmit(0, TYPE_IGNORED, TXMODE_MIDI);             // transmit velocity zero
+      }
+    }
+  }
+  clearToSendMidi = 1;
+}
+  
 void switchTxMode(char newMode){
   if(outputMode == OUTPUTMODE_BLOCK_MIDI){
     newMode = TXMODE_PG200;
@@ -413,7 +449,7 @@ void loadPg200maps(){
   pg200address[POT_R] = 33; //chk - envelope release
   
   // default midi cc-to-pg200 address mapping.
-  loadLittlePhattyMidiMap();
+  loadDefaultMidiMap();
 }
 
 // ******* [start midi input ring buffer] *******
@@ -467,7 +503,9 @@ void readFromRxBuffer(){
 void treatMidiByte(char midiByte){
 
   if(midiByte.F7 == 1){ //status byte
-    if((midiByte & 0xF0) == MIDI_MODE_CC && (midiByte & 0x0F) == midiChannel){ //cc message designated for this device
+    lastMidiStatus = (midiByte & 0xF0);
+    
+    if(lastMidiStatus == MIDI_MODE_CC && (midiByte & 0x0F) == midiChannel){ //cc message designated for this device
       midiRouting = MIDI_ROUTE_TO_PG200;
       midiByteCounter = 1;
     } else {
@@ -502,6 +540,21 @@ void treatMidiByte(char midiByte){
       //normal midi message, pass through without altering
       if(TXMODE_PORT == TXMODE_MIDI && hasSentFirstMidiByte == 1){ //block message unless first midi message has been sent.
         transmit(midiByte, TYPE_IGNORED, TXMODE_MIDI);
+      } else { // midi is temporarily blocked. Record any note off-messages for replay once midi is on again.
+        if(midiByteCounter == 2){ // if this is the second parameter received
+          if(lastMidiStatus == MIDI_NOTE_OFF || lastMidiStatus == MIDI_NOTE_ON && midiByte == 0) { //if we are in note off mode or in note on and velocity is zero (=note off)
+            missingNoteOffs[lastMidiParam1] = 1;
+            hasMissingNoteOffs = 1;
+          }
+        }
+      }
+      
+      //Store last received first-parameter. switch to 1 after second param to allow for running status
+      if(midiByteCounter == 1){ // first parameter received
+        lastMidiParam1 = midiByte;
+        midiByteCounter = 2;
+      } else if(midiByteCounter == 2){ // second parameter received
+        midiByteCounter = 1;
       }
     }
   }
@@ -723,10 +776,16 @@ void setupRxBuffer(){
 }
 
 void setupMidi(){
+  char i;
+  
   midiChannel = DEFAULT_MIDI_CHANNEL;
   midiByteCounter = 0;
   lastPg200Controller = NUMBER_OF_CONTROLLERS+1;
   midiRouting = MIDI_ROUTE_TO_THRU;
+  
+  for(i=0; i<127; i++){
+    missingNoteOffs[i]=0;
+  }
 }
 
 void setupInterrupts(){
@@ -851,6 +910,10 @@ void main() {
   PORTC.F5=1;
 
   while(1){
+    if(clearToSendMissingNoteOffs == 1){
+      sendMissingNoteOffs();
+    }
+  
     //read from the rx data and convert and transmit midi and pg-200 messages
     //to the JX-3P - for ever and ever!
     readFromRxBuffer();
