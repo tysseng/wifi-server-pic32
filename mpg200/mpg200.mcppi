@@ -24,11 +24,12 @@ Count=0
 Count=0
 ActiveImageIndex=-1
 [OPENED_FILES]
-Count=4
+Count=5
 File0=mpg200.c
 File1=..\..\..\Users\Public\Documents\Mikroelektronika\mikroC PRO for PIC\Defs\P18F258.c
 File2=readme.txt
 File3=mpg200.h
+File4=mpg200.lst
 [EEPROM]
 Count=0
 [ACTIVE_COMMENTS_FILES]

@@ -12,7 +12,6 @@
 #define MIDI_NOTE_OFF 0x80
 #define MIDI_NOTE_ON 0x90
 #define MIDI_MODE_CC 0xB0
-#define DEFAULT_MIDI_CHANNEL 0
 
 //midi routing modes
 #define MIDI_ROUTE_TO_THRU 0
@@ -21,17 +20,17 @@
 //Constants for all PG200 controllers
 #define NUMBER_OF_SWITCHES 16
 #define NUMBER_OF_CONTROLLERS 34
-#define SW_B_WAVE 0
-#define SW_B_RANGE 1
-#define SW_A_WAVE 2
-#define SW_A_RANGE 3
-#define SW_A_LFO 4
-#define SW_A_ENV 5
+#define SW_A_RANGE 0
+#define SW_A_WAVE 1
+#define SW_A_LFO 2
+#define SW_A_ENV 3
+#define SW_B_RANGE 4
+#define SW_B_WAVE 5
 #define SW_B_LFO 6
 #define SW_B_ENV 7
-#define SW_VCA 8
+#define SW_SYNC 8
 #define SW_VCF_POL 9
-#define SW_SYNC 10
+#define SW_VCA 10
 #define SW_CHORUS 11
 #define SW_DCO_POL 12
 #define SW_LFO_WAVE 13
@@ -78,10 +77,6 @@
 #define OUTPUTMODE_REVERT_TO_MIDI 1
 #define OUTPUTMODE_INSTANT_SWITCH 2
 
-//#define defaultSwitchToMidiTimerOverflows 4
-#define DEFAULT_SWITCH_TO_MIDI_TIMER_OVERFLOWS 4
-#define DEFAULT_OUTPUT_MODE OUTPUTMODE_REVERT_TO_MIDI
-
 //COMMENTS:
 //- Midi note messages and cc messages must not be mixed (e.g. they must originate from the same source) to prevent problems with running statuses. This should not really be a problem in real life though.
 //- Programmer switch must be in MIDI BUS position for both midi and pg-200 to work at the same time.
@@ -98,10 +93,9 @@
 //- check that switches are correctly implemented (0 vs. 1)
 //- implement Manual and Write
 //- Send initial button states if they haven't yet been sent (on startup - but only the first time parts of a button changes..
+//  May be able to just send a button state whenever a button state message arrives, and use the same
+//  mask every time instead of calculating it.
 //- BUG: Any subsequent controller that is sent that does not match any known pg200 controller, will work on the previous controller recognized. Set currentController to unknown and check for this.
-
-/** Parameters that should be user configurable **/
-char midiChannel;
 
 // maps all of the 127 possible midi cc addresses to their corresponding
 // pg-200 address - if any.
@@ -138,9 +132,6 @@ char rxWritePtr;
 //IF MIDI_ROUTE_TO_PG200, incoming midi bytes are treated as PG200 data
 char midiRouting;
 
-// default mode.
-char outputMode = DEFAULT_OUTPUT_MODE;
-
 // last change from PG200 to MIDI mode has settled if this is 1
 char clearToSendMidi = 1;
 
@@ -154,9 +145,6 @@ char hasSentFirstMidiByte = 0;
 // counter to count times timer has timed out, necessary because timer0 is too fast.
 char timer0TimeoutCount = 0;
 
-// these should be configurable via midi and have defaults that can be reverted to
-char configSwitchToMidiTimerOverflows = DEFAULT_SWITCH_TO_MIDI_TIMER_OVERFLOWS; //20MHz: 4 timeouts approx 50ms delay after PG-200 before switching to midi (+ another 26ms before midi can be sent).
-
 // array that holds notes that should have been turned off but that weren't because
 // the mpg200 was in pg200 mode when the off messages arrived. As soon as it reverts
 // back to midi, it should transmit these messages.
@@ -167,10 +155,95 @@ char hasMissingNoteOffs = 0;
 char lastMidiStatus = 0;
 char lastMidiParam1 = 0;
 
+/**** SYSEX input ****/
+
+//possible sysex operations:
+#define SYSEX_OP_NONE 0
+#define SYSEX_OP_WRITE_SETTINGS_TO_EE 1
+#define SYSEX_OP_CLEAR_SETTINGS_FROM_EE 2
+#define SYSEX_OP_CHANGE_SETTING 3
+
+// status of current sysex reception, what was the last operation and parameters
+// received.
+char currentSysexOperation = 0;
+char currentSysexParam1 = 0;
+
+// are we currently receiving sysex data?
+bit inSysexMode;
+
+// is current sysex stream intended for this device?
+bit sysexForThisDevice;
+
+//index of sysex byte after sysex status
+unsigned int sysexByteCounter = 0;
+
+// cyclic counter counting bytes after sysex address, reset to 0 when one sysex
+// operation has been completed (operation length in bytes may depend)
+char sysexDataCounter = 0;
+char sysexAddress[] = {0, 43, 102}; //randomly chosen but must start with 0
+
+/**** SETTINGS  ****/
+
+#define POS_SETTINGS_IN_EE 0
+#define POS_MIDI_CH 1
+#define POS_OUT_MODE 2
+#define POS_CONTROLLERS 3
+#define POS_SWITCH_TO_MIDI_TIMER_OVERFLOWS 37
+#define SETTINGS_LENGTH 38
+
+char settings[] = {
+  0, // default: no settings in ee. If any settings are found in ee memory on startup, they are used instead.
+  0, // default midi channel
+  OUTPUTMODE_REVERT_TO_MIDI, //default output mode
+
+  //Default midi mapping
+  //switches
+  72,  // SW_A_RANGE
+  73,  // SW_A_WAVE
+  82,  // SW_A_LFO
+  81,  // SW_A_ENV
+  74,  // SW_B_RANGE
+  75,  // SW_B_WAVE
+  80,  // SW_B_LFO
+  79,  // SW_B_ENV
+  76,  // SW_SYNC
+  77,  // SW_VCF_POL
+  78,  // SW_VCA
+  85,  // SW_CHORUS
+  84,  // SW_DCO_POL
+  83,  // SW_LFO_WAVE
+  127, // SW_MANUAL
+  127, // SW_WRITE
+
+  //Pots
+  12, // POT_B_FINE
+  13, // POT_B_TUNE
+  14, // POT_DCO_ENV
+  15, // POT_DCO_LFO
+  16, // POT_MIX
+  17, // POT_HPF
+  18, // POT_RESONANCE
+  19, // POT_CUTOFF
+  20, // POT_VCF_ENV
+  21, // POT_VCF_LFO
+  22, // POT_PITCH_FOLLOW
+  23, // POT_LEVEL
+  24, // POT_LFO_RATE
+  25, // POT_LFO_DELAY
+  26, // POT_A 30
+  27, // POT_D 31
+  28, // POT_S 32
+  29, // POT_R 33
+  
+  4, //DEFAULT_SWITCH_TO_MIDI_TIMER_OVERFLOWS - 20MHz: 4 timeouts approx 50ms delay after PG-200 before switching to midi (+ another 26ms before midi can be sent).
+};
+
+/**** PROGRAM START ****/
+
 void interrupt(){
   char midiByte;
   char midiStatus;
-  
+
   if (PIR1.RCIF){
     midiByte = RCREG;
     writeToRxBuffer(midiByte);
@@ -178,7 +251,7 @@ void interrupt(){
     //timer0 is too fast, we need to let it overflow several times before
     //we can get a long enough delay
     TMR0IF_bit = 0;
-    if(timer0TimeoutCount < configSwitchToMidiTimerOverflows ){
+    if(timer0TimeoutCount < settings[POS_SWITCH_TO_MIDI_TIMER_OVERFLOWS] ){
       PORTC.F3 = 1;
       timer0TimeoutCount++;
       TMR0H = 0;
@@ -245,9 +318,9 @@ void sendMissingNoteOffs(){
 }
   
 void switchTxMode(char newMode){
-  if(outputMode == OUTPUTMODE_BLOCK_MIDI){
+  if(settings[POS_OUT_MODE] == OUTPUTMODE_BLOCK_MIDI){
     newMode = TXMODE_PG200;
-  } else if(outputMode == OUTPUTMODE_REVERT_TO_MIDI){
+  } else if(settings[POS_OUT_MODE] == OUTPUTMODE_REVERT_TO_MIDI){
     if(TXMODE_PORT != newMode){
       if(newMode == TXMODE_PG200){
         TXMODE_PORT = newMode;
@@ -306,49 +379,12 @@ void loadLittlePhattyMidiMap(){
   pg200midiToPg[31]  = POT_R;        //LP Vol R: 31
 }
 
-// default midi cc-to-pg200 address mapping.
+// read default midi cc-to-pg200 address mapping from settings array.
 void loadDefaultMidiMap(){
-
-  //pots
-  pg200midiToPg[12] = POT_B_FINE;
-  pg200midiToPg[13] = POT_B_TUNE;
-  pg200midiToPg[14] = POT_DCO_ENV;
-  pg200midiToPg[15] = POT_DCO_LFO;
-  pg200midiToPg[16] = POT_MIX;
-  pg200midiToPg[17] = POT_HPF;
-  pg200midiToPg[18] = POT_RESONANCE;
-  pg200midiToPg[19] = POT_CUTOFF;
-  pg200midiToPg[20] = POT_VCF_ENV;
-  pg200midiToPg[21] = POT_VCF_LFO;
-  pg200midiToPg[22] = POT_PITCH_FOLLOW;
-  pg200midiToPg[23] = POT_LEVEL;
-  pg200midiToPg[24] = POT_LFO_RATE;
-  pg200midiToPg[25] = POT_LFO_DELAY;
-  pg200midiToPg[26] = POT_A;
-  pg200midiToPg[27] = POT_D;
-  pg200midiToPg[28] = POT_S;
-  pg200midiToPg[29] = POT_R;
-  
-  //switches
-  pg200midiToPg[72]  = SW_A_RANGE;
-  pg200midiToPg[73]  = SW_A_WAVE;
-  pg200midiToPg[74]  = SW_B_RANGE;
-  pg200midiToPg[75]  = SW_B_WAVE;
-  pg200midiToPg[76]  = SW_SYNC;
-  pg200midiToPg[77]  = SW_VCF_POL;
-  pg200midiToPg[78]  = SW_VCA;
-  pg200midiToPg[79]  = SW_B_ENV;
-  pg200midiToPg[80]  = SW_B_LFO;
-  pg200midiToPg[81]  = SW_A_ENV;
-  pg200midiToPg[82]  = SW_A_LFO;
-  pg200midiToPg[83]  = SW_LFO_WAVE;
-  pg200midiToPg[84]  = SW_DCO_POL;
-  pg200midiToPg[85]  = SW_CHORUS;
-
-  // not used
-  pg200midiToPg[127] = SW_MANUAL;
-  pg200midiToPg[127] = SW_WRITE;
-
+  char i;
+  for(i=0; i < NUMBER_OF_CONTROLLERS; i++){
+    pg200midiToPg[settings[POS_CONTROLLERS + i]] = i;
+  }
 }
 
 void loadPg200maps(){
@@ -503,17 +539,22 @@ void readFromRxBuffer(){
 void treatMidiByte(char midiByte){
 
   if(midiByte.F7 == 1){ //status byte
+  
     lastMidiStatus = (midiByte & 0xF0);
-    
-    if(lastMidiStatus == MIDI_MODE_CC && (midiByte & 0x0F) == midiChannel){ //cc message designated for this device
+
+    //cc message designated for this device, these are not passed on.
+    if(lastMidiStatus == MIDI_MODE_CC && (midiByte & 0x0F) == settings[POS_MIDI_CH]){
       midiRouting = MIDI_ROUTE_TO_PG200;
       midiByteCounter = 1;
     } else {
       midiRouting = MIDI_ROUTE_TO_THRU;
-      
       if(OUTPUTMODE_INSTANT_SWITCH || TXMODE_PORT == TXMODE_MIDI && clearToSendMidi == 1){
-        //we have switched to midi mode and waited the necessary time for the signal to settle
-        
+        // We have switched to midi mode and waited the necessary time for the signal to settle.
+        // If message is destined for this device (and thus the jx-3p), we have to change the
+        // midi channel to 0. NB: Non musical commands like sysex messages are left untouched (all these start with 0xFx).
+        if(lastMidiStatus != 0xF0 && (midiByte & 0x0F == settings[POS_MIDI_CH])){
+          midiByte = midiByte & 0xF0; //strip address bits.
+        }
         transmit(midiByte, TYPE_IGNORED, TXMODE_MIDI);
         
         // when this is one, we know that the first midi byte has been sent and that we are ok to send more
@@ -523,6 +564,20 @@ void treatMidiByte(char midiByte){
       } else {
         //do not send midi, tell the world that the first byte was not send in order to block subsequent bytes.
         hasSentFirstMidiByte = 0;
+      }
+
+      // Treat sysex status messages.
+      if(midiByte == 0xF0){
+        sysexByteCounter = 0;
+        inSysexMode = 1;
+        sysexForThisDevice = 1; //will be set to false if address check fails later.
+        //sysex start
+      } else if(midiByte == 0xF7){
+        //sysex end
+        inSysexMode = 0;
+      } else {
+        //sysex aborted if in sysex mode
+        inSysexMode = 0;
       }
     }
   } else { // data byte
@@ -548,6 +603,21 @@ void treatMidiByte(char midiByte){
           }
         }
       }
+
+      if(inSysexMode){
+        // check if sysex is meant for this device
+        
+        if(sysexByteCounter < 3){
+          if(!sysexAddress[sysexByteCounter]){
+            sysexForThisDevice = 0;
+          }
+        } else {
+          if(sysexForThisDevice){
+            treatSysexByte(midiByte);
+          }
+        sysexByteCounter++;
+        }
+      }
       
       //Store last received first-parameter. switch to 1 after second param to allow for running status
       if(midiByteCounter == 1){ // first parameter received
@@ -557,6 +627,59 @@ void treatMidiByte(char midiByte){
         midiByteCounter = 1;
       }
     }
+  }
+}
+
+void treatSysexByte(char midiByte){
+  if(sysexDataCounter == 0){
+    //first data byte, signals type of operation
+    currentSysexOperation = midiByte;
+    if(midiByte == SYSEX_OP_WRITE_SETTINGS_TO_EE){
+      writeSettingsToEE();
+    } else if(midiByte == SYSEX_OP_CLEAR_SETTINGS_FROM_EE){
+      clearSettingsFromEE();
+    } else if(midiByte == SYSEX_OP_CHANGE_SETTING){
+      //do nothing, need more data before we can change settings.
+      sysexDataCounter++;
+    }
+  } else if(sysexDataCounter == 1){
+    if(currentSysexOperation == SYSEX_OP_CHANGE_SETTING){
+      // read position in settings array to change
+      currentSysexParam1 = midiByte;
+    }
+    sysexDataCounter++;
+  } else if(sysexDataCounter == 2){
+    if(currentSysexOperation == SYSEX_OP_CHANGE_SETTING){
+      // change settings value at position indicated by previous sysex parameter.
+      settings[currentSysexParam1] = midiByte;
+    }
+    sysexDataCounter++;
+  }
+}
+
+char hasSettingsInEE(){
+  return EEPROM_Read(0); //if this is 0, no settings data should be read from EE.
+}
+
+void writeSettingsToEE(){
+  char i;
+  settings[0] = 1; //indicate that ee has settings data.
+  for(i=0; i<SETTINGS_LENGTH; i++){
+    EEPROM_Write(i, settings[i]);
+  }
+}
+
+void readSettingsFromEE(){
+  char i;
+  for(i=0; i<SETTINGS_LENGTH; i++){
+    settings[i] = EEPROM_Read(i);
+  }
+}
+
+void clearSettingsFromEE(){
+  char i;
+  for(i=0; i<SETTINGS_LENGTH; i++){
+    EEPROM_Write(i, 0);
   }
 }
 
@@ -736,7 +859,7 @@ void transmit(char input, char pg200type, char txmode){
   UART1_Write(input);
 
   // if output mode is revert to midi, switch to midi after sending pg200 message.
-  if(outputMode == OUTPUTMODE_REVERT_TO_MIDI){
+  if(settings[POS_OUT_MODE] == OUTPUTMODE_REVERT_TO_MIDI){
     switchTxMode(TXMODE_MIDI);
   }
 }
@@ -765,7 +888,7 @@ void sendPing(){
     delay_ms(17);
     
     // prepare for receiving midi
-    if(outputMode != OUTPUTMODE_BLOCK_MIDI){
+    if(settings[POS_OUT_MODE] != OUTPUTMODE_BLOCK_MIDI){
       switchTxMode(TXMODE_MIDI);
     }
 }
@@ -778,7 +901,6 @@ void setupRxBuffer(){
 void setupMidi(){
   char i;
   
-  midiChannel = DEFAULT_MIDI_CHANNEL;
   midiByteCounter = 0;
   lastPg200Controller = NUMBER_OF_CONTROLLERS+1;
   midiRouting = MIDI_ROUTE_TO_THRU;
@@ -786,6 +908,9 @@ void setupMidi(){
   for(i=0; i<127; i++){
     missingNoteOffs[i]=0;
   }
+  
+  inSysexMode = 0;
+  sysexForThisDevice = 0;
 }
 
 void setupInterrupts(){
@@ -822,32 +947,32 @@ void readSwitch(){
   char line3;
 
   if(PORTC.F0 == 1){
-    if(outputMode != 0){
+    if(settings[POS_OUT_MODE] != 0){
       PORTC.F5 = 0;
       delay_ms(500);
       flashStatus(1);
-      outputMode = OUTPUTMODE_BLOCK_MIDI;
+      settings[POS_OUT_MODE] = OUTPUTMODE_BLOCK_MIDI;
       TXMODE_PORT = TXMODE_PG200;
       delay_ms(500);
       PORTC.F5 = 1;
     }
   } else if(PORTC.F1 == 1){
-    if(outputMode != 1){
+    if(settings[POS_OUT_MODE] != 1){
       PORTC.F5 = 0;
       delay_ms(500);
       flashStatus(2);
-      outputMode = OUTPUTMODE_REVERT_TO_MIDI;
+      settings[POS_OUT_MODE] = OUTPUTMODE_REVERT_TO_MIDI;
       TXMODE_PORT = TXMODE_MIDI;
       clearToSendMidi = 1;
       delay_ms(500);
       PORTC.F5 = 1;
     }
   } else if(PORTC.F2 == 1){
-    if(outputMode != 2){
+    if(settings[POS_OUT_MODE] != 2){
       PORTC.F5 = 0;
       delay_ms(500);
       flashStatus(3);
-      outputMode = OUTPUTMODE_INSTANT_SWITCH;
+      settings[POS_OUT_MODE] = OUTPUTMODE_INSTANT_SWITCH;
       TXMODE_PORT = TXMODE_MIDI;
       delay_ms(500);
       PORTC.F5 = 1;
@@ -890,12 +1015,18 @@ void main() {
   TRISC0_bit=1;
   TRISC1_bit=1;
   TRISC2_bit=1;
-  
+
   STATUS_TRIS = 0;
   flashStatus(3);
 
   setupInterrupts();
   resetSwitchStates();
+
+  // overwrite default settings with settings from EE.
+  if(hasSettingsInEE()){
+    readSettingsFromEE();
+  }
+  
   loadPg200maps();
   setupRxBuffer();
   setupMidi();
