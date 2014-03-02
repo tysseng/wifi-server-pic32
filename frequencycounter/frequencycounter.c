@@ -9,10 +9,10 @@
  frequencies as the human ear cannot distinguish between changes less than 3 Hz.
 
  HARDWARE:
-       The code is written for PIC18F458 at 8MHz.
-       T1 a 16 bit counter in free running mode is used to capture pulse widths
+       The code is written for PIC18F458 at 20MHz.
+       T1 is a 16 bit counter in free running mode is used to capture pulse widths
        PORTC Pin 2 is used for input
-       PORTB are used an LCD display, connected to the default pins of the 
+       PORTB is used for an LCD display, connected to the default pins of the
        Mikroelektronika EasyPIC3 development board.
  
   Written using MicroC PRO for PIC v 4.60
@@ -21,7 +21,7 @@
   flow.
 
   The current implementation seems to be accurate for frequencies in the range
-  150Hz to 1.25kHz.
+  150Hz to 6.4kHz.
 
   To interface the circuit with an audio signal, an external circuit is
   necessary. Ex: To convert a +/- 15V sine or similar signal into a 0-5v input
@@ -118,15 +118,26 @@ void startCapture(){
 
 //returns the frequency x 10, the last digit is the first decimal place.
 unsigned int calculateFrequency(unsigned int timerValue){
-  unsigned int clockcycles;
-  // We have to add 17 timer ticks to the supplied timer value.
+  unsigned int correctedTimerValue;
+
+  // Frequency is calculated like this:
+  // f = (timer ticks/second) / (timer ticks spent)
+
+  // One timer tick takes 4 clock cycles, so the number of instructions per second
+  // equals Clock frequency / 4 => clock_kHz * 10000 / 4 = clock_kHz * 250
+
+  // For some reason, clock frequency is reported as 1/10 of the MCU clock. Not
+  // sure why this is but it means we have to multiply by 2500 instead of 250
+
+  // We have to add 18 timer ticks to the supplied timer value.
   // This is because we lose some time between when the interrupt is triggered
   // and the timer is restarted. If we do not compensate for this, the measured
-  // frequency will be too high. The error will be larger for higher 
+  // frequency will be too high. The error will be larger for higher
   // frequencies, as the lost time accounts for a larger proportion of the total
   // period.
-  clockcycles = (timerValue + 17) * 4;
-  return (Clock_kHz() * 10000 ) / clockcycles;
+
+  correctedTimerValue = (timerValue + 18);
+  return (Clock_kHz() * 2500 ) / correctedTimerValue;
 }
 
 unsigned int getAverageCapture(){
@@ -172,8 +183,8 @@ void hardwareInit(void) {          // basic hardware control
 // = 16 cycles. 
 
 // NB: For some reason the correct number to add to the timer when
-// calculating the correct frequency is always one more than this. 
-// I am not sure where the last cycle goes, could it be interrupt jitter?
+// calculating the correct frequency is always two more than this.
+// I am not sure where the last cycles go, could it be interrupt jitter?
 
 //INTERRUPT HANDLING
 void interrupt(void) {

@@ -78,15 +78,10 @@ void startCapture(){
 
 
 unsigned int calculateFrequency(unsigned int timerValue){
- unsigned int clockcycles;
-
-
-
-
-
-
- clockcycles = (timerValue + 17) * 4;
- return (Clock_kHz() * 10000 ) / clockcycles;
+ unsigned int correctedTimerValue;
+#line 139 "C:/git/mikroc/frequencycounter/frequencycounter.c"
+ correctedTimerValue = (timerValue + 18);
+ return (Clock_kHz() * 2500 ) / correctedTimerValue;
 }
 
 unsigned int getAverageCapture(){
@@ -115,7 +110,7 @@ void hardwareInit(void) {
  PIE1.CCP1IE = 1 ;
  INTCON.GIE = 1 ;
 }
-#line 179 "C:/git/mikroc/frequencycounter/frequencycounter.c"
+#line 190 "C:/git/mikroc/frequencycounter/frequencycounter.c"
 void interrupt(void) {
 
 
@@ -133,11 +128,11 @@ void interrupt(void) {
  CLRF TMR1H+0
  CLRF TMR1L+0
  BCF T1CON+0, 5
- BCF T1CON+0, 4
+ BSF T1CON+0, 4
  BCF PIR1+0, 0
  BSF T1CON+0, 0
  }
-#line 216 "C:/git/mikroc/frequencycounter/frequencycounter.c"
+#line 227 "C:/git/mikroc/frequencycounter/frequencycounter.c"
  storeInput() ;
  PIR1.CCP1IF = 0 ;
  }
