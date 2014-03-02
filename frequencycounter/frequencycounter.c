@@ -21,7 +21,10 @@
   flow.
 
   The current implementation seems to be accurate for frequencies in the range
-  150Hz to 6.4kHz.
+  150Hz to 6.4kHz. (saw waves. clean square waves will be measureable all the
+  way down to 77Hz without a prescaler. With a 1:4 prescaler, frequencies down
+  to 20Hz seem measureable. Similarly, a 1:8 prescaler will let you measure
+  down to 10Hz.
 
   To interface the circuit with an audio signal, an external circuit is
   necessary. Ex: To convert a +/- 15V sine or similar signal into a 0-5v input
@@ -44,6 +47,7 @@
 void interrupt(void);
 void main(void);
 void hardwareInit(void);          // setup hardware start conditions
+void frequencyCalculatorInit(unsigned short factor);
 void storeInput(void);            // copies a captured value into the array of periods.
 void startCapture();              // performs a capture of the selected number of pulses.
 
@@ -80,6 +84,10 @@ unsigned int capturedData = 0 ;              // value captured by the CCP module
 unsigned short captures[2*pulsesToCapture] ; // cyclic storage for 16 captures (ints)
 unsigned short pulsesCaptured = 0 ;
 
+unsigned long  clockCyclesPerSecondTimesFactor = 0;
+unsigned short clockCyclesPerTimerClick = 0;
+unsigned short interruptDelayClockCycles = 0;
+
 //GLOBAL POINTERS
 unsigned short *pCaptures ;                  // pointer to the captures array
 
@@ -89,6 +97,7 @@ void main(){
     unsigned int average;
 
     hardwareInit() ;
+    frequencyCalculatorInit(100);
     Lcd_Init();
     Lcd_Cmd(_LCD_CLEAR);
     Lcd_Cmd(_LCD_CURSOR_OFF);
@@ -116,35 +125,30 @@ void startCapture(){
     CCP1CON = 0b00000101 ;               // Start capture, capture on every rising edge
 }
 
-//returns the frequency x 10, the last digit is the first decimal place.
-unsigned int calculateFrequency(unsigned int timerValue){
-  unsigned int correctedTimerValue;
+//returns the frequency, depending on the selected scale factor the last digits
+//may be decimals
+unsigned int calculateFrequency(unsigned int timer){
+  unsigned long clockCycles;
+  
+  // Convert to long to get correct calculation later
+  unsigned long timerAsLong = timer;
 
-  // Frequency is calculated like this:
-  // f = (timer ticks/second) / (timer ticks spent)
-
-  // One timer tick takes 4 clock cycles, so the number of instructions per second
-  // equals Clock frequency / 4 => clock_kHz * 10000 / 4 = clock_kHz * 250
-
-  // For some reason, clock frequency is reported as 1/10 of the MCU clock. Not
-  // sure why this is but it means we have to multiply by 2500 instead of 250
-
-  // We have to add 18 timer ticks to the supplied timer value.
+  // We have to add extra clock cycles to the supplied timer value.
   // This is because we lose some time between when the interrupt is triggered
   // and the timer is restarted. If we do not compensate for this, the measured
   // frequency will be too high. The error will be larger for higher
   // frequencies, as the lost time accounts for a larger proportion of the total
   // period.
 
-  correctedTimerValue = (timerValue + 18);
-  return (Clock_kHz() * 2500 ) / correctedTimerValue;
+  clockCycles = timerAsLong * clockCyclesPerTimerClick + interruptDelayClockCycles;
+  return clockCyclesPerSecondTimesFactor / clockCycles;
 }
 
 unsigned int getAverageCapture(){
   unsigned short i;
   unsigned long sum = 0;
   for(i=0; i<2*pulsesToCapture; i+=2){
-    sum += (captures[i] << 8) + captures[i+1];
+    sum += (captures[i] << 8) + captures[i+1];  //combine two shorts to an int.
   }
   return sum >> 4;
 }
@@ -154,7 +158,7 @@ void hardwareInit(void) {          // basic hardware control
   PORTA = 0x00 ;
   TRISA = 0X00 ;
   PORTC = 0b00000100 ;             // normally high - depending on hardware
-  TRISC = 0b00000100 ;             // portc.b1 as input
+  TRISC = 0b00000100 ;             // portc.b2 as input
 
   T1CON.TMR1ON = 0 ;               // ensure it's off
   T1CON.T1OSCEN = 0 ;              // ensure OSC is OFF
@@ -165,6 +169,20 @@ void hardwareInit(void) {          // basic hardware control
   INTCON.PEIE = 1 ;                // enable peripheral interrupts
   PIE1.CCP1IE = 1 ;                // enable CCP1 capture interrupt
   INTCON.GIE = 1 ;                 // enable global interrupts
+}
+
+void frequencyCalculatorInit(unsigned short factor){
+    // Using a 1:4 prescaler for the timer seems to be the best tradeoff between
+    // lowest possible measureable frequency and reasonable accuracy in the
+    // high frequency region. Effective work area is between 20 and
+    clockCyclesPerSecondTimesFactor = Clock_kHz() * 1000 * factor;
+
+    // prescaler = 1:4
+    clockCyclesPerTimerClick = 16;
+
+    // 16 instructions plus some strange offset. 10 seems to work when prescaler
+    // is 1:1, 15 when prescaler is 1:4
+    interruptDelayClockCycles = 16 * 4 + 15;
 }
 
 // How to accurately measure the delay between when an interrupt occurs and 
@@ -203,7 +221,7 @@ void interrupt(void) {
             BCF         T1CON+0, 0
             CLRF        TMR1H+0
             CLRF        TMR1L+0
-            BCF         T1CON+0, 5
+            BSF         T1CON+0, 5
             BCF         T1CON+0, 4
             BCF         PIR1+0, 0
             BSF         T1CON+0, 0
@@ -218,7 +236,7 @@ void interrupt(void) {
         T1CON.TMR1ON = 0 ;               //++ Turning off the timer also resets T1 prescaler
         TMR1H = 0x00 ;                   // Set initial value for the timer TMR1 for maximum counts available
         TMR1L = 0x00 ;
-        T1CON.T1CKPS1 = 0 ;              // Assigned T1 prescaler rate is 1:1
+        T1CON.T1CKPS1 = 1 ;              // Assigned T1 prescaler rate is 1:4
         T1CON.T1CKPS0 = 0 ;
         PIR1.TMR1IF = 0 ;                // clear T1 interrupt flag
         T1CON.TMR1ON = 1 ;               // turn T1 back on

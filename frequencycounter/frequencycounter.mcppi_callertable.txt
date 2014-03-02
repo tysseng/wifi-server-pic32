@@ -1,6 +1,8 @@
 main
 	__CC2DW
 	hardwareInit
+	frequencyCalculatorInit
+		Mul_32x32_U
 	Lcd_Init
 		Delay_5500us
 		Delay_1us
@@ -21,9 +23,8 @@ main
 	startCapture
 	getAverageCapture
 	calculateFrequency
-		Div_32x32_S
-			SDIV3232L
-			COMFREM
+		Mul_32x32_U
+		Div_32x32_U
 	Lcd_Out_Timer
 		Div_16x16_U
 		Lcd_Chr

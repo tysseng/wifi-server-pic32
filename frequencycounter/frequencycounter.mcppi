@@ -97,4 +97,5 @@ File44=UART
 File45=Mmc_Fat16_Config
 [EXPANDED NODES]
 Node1=Sources
-Count=1
+Node2=Output Files
+Count=2

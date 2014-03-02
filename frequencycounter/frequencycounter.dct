@@ -453,6 +453,8 @@ ckp
 ckp_bit
 clko
 clko_bit
+clockcyclespersecondtimesfactor
+clockcyclespertimerclick
 cm0
 cm0_bit
 cm1
@@ -969,6 +971,7 @@ fontsystem5x7_v2
 freadneedsupdate
 free
 free_bit
+frequencycalculatorinit
 frexp
 fsect
 fsr0
@@ -1129,6 +1132,7 @@ intedg1_bit
 intedg2
 intedg2_bit
 interrupt
+interruptdelayclockcycles
 inttohex
 inttostr
 inttostrwithzeros

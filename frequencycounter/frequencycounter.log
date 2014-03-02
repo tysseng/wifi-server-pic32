@@ -1,14 +1,14 @@
 0	1	mikroCPIC1618.exe -MSF -DBG -pP18F458 -DL -O11111114 -fo20 -N"C:\git\mikroc\frequencycounter\frequencycounter.mcppi" -SP"C:\Users\Public\Documents\Mikroelektronika\mikroC PRO for PIC\defs\" -SP"C:\Users\Public\Documents\Mikroelektronika\mikroC PRO for PIC\uses\P18\" -SP"C:\git\mikroc\frequencycounter\" -SP"C:\Elektro\mikroC\frequencycounter\" -SP"C:\Program Files (x86)\Mikroelektronika\mikroC PRO for PIC\defs\" -SP"C:\Program Files (x86)\Mikroelektronika\mikroC PRO for PIC\uses\P18\" "frequencycounter.c" "__Lib_Math.mcl" "__Lib_MathDouble.mcl" "__Lib_System.mcl" "__Lib_Delays.mcl" "__Lib_CType.mcl" "__Lib_CString.mcl" "__Lib_CStdlib.mcl" "__Lib_CMath.mcl" "__Lib_Conversions.mcl" "__Lib_Sprintf.mcl" "__Lib_PrintOut.mcl" "__Lib_Sprinti.mcl" "__Lib_Sprintl.mcl" "__Lib_Time.mcl" "__Lib_Trigonometry.mcl" "__Lib_Button.mcl" "__Lib_Keypad4x4.mcl" "__Lib_Manchester.mcl" "__Lib_OneWire.mcl" "__Lib_PS2.mcl" "__Lib_Sound.mcl" "__Lib_SoftI2C.mcl" "__Lib_SoftSPI.mcl" "__Lib_SoftUART.mcl" "__Lib_ADC_A_C.mcl" "__Lib_EEPROM_256.mcl" "__Lib_FLASH_w8_e64.mcl" "__Lib_I2C_c34.mcl" "__Lib_PWM_c2d4.mcl" "__Lib_SPI_c345.mcl" "__Lib_UART_c67.mcl" "__Lib_CAN_C_A.mcl" "__Lib_PortExpander.mcl" "__Lib_CANSPI.mcl" "__Lib_CF.mcl" "__Lib_CFFat16.mcl" "__Lib_GlcdFonts.mcl" "__Lib_Glcd.mcl" "__Lib_LcdConsts.mcl" "__Lib_Lcd.mcl" "__Lib_Mmc.mcl" "__Lib_MmcFat16.mcl" "__Lib_MmcFat16Constants.mcl" "__Lib_RS485.mcl" "__Lib_T6963C.mcl" "__Lib_SPIGlcd.mcl" "__Lib_SPILcd.mcl" "__Lib_SPILcd8.mcl" "__Lib_SPIT6963C.mcl" "__Lib_EthEnc28j60.mcl"	 
 warning: 0	1501	Specified search path does not exist: 'C:\Elektro\mikroC\frequencycounter'	 
 hint: 0	1139	Available RAM: 1515 [bytes], Available ROM: 32768 [bytes]	 
-diagnostics: 0	126	All files Preprocessed in 16 ms	 
+diagnostics: 0	126	All files Preprocessed in 15 ms	 
 diagnostics: 0	122	Compilation Started	frequencycounter.c
-diagnostics: 280	123	Compiled Successfully	frequencycounter.c
-hint: 121	1164	Variable 'correctedTimerValue' has been eliminated by optimizer	frequencycounter.c
-diagnostics: 0	127	All files Compiled in 62 ms	 
-hint: 0	1144	Used RAM (bytes): 78 (5%)  Free RAM (bytes): 1437 (95%)	Used RAM (bytes): 78 (5%)  Free RAM (bytes): 1437 (95%)
+diagnostics: 298	123	Compiled Successfully	frequencycounter.c
+hint: 131	1164	Variable 'clockCycles' has been eliminated by optimizer	frequencycounter.c
+diagnostics: 0	127	All files Compiled in 63 ms	 
+hint: 0	1144	Used RAM (bytes): 87 (6%)  Free RAM (bytes): 1428 (94%)	Used RAM (bytes): 87 (6%)  Free RAM (bytes): 1428 (94%)
 hint: 0	1144	Used ROM (bytes): 2711 (8%)  Free ROM (bytes): 30057 (92%)	Used ROM (bytes): 2711 (8%)  Free ROM (bytes): 30057 (92%)
 diagnostics: 0	125	Project Linked Successfully	frequencycounter.mcppi
-diagnostics: 0	128	Linked in 141 ms	 
+diagnostics: 0	128	Linked in 125 ms	 
 diagnostics: 0	129	Project 'frequencycounter.mcppi' completed: 281 ms	 
-diagnostics: 0	103	Finished successfully: 02 mar 2014, 17:58:20	frequencycounter.mcppi
+diagnostics: 0	103	Finished successfully: 02 mar 2014, 19:51:09	frequencycounter.mcppi

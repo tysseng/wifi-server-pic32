@@ -1,9 +1,10 @@
 #line 1 "C:/git/mikroc/frequencycounter/frequencycounter.c"
 #line 1 "c:/users/public/documents/mikroelektronika/mikroc pro for pic/include/built_in.h"
-#line 44 "C:/git/mikroc/frequencycounter/frequencycounter.c"
+#line 47 "C:/git/mikroc/frequencycounter/frequencycounter.c"
 void interrupt(void);
 void main(void);
 void hardwareInit(void);
+void frequencyCalculatorInit(unsigned short factor);
 void storeInput(void);
 void startCapture();
 
@@ -40,6 +41,10 @@ unsigned int capturedData = 0 ;
 unsigned short captures[2*pulsesToCapture] ;
 unsigned short pulsesCaptured = 0 ;
 
+unsigned long clockCyclesPerSecondTimesFactor = 0;
+unsigned short clockCyclesPerTimerClick = 0;
+unsigned short interruptDelayClockCycles = 0;
+
 
 unsigned short *pCaptures ;
 
@@ -49,6 +54,7 @@ void main(){
  unsigned int average;
 
  hardwareInit() ;
+ frequencyCalculatorInit(100);
  Lcd_Init();
  Lcd_Cmd(_LCD_CLEAR);
  Lcd_Cmd(_LCD_CURSOR_OFF);
@@ -77,11 +83,22 @@ void startCapture(){
 }
 
 
-unsigned int calculateFrequency(unsigned int timerValue){
- unsigned int correctedTimerValue;
-#line 139 "C:/git/mikroc/frequencycounter/frequencycounter.c"
- correctedTimerValue = (timerValue + 18);
- return (Clock_kHz() * 2500 ) / correctedTimerValue;
+
+unsigned int calculateFrequency(unsigned int timer){
+ unsigned long clockCycles;
+
+
+ unsigned long timerAsLong = timer;
+
+
+
+
+
+
+
+
+ clockCycles = timerAsLong * clockCyclesPerTimerClick + interruptDelayClockCycles;
+ return clockCyclesPerSecondTimesFactor / clockCycles;
 }
 
 unsigned int getAverageCapture(){
@@ -110,7 +127,21 @@ void hardwareInit(void) {
  PIE1.CCP1IE = 1 ;
  INTCON.GIE = 1 ;
 }
-#line 190 "C:/git/mikroc/frequencycounter/frequencycounter.c"
+
+void frequencyCalculatorInit(unsigned short factor){
+
+
+
+ clockCyclesPerSecondTimesFactor = Clock_kHz() * 1000 * factor;
+
+
+ clockCyclesPerTimerClick = 16;
+
+
+
+ interruptDelayClockCycles = 16 * 4 + 15;
+}
+#line 208 "C:/git/mikroc/frequencycounter/frequencycounter.c"
 void interrupt(void) {
 
 
@@ -127,12 +158,12 @@ void interrupt(void) {
  BCF T1CON+0, 0
  CLRF TMR1H+0
  CLRF TMR1L+0
- BCF T1CON+0, 5
- BSF T1CON+0, 4
+ BSF T1CON+0, 5
+ BCF T1CON+0, 4
  BCF PIR1+0, 0
  BSF T1CON+0, 0
  }
-#line 227 "C:/git/mikroc/frequencycounter/frequencycounter.c"
+#line 245 "C:/git/mikroc/frequencycounter/frequencycounter.c"
  storeInput() ;
  PIR1.CCP1IF = 0 ;
  }
