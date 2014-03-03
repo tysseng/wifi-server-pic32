@@ -1,0 +1,11 @@
+void initPitchArray();
+void printNote(unsigned int frequency, int factor);
+unsigned short getOctave(unsigned short semitone);
+unsigned short getSemitoneInOctave(unsigned short semitone);
+void lookupAndPrintTone(unsigned short octave, unsigned short semitone, int mismatch);
+void printTone(char* note, unsigned short octave);
+void printMismatch(int mismatch);
+unsigned short getNumberOfSymbols(int mismatch);
+void Lcd_Out_ULong(unsigned short row, unsigned short col, unsigned long number);
+void Lcd_Out_UInt(unsigned short row, unsigned short col, unsigned int number);
+void Lcd_Out_UShort(unsigned short row, unsigned short col, unsigned short number);

@@ -40,21 +40,9 @@
                        ------
   Joakim Tysseng, March 2011
 */
-
+#include "frequencycounter.h"
+#include "frequencyToNoteConverter.h"
 #include "built_in.h"              // to get useful built in commands highest() delay_ms() etc
-
-//PROTOTYPES
-void interrupt(void);
-void main(void);
-void hardwareInit(void);          // setup hardware start conditions
-void frequencyCalculatorInit(unsigned short factor);
-void storeInput(void);            // copies a captured value into the array of periods.
-void startCapture();              // performs a capture of the selected number of pulses.
-
-unsigned int getAverageCapture();
-unsigned int calculateFrequency(unsigned int timerValue);
-void Lcd_Out_Timer(unsigned short row, unsigned short col, unsigned int number);
-void Lcd_Out_Freq(unsigned short row, unsigned short col, unsigned int number);
 
 // LCD module connections
 sbit LCD_RS at RB2_bit;
@@ -76,8 +64,8 @@ sbit LCD_D7_Direction at TRISB7_bit;
 const unsigned short pulsesToCapture = 16;
 
 //PREDEFINED TEXTS
-char txt1[] = "Timer....: ";
-char txt2[] = "Frequency: ";
+char txt1[] = "Note:           ";
+char txt2[] = "       /        ";
 
 //GLOBAL VARIABLES
 unsigned int capturedData = 0 ;              // value captured by the CCP module
@@ -97,7 +85,8 @@ void main(){
     unsigned int average;
 
     hardwareInit() ;
-    frequencyCalculatorInit(100);
+    initPitchArray();
+    frequencyCalculatorInit(10);
     Lcd_Init();
     Lcd_Cmd(_LCD_CLEAR);
     Lcd_Cmd(_LCD_CURSOR_OFF);
@@ -110,8 +99,7 @@ void main(){
        if(pulsesCaptured > pulsesToCapture){
          average = getAverageCapture();
          frequency = calculateFrequency(average);
-         Lcd_Out_Timer(1, 12, average);
-         Lcd_Out_Freq(2, 11, frequency);
+         printNote(frequency, 10);
          startCapture();
        }
     } while (1);
@@ -258,41 +246,4 @@ void storeInput(void) {
     }
    *(pCaptures++) = hi(capturedData) ;   // store captured hibyte:lobyte in array
    *(pCaptures++) = lo(capturedData) ;
-}
-
-// Utility function that writes the five last digits of an integer to the LCD
-// display
-void Lcd_Out_Timer(unsigned short row, unsigned short col, unsigned int number){
-  unsigned char digits[5];
-  digits[0] = number % 10;
-  digits[1] = (number / 10) % 10;
-  digits[2] = (number / 100) % 10;
-  digits[3] = (number / 1000) % 10;
-  digits[4] = (number / 10000) % 10;
-
-  Lcd_Chr(row, col+4, 48 + digits[0]);
-  Lcd_Chr(row, col+3, 48 + digits[1]);
-  Lcd_Chr(row, col+2, 48 + digits[2]);
-  Lcd_Chr(row, col+1, 48 + digits[3]);
-  Lcd_Chr(row, col, 48 + digits[4]);
-}
-
-void Lcd_Out_Freq(unsigned short row, unsigned short col, unsigned int number){
-  unsigned char digits[5];
-  digits[0] = number % 10;
-  digits[1] = (number / 10) % 10;
-  digits[2] = (number / 100) % 10;
-  digits[3] = (number / 1000) % 10;
-  digits[4] = (number / 10000) % 10;
-
-  Lcd_Chr(row, col+5, 48 + digits[0]);
-  Lcd_Chr(row, col+4, 46);
-  Lcd_Chr(row, col+3, 48 + digits[1]);
-  Lcd_Chr(row, col+2, 48 + digits[2]);
-  Lcd_Chr(row, col+1, 48 + digits[3]);
-  if(digits[4] == 0){
-    Lcd_Chr(row, col, 32);
-  } else {
-    Lcd_Chr(row, col, 48 + digits[4]);
-  }
 }

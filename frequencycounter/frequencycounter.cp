@@ -1,19 +1,27 @@
 #line 1 "C:/git/mikroc/frequencycounter/frequencycounter.c"
-#line 1 "c:/users/public/documents/mikroelektronika/mikroc pro for pic/include/built_in.h"
-#line 47 "C:/git/mikroc/frequencycounter/frequencycounter.c"
+#line 1 "c:/git/mikroc/frequencycounter/frequencycounter.h"
 void interrupt(void);
 void main(void);
 void hardwareInit(void);
 void frequencyCalculatorInit(unsigned short factor);
 void storeInput(void);
 void startCapture();
-
 unsigned int getAverageCapture();
 unsigned int calculateFrequency(unsigned int timerValue);
-void Lcd_Out_Timer(unsigned short row, unsigned short col, unsigned int number);
-void Lcd_Out_Freq(unsigned short row, unsigned short col, unsigned int number);
-
-
+#line 1 "c:/git/mikroc/frequencycounter/frequencytonoteconverter.h"
+void initPitchArray();
+void printNote(unsigned int frequency, int factor);
+unsigned short getOctave(unsigned short semitone);
+unsigned short getSemitoneInOctave(unsigned short semitone);
+void lookupAndPrintTone(unsigned short octave, unsigned short semitone, int mismatch);
+void printTone(char* note, unsigned short octave);
+void printMismatch(int mismatch);
+unsigned short getNumberOfSymbols(int mismatch);
+void Lcd_Out_ULong(unsigned short row, unsigned short col, unsigned long number);
+void Lcd_Out_UInt(unsigned short row, unsigned short col, unsigned int number);
+void Lcd_Out_UShort(unsigned short row, unsigned short col, unsigned short number);
+#line 1 "c:/users/public/documents/mikroelektronika/mikroc pro for pic/include/built_in.h"
+#line 48 "C:/git/mikroc/frequencycounter/frequencycounter.c"
 sbit LCD_RS at RB2_bit;
 sbit LCD_EN at RB3_bit;
 sbit LCD_D4 at RB4_bit;
@@ -33,8 +41,8 @@ sbit LCD_D7_Direction at TRISB7_bit;
 const unsigned short pulsesToCapture = 16;
 
 
-char txt1[] = "Timer....: ";
-char txt2[] = "Frequency: ";
+char txt1[] = "Note:           ";
+char txt2[] = "       /        ";
 
 
 unsigned int capturedData = 0 ;
@@ -54,7 +62,8 @@ void main(){
  unsigned int average;
 
  hardwareInit() ;
- frequencyCalculatorInit(100);
+ initPitchArray();
+ frequencyCalculatorInit(10);
  Lcd_Init();
  Lcd_Cmd(_LCD_CLEAR);
  Lcd_Cmd(_LCD_CURSOR_OFF);
@@ -67,8 +76,7 @@ void main(){
  if(pulsesCaptured > pulsesToCapture){
  average = getAverageCapture();
  frequency = calculateFrequency(average);
- Lcd_Out_Timer(1, 12, average);
- Lcd_Out_Freq(2, 11, frequency);
+ printNote(frequency, 10);
  startCapture();
  }
  } while (1);
@@ -141,7 +149,7 @@ void frequencyCalculatorInit(unsigned short factor){
 
  interruptDelayClockCycles = 16 * 4 + 15;
 }
-#line 208 "C:/git/mikroc/frequencycounter/frequencycounter.c"
+#line 196 "C:/git/mikroc/frequencycounter/frequencycounter.c"
 void interrupt(void) {
 
 
@@ -163,7 +171,7 @@ void interrupt(void) {
  BCF PIR1+0, 0
  BSF T1CON+0, 0
  }
-#line 245 "C:/git/mikroc/frequencycounter/frequencycounter.c"
+#line 233 "C:/git/mikroc/frequencycounter/frequencycounter.c"
  storeInput() ;
  PIR1.CCP1IF = 0 ;
  }
@@ -180,41 +188,4 @@ void storeInput(void) {
  }
  *(pCaptures++) =  ((char *)&capturedData)[1]  ;
  *(pCaptures++) =  ((char *)&capturedData)[0]  ;
-}
-
-
-
-void Lcd_Out_Timer(unsigned short row, unsigned short col, unsigned int number){
- unsigned char digits[5];
- digits[0] = number % 10;
- digits[1] = (number / 10) % 10;
- digits[2] = (number / 100) % 10;
- digits[3] = (number / 1000) % 10;
- digits[4] = (number / 10000) % 10;
-
- Lcd_Chr(row, col+4, 48 + digits[0]);
- Lcd_Chr(row, col+3, 48 + digits[1]);
- Lcd_Chr(row, col+2, 48 + digits[2]);
- Lcd_Chr(row, col+1, 48 + digits[3]);
- Lcd_Chr(row, col, 48 + digits[4]);
-}
-
-void Lcd_Out_Freq(unsigned short row, unsigned short col, unsigned int number){
- unsigned char digits[5];
- digits[0] = number % 10;
- digits[1] = (number / 10) % 10;
- digits[2] = (number / 100) % 10;
- digits[3] = (number / 1000) % 10;
- digits[4] = (number / 10000) % 10;
-
- Lcd_Chr(row, col+5, 48 + digits[0]);
- Lcd_Chr(row, col+4, 46);
- Lcd_Chr(row, col+3, 48 + digits[1]);
- Lcd_Chr(row, col+2, 48 + digits[2]);
- Lcd_Chr(row, col+1, 48 + digits[3]);
- if(digits[4] == 0){
- Lcd_Chr(row, col, 32);
- } else {
- Lcd_Chr(row, col, 48 + digits[4]);
- }
 }

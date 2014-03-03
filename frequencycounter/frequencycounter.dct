@@ -991,6 +991,9 @@ gcen
 gcen_bit
 get_fosc_khz
 getaveragecapture
+getnumberofsymbols
+getoctave
+getsemitoneinoctave
 gie
 gie_bit
 gie_gieh
@@ -1084,6 +1087,7 @@ ics_off
 indf0
 indf1
 indf2
+initpitcharray
 int0
 int0_bit
 int0e
@@ -1264,6 +1268,9 @@ lcd_out
 lcd_out_cp
 lcd_out_freq
 lcd_out_timer
+lcd_out_uint
+lcd_out_ulong
+lcd_out_ushort
 lcd_rs
 lcd_rs_direction
 ldexp
@@ -1280,6 +1287,7 @@ longword2double
 longwordtohex
 longwordtostr
 longwordtostrwithzeros
+lookupandprinttone
 ltrim
 lvdcon
 lvden
@@ -1487,6 +1495,7 @@ pie3
 pir1
 pir2
 pir3
+pitches
 plusw0
 plusw1
 plusw2
@@ -1508,7 +1517,10 @@ pr2
 preinc0
 preinc1
 preinc2
+printmismatch
+printnote
 printout
+printtone
 prod
 prodh
 prodl

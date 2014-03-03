@@ -6,7 +6,7 @@ Value=0
 [BUILD_TYPE]
 Value=0
 [ACTIVE_TAB]
-Value=frequencycounter.c
+Value=lcdRoutines.c
 [USE_EEPROM]
 Value=0
 [EEPROM_DEFINITION]
@@ -16,17 +16,24 @@ Value=0
 [HEAP_SIZE]
 Value=2000
 [FILES]
-Count=1
+Count=3
 File0=frequencycounter.c
+File1=frequencyToNoteConverter.c
+File2=lcdRoutines.c
 [BINARIES]
 Count=0
 [IMAGES]
 Count=0
 ActiveImageIndex=-1
 [OPENED_FILES]
-Count=2
+Count=7
 File0=frequencycounter.c
 File1=frequencycounter.asm
+File2=frequencyToNoteConverter.c
+File3=frequencyToNoteConverter.h
+File4=frequencycounter.h
+File5=lcdRoutines.c
+File6=lcdRoutines.h
 [EEPROM]
 Count=0
 [ACTIVE_COMMENTS_FILES]
@@ -42,9 +49,13 @@ Path3=C:\Elektro\mikroC\frequencycounter\
 Path4=C:\Program Files (x86)\Mikroelektronika\mikroC PRO for PIC\defs\
 Path5=C:\Program Files (x86)\Mikroelektronika\mikroC PRO for PIC\uses\P18\
 [HEADER_PATH]
-Count=0
+Count=1
+Path0=C:\git\mikroc\frequencycounter\
 [HEADERS]
-Count=0
+Count=3
+File0=frequencycounter.h
+File1=frequencyToNoteConverter.h
+File2=lcdRoutines.h
 [PLDS]
 Count=0
 [Useses]
@@ -97,5 +108,6 @@ File44=UART
 File45=Mmc_Fat16_Config
 [EXPANDED NODES]
 Node1=Sources
-Node2=Output Files
-Count=2
+Node2=Header Files
+Node3=Output Files
+Count=3

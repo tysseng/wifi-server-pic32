@@ -1,3 +1,6 @@
+#include "frequencyToNoteConverter.h"
+#include "lcdRoutines.h"
+
 //8 octaves times 12 semi tones
 //format: two decimals written as integers.
 unsigned long pitches[108];
@@ -7,7 +10,7 @@ void initPitchArray(){
   short semitone;
   short divideBy = 2;
   
-  pitches[96]  = 418601;
+  pitches[96]  = 418601; //C8
   pitches[97]  = 443492;
   pitches[98]  = 469864;
   pitches[99]  = 497803;
@@ -18,7 +21,7 @@ void initPitchArray(){
   pitches[104]  = 664488;
   pitches[105]  = 704000;
   pitches[106]  = 745862;
-  pitches[107]  = 790213;
+  pitches[107]  = 790213; //B8
   
   for(octave=7; octave>-1; octave--){
     for(semitone=0; semitone<12; semitone++){
@@ -28,46 +31,51 @@ void initPitchArray(){
   }
 }
 
-unsigned int printNote(unsigned int frequency, int factor){
+void printNote(unsigned int frequency, int factor){
 
-  long frequency100 = factor == 10 ? frequency * 10 : frequency;
+  unsigned long frequency100 = (factor == 10 ? 10L * frequency  : 1L * frequency);
+
+  unsigned long tmp;
+  unsigned long tmp2;
 
   unsigned short semitone;
-  unsigned short lowerBound;
-  unsigned short upperBound;
+  unsigned short lowerBound = 0;
+  unsigned short upperBound = 0;
   unsigned short closestMatch;
   unsigned short octave;
   unsigned short semitoneInOctave;
   int mismatch;
 
-  //implement as binary search later
-  lowerBound = 0;
-  upperBound = 0;
-
+  // implement as binary search later
   // NB: Does not handle edge cases
   for(semitone = 0; semitone < 108; semitone++){
-    if(frequency100 > pitches[semitone]{
-      lowerBound = upperBound;
-      upperBound = semitone;
+    if(frequency100 > pitches[semitone]){
+      lowerBound = semitone;
+      upperBound = semitone+1;
     } else {
       break;
     }
   }
-  
-  //find closest match
-  if(frequency100 - pitches[lowerBound] > pitches[higherBound] - frequency100){
+
+  if(frequency100 - pitches[lowerBound] > pitches[upperBound] - frequency100){
     closestMatch = upperBound;
   } else {
     closestMatch = lowerBound;
   }
 
+  Delay_5ms();
+  Lcd_Out_Freq(2, 1, frequency100);
+
+  Delay_5ms();
+  Lcd_Out_Freq(2, 9, pitches[closestMatch]);
+
+  
   //find percentage mismatch
   mismatch = 10000L * (frequency100 - pitches[closestMatch]) / pitches[closestMatch];
-  
-  octave = getOctave(semitone);
-  semitoneInOctave = getSemitoneInOctave(semitone);
 
-  printTone(octave, semitone, mismatch);
+  octave = getOctave(closestMatch);
+  semitoneInOctave = getSemitoneInOctave(closestMatch);
+  lookupAndPrintTone(octave, semitoneInOctave, mismatch);
 }
 
 unsigned short getOctave(unsigned short semitone){
@@ -81,66 +89,83 @@ unsigned short getSemitoneInOctave(unsigned short semitone){
 void lookupAndPrintTone(unsigned short octave, unsigned short semitone, int mismatch){
   switch (semitone){
     case 0:
-      printTone("C  ", octave);
+      printTone("-C  ", octave);
       break;
     case 1:
-      printTone("C# ", octave);
+      printTone("-C# ", octave);
       break;
     case 2:
-      printTone("D  ", octave);
+      printTone("-D  ", octave);
       break;
     case 3:
-      printTone("D# ", octave);
+      printTone("-D# ", octave);
       break;
     case 4:
-      printTone("E  ", octave);
+      printTone("-E  ", octave);
       break;
     case 5:
-      printTone("F  ", octave);
+      printTone("-F  ", octave);
       break;
     case 6:
-      printTone("F# ", octave);
+      printTone("-F# ", octave);
       break;
     case 7:
-      printTone("G  ", octave);
+      printTone("-G  ", octave);
       break;
     case 8:
-      printTone("G#  ", octave);
+      printTone("-G# ", octave);
       break;
     case 9:
-      printTone("A  ", octave);
+      printTone("-A  ", octave);
       break;
     case 10:
-      printTone("A#  ", octave);
+      printTone("-A# ", octave);
       break;
     case 11:
-      printTone("B  ", octave);
+      printTone("-B ", octave);
       break;
   }
-  printMismatch(mismatch);
+  //printMismatch(mismatch);
 }
 
 void printTone(char* note, unsigned short octave){
-    //"1234567890123456"
-    //"note: 0-C# +++++"
-    Lcd_Chr(1, 6, 48 + octave);
-    Lcd_Out(1,8,octave);
+  //"1234567890123456"
+  //"note: 0-C# +++++"
+  Lcd_Out(1,8,note);
+  Lcd_Chr(1, 7, 48 + octave);
 }
 
 void printMismatch(int mismatch){
-     char symbol;
-     unsigned short numberOfSymbols;
-
-     if(mismatch > 0){
-       symbol = '+';
-       numberOfSymbols = getNumberOfSymbols(mismatch);
-     } else {
-       symbol = '-';
-       numberOfSymbols = getNumberOfSymbols(-1 * mismatch);
-     }
+  char symbol;
+  unsigned short numberOfSymbols;
+  unsigned short i;
+  
+  if(mismatch > 0){
+    symbol = '+';
+    numberOfSymbols = getNumberOfSymbols(mismatch);
+  } else {
+    symbol = '-';
+    numberOfSymbols = getNumberOfSymbols(-1 * mismatch);
+  }
+  
+  for(i = 0; i< numberOfSymbols; i++){
+    Lcd_Chr(1, 12 + i, symbol);
+  }
+  for(i; i<3; i++){
+    Lcd_Chr(1, 12 + i, ' ');
+  }
 }
 
 unsigned short getNumberOfSymbols(int mismatch){
   //max mismatch is roughly 300, which equals 3%.
+  if(mismatch >200){
+    return 3;
+  } else if(mismatch > 100) {
+    return 2;
+  } else if(mismatch > 50) {
+    return 1;
+  }
+  return 0;
   //TODO: Finn grenser for hva som er ustemt.
 }
+
