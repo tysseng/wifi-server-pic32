@@ -10,6 +10,8 @@ void initPitchArray(){
   short semitone;
   short divideBy = 2;
   
+  // http://www.indiana.edu/~emusic/etext/acoustics/chapter1_pitch.shtml
+  
   pitches[96]  = 418601; //C8
   pitches[97]  = 443492;
   pitches[98]  = 469864;
@@ -70,7 +72,7 @@ void printNote(unsigned int frequency, int factor){
   Lcd_Out_Freq(2, 9, pitches[closestMatch]);
 
   
-  //find percentage mismatch
+  //find percentage mismatch. Not currently working.
   mismatch = 10000L * (frequency100 - pitches[closestMatch]) / pitches[closestMatch];
 
   octave = getOctave(closestMatch);
@@ -125,7 +127,9 @@ void lookupAndPrintTone(unsigned short octave, unsigned short semitone, int mism
       printTone("-B ", octave);
       break;
   }
-  //printMismatch(mismatch);
+  
+  Delay_5ms();
+  printMismatch(mismatch);
 }
 
 void printTone(char* note, unsigned short octave){

@@ -6,7 +6,8 @@
  calculates the input frequency through an average of 16 samples.
  
  The result is accurate down to +/- 0.1 Hz, which is good enough for audio
- frequencies as the human ear cannot distinguish between changes less than 3 Hz.
+ frequencies as the human ear cannot distinguish between changes of 
+ less than 3 Hz (in the 1000 to 2000Hz range).
 
  HARDWARE:
        The code is written for PIC18F458 at 20MHz.
@@ -151,8 +152,8 @@ void hardwareInit(void) {          // basic hardware control
   T1CON.TMR1ON = 0 ;               // ensure it's off
   T1CON.T1OSCEN = 0 ;              // ensure OSC is OFF
   T1CON.TMR1CS = 0;                // Timer1 counts pulses from internal oscillator
-  T1CON.T1CKPS1 = 0;               // prescale the input pulses
-  T1CON.T1CKPS0 = 0;               // Assigned T1 prescaler rate is 1:1 so T1 is Fosc/4 with 20Mhz clock = 0.2uS per tick
+  T1CON.T1CKPS1 = 1;               // prescale the input pulses
+  T1CON.T1CKPS0 = 0;               // Assigned T1 prescaler rate is 1:4
 
   INTCON.PEIE = 1 ;                // enable peripheral interrupts
   PIE1.CCP1IE = 1 ;                // enable CCP1 capture interrupt
