@@ -1,0 +1,61 @@
+********
+Start position for timer, 1 pulse, when using 24 pulses per quarter note
+*********
+time per quarter note (tpqn) = 60s / BPM =
+time per pulse (tpp) = tpqn / ppqn = tpqn / 24 = (60s / BPM) / 24 = 60s / (24 * BPM)
+
+e.g.:
+BPM = 120
+tpp = 60s / 24 * 120 = 1s / 24 * 2 = 1s / 48
+
+Selected minimum speed: 60BPM
+tpp = 60 / 24 * 60 = 60/1440 = 1/24 s = 41667us
+
+Selected maximum speed: 240 BPM
+tpp = 60 / 24 * 240 = 60/5760 =  1/96 s = 10417us
+
+with a clock frequency of 20MHz and a tick length of 4 clock cycles,
+the maximum timer length is:
+
+65536 / (20 000 000 / 4) = 13107.2us
+
+With a prescaler of 4, this is extended to 52428.8us, which is enough when we
+set the maximum delay to 41667 us
+
+To get the number of necessary ticks:
+
+1 tick = 1s / ( 20 000 000 / 16 ) = 1/1.25 us (=0.8us per tick).
+
+Necessary ticks = time / (timer pr tick) = time / (1 / 1.25) = 1.25 * time
+
+Time simplified = 60 / 24 * BPM = 5 / 2 * BPM
+
+Necessary ticks is then 5 * 1.25 / 2 * BPM = 6,25 / 2*BPM
+If measurements are in us:
+=====================
+Ticks = 3125000 / BPM
+---------------------
+
+which means that:
+
+240 BPM: 10417us = 10417 * 1.25 ticks = 13021,25 ticks
+120 BPM: 20834us = 20834 * 1.25 ticks = 26042,5 ticks
+ 60 BPM: 41667us = 41667 * 1.25 ticks = 52083,75 ticks
+
+--
+
+Clock drift:
+With a frequency of 20MHz and a prescaler of 4, each tick lasts for
+  1 / (5000 000/4) s = 0.8us
+
+With this resolution, the maximum error/drift per pulse will be:
+  0.4us
+
+This equals a maximum drift per quarter note of:
+  24 * 0.4 = 9.6us
+
+The maximum bpm = 240, which gives a maximum drift per minute of
+  12 * 240us = 2304us = 2.304ms
+
+During a four minute song, this adds up to:
+  9.216ms = 0.009216s (less than 1/100th of a second).
