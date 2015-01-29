@@ -4,8 +4,18 @@ typedef void (*nodeFunction)(struct matrixNode *);
 
 //node in matrix
 typedef struct matrixNode{
+    // placeholder for result from Node function
     short result;
+    
+    // parameters passed to this node
     short params[8];
+    
+    // Bitwise variable that indicates usage of params:
+    // 1 signifies that param is a constant
+    // 0 that it is the index of the Node to get result from
+    short paramIsConstant;
+
+    // function to run when this Node is accessed
     nodeFunction func;
 } Node;
 
@@ -60,8 +70,8 @@ void runMatrix(){
 void main() {
     Node aNode;
 
+    // DEBUG STUFF
     Lcd_Init();                        // Initialize Lcd
-
     Lcd_Cmd(_LCD_CLEAR);               // Clear display
     Lcd_Cmd(_LCD_CURSOR_OFF);          // Cursor off
     Lcd_Out(1,1,txt1);                 // Write text in first row
@@ -73,5 +83,6 @@ void main() {
 
     runMatrix();
 
+    // DEBUG STUFF
     Lcd_Chr(2,1,48+aNode.result);
 }
