@@ -4,11 +4,18 @@ typedef void (*nodeFunction)(struct matrixNode *);
 
 //node in matrix
 typedef struct matrixNode{
-    // placeholder for result from Node function
+  // placeholder for result from Node function
     short result;
     
     // parameters passed to this node
     short params[8];
+
+    // high res status variable for ramps etc, to reduce effects of rounding
+    // errors.
+    int highResState;
+    
+    // state, holds flags for
+    short state;
     
     // Bitwise variable that indicates usage of params:
     // 1 signifies that param is a constant
@@ -56,51 +63,100 @@ void interrupt(){
 // they can be constants. This function figures out which one and returns its 
 // value.
 unsigned short getParam(Node *aNode, unsigned short paramId){
-  unsigned short type;
+    unsigned short type;
 
-  type = (aNode->paramIsConstant >> paramId) & 0b00000001;
-  if(type == 1){
-    return aNode->params[paramId];
-  } else {
-    return nodes[aNode->params[paramId]]->result;
-  }
+    type = (aNode->paramIsConstant >> paramId) & 0b00000001;
+    if(type == 1){
+        return aNode->params[paramId];
+    } else {
+        return nodes[aNode->params[paramId]]->result;
+    }
 }
 
 // sum an arbitrary number of inputs.
 void nodeFuncSum(Node *aNode){
-  unsigned short i;
-  aNode->result = 0;
-  for(i=0; i<aNode->paramsInUse; i++){
-    aNode->result += getParam(aNode, i);
-  }
+    unsigned short i;
+    aNode->result = 0;
+    for(i=0; i<aNode->paramsInUse; i++){
+        aNode->result += getParam(aNode, i);
+    }
 }
 
 // accepts a single input and inverts it.
 void nodeFuncInvert(Node *aNode){
-  unsigned short param;
-  param = getParam(aNode, 0);
+    unsigned short param;
+    param = getParam(aNode, 0);
   
-  //hack to allow whole range to be inverted. chops off top as 128 is not
-  //possible with an 8 bit signed variable
-  if(param == -128){
-    aNode->result = 127;
-  } else {
-    aNode->result = -param;
-  }
+    //hack to allow whole range to be inverted. chops off top as 128 is not
+    //possible with an 8 bit signed variable
+    if(param == -128){
+        aNode->result = 127;
+    } else {
+        aNode->result = -param;
+    }
 }
 
-// accepts a single input and iverts it around the "center" (64 or -63) of the 
+// accepts a single input and iverts it around the "center" (64 or -63) of the
 // side of 0 that the input is: 1 becomes 127 but -1 becomes -126.
 // usefull for inverting envelopes without turning them negative.
 void nodeFuncInvertEachSide(Node *aNode){
-  unsigned short param;
-  param = getParam(aNode, 0);
+    unsigned short param;
+    param = getParam(aNode, 0);
 
-  if(param > 0){
-    aNode->result = 127-param;
-  } else {
-    aNode->result = -128-param;
-  }
+    if(param > 0){
+        aNode->result = 127-param;
+    } else {
+        aNode->result = -128-param;
+    }
+}
+
+// calculate increment necessary to get the requested ramp timing.
+int calculateRampIncrement(short setting){
+    int highResSetting = setting;
+    return highResSetting << 8;
+}
+
+// Ramp function, takes three parameters:
+// - param[0]: timing
+// - param[1]: trigger, ramp is reset when trigger != 0
+// - param[2]: start position (may be runtime input or config), depends on paramIsConstant setting
+// - param[3]: bitfield
+//   - B0=shoudResetWhenFinished
+//   - B1=direction, 0=down, 1=up
+//   - B2=bipolar, 0=false (only positive numbers are used), 1=true (full range)
+void nodeFuncRamp(Node *aNode){
+
+    int increment;
+    short trigger, startPosition;
+    bit shouldResetWhenFinished, direction, bipolar;
+
+    trigger = getParam(aNode, 1);
+    startPosition = getParam(aNode, 2);
+    shouldResetWhenFinished = aNode->params[3].B0;
+    
+    //TODO: Implement usage of these
+    direction = aNode->params[3].B1;
+    bipolar= aNode->params[3].B2;
+    
+    if(trigger){
+        aNode->highResState = startPosition << 8;
+        aNode->state.B0 = 1; //is running = true
+    }
+    
+    increment = calculateRampIncrement(getParam(aNode, 0));
+
+    //TODO: This will never reach max, is that a problem?
+    //aNode->state.B0 = isRunning
+    if(aNode->state.B0 && 32767 - aNode->highResState > increment){
+        aNode->highResState += increment;
+    } else {
+        aNode->state.B0 = 0; //is running = false
+        if(shouldResetWhenFinished){
+            aNode->highResState = startPosition << 8;
+        }
+    }
+    
+    aNode->result = (aNode->highResState >> 8);
 }
 
 // add Node to the matrix.
@@ -111,12 +167,12 @@ void addNode(Node *aNode){
 
 // loop over the matrix array once and calculate all results
 void runMatrix(){
-  unsigned short i;
-  Node *aNode;
-  for(i = 0; i<nodesInUse; i++){
-    aNode = nodes[i];
-    aNode->func(aNode);
-  }
+    unsigned short i;
+    Node *aNode;
+    for(i = 0; i<nodesInUse; i++){
+      aNode = nodes[i];
+      aNode->func(aNode);
+    }
 }
 
 //TODO: Does not work with -128 for some reason
