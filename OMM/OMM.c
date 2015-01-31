@@ -6,6 +6,8 @@
 #define RUNNING 1
 #define STOPPED 0
 
+#include <built_in.h>
+
 //function pointer to a matrix node function
 typedef void (*nodeFunction)(struct matrixNode *);
 
@@ -118,7 +120,7 @@ void nodeFuncInvertEachSide(Node *aNode){
 }
 
 // calculate increment necessary to get the requested ramp timing.
-int calculateRampIncrement(short setting, short direction){
+int calculateRampIncrement(short setting, short direction, short bipolar){
     int highResSetting = setting;
     if(direction == 0){
         highResSetting = -highResSetting;
@@ -152,7 +154,7 @@ void nodeFuncRamp(Node *aNode){
         aNode->highResState = startPosition << 8;
         aNode->state.B0 = RUNNING;
     } else {
-        increment = calculateRampIncrement(getParam(aNode, 0), direction);
+        increment = calculateRampIncrement(getParam(aNode, 0), direction, bipolar);
 
         //TODO: This may never reach max, is that a problem?
         if(aNode->state.B0){ // RUNNING
@@ -160,7 +162,7 @@ void nodeFuncRamp(Node *aNode){
                 direction == DOWN && (aNode->highResState > 0 || -32768 - aNode->highResState <= increment)){
                 aNode->highResState += increment;
             } else {
-                aNode->state.B0 = STOPPED;
+//                aNode->state.B0 = STOPPED;
                 if(shouldResetWhenFinished){
                     aNode->highResState = startPosition << 8;
                 }
@@ -208,6 +210,7 @@ void printSignedShort(unsigned short row, unsigned short col, short in){
 }
 
 void main() {
+    unsigned int dacout;
     unsigned short iteration;
     Node aNode, aNode2, aNode3;
 
@@ -249,19 +252,30 @@ void main() {
     
 
     aNode3.params[1] = 0; // reset ramp trigger
+    /*
     while(1){
 
         delay_ms(5);
         runMatrix();
         printSignedShort(2,1,aNode3.result);
         printSignedShort(2,12,iteration++);
-    }
+    } */
     
     // DEBUG STUFF
     printSignedShort(2,1,aNode3.result);
 
-//    printSignedShort(2,6,aNode2.result);
-//    printSignedShort(2,11,aNode3.result);
+     /**** DAC ****/
+     SPI1_Init();
+     TRISC = 0; //trisc as output
+     LATC.B0 = 1;
+     dacout=0;
 
-    //printSignedShort(2,7,-128);
+     // The following code runs at about 89kHz.
+     while(1){
+         LATC.B0 = 0; //must write directly to latch (didn't work with PORTC.B0!)
+         SPI1_write(hi(dacout));
+         SPI1_write(lo(dacout) & 0b11111100);
+         LATC.B0 = 1; //latches values in DAC.
+         dacout += 2048;
+     }
 }
