@@ -1,15 +1,29 @@
 #define MAX_OPERATIONS 20
+
+#define UP 1
+#define DOWN 0
+
+#define RUNNING 1
+#define STOPPED 0
+
 //function pointer to a matrix node function
 typedef void (*nodeFunction)(struct matrixNode *);
 
 //node in matrix
 typedef struct matrixNode{
-    // placeholder for result from Node function
+  // placeholder for result from Node function
     short result;
-    
+
     // parameters passed to this node
     short params[8];
-    
+
+    // high res status variable for ramps etc, to reduce effects of rounding
+    // errors.
+    int highResState;
+
+    // state, holds flags for
+    short state;
+
     // Bitwise variable that indicates usage of params:
     // 1 signifies that param is a constant
     // 0 that it is the index of the Node to get result from
@@ -52,55 +66,108 @@ void interrupt(){
     //reset timer etc
 } */
 
-// params can be pointers to the result of the previous Node in the matrix or 
-// they can be constants. This function figures out which one and returns its 
+// params can be pointers to the result of the previous Node in the matrix or
+// they can be constants. This function figures out which one and returns its
 // value.
-unsigned short getParam(Node *aNode, unsigned short paramId){
-  unsigned short type;
+short getParam(Node *aNode, unsigned short paramId){
+    unsigned short type;
 
-  type = (aNode->paramIsConstant >> paramId) & 0b00000001;
-  if(type == 1){
-    return aNode->params[paramId];
-  } else {
-    return nodes[aNode->params[paramId]]->result;
-  }
+    type = (aNode->paramIsConstant >> paramId) & 0b00000001;
+    if(type == 1){
+        return aNode->params[paramId];
+    } else {
+        return nodes[aNode->params[paramId]]->result;
+    }
 }
 
 // sum an arbitrary number of inputs.
 void nodeFuncSum(Node *aNode){
-  unsigned short i;
-  aNode->result = 0;
-  for(i=0; i<aNode->paramsInUse; i++){
-    aNode->result += getParam(aNode, i);
-  }
+    unsigned short i;
+    aNode->result = 0;
+    for(i=0; i<aNode->paramsInUse; i++){
+        aNode->result += getParam(aNode, i);
+    }
 }
 
 // accepts a single input and inverts it.
 void nodeFuncInvert(Node *aNode){
-  unsigned short param;
-  param = getParam(aNode, 0);
-  
-  //hack to allow whole range to be inverted. chops off top as 128 is not
-  //possible with an 8 bit signed variable
-  if(param == -128){
-    aNode->result = 127;
-  } else {
-    aNode->result = -param;
-  }
+    short param;
+    param = getParam(aNode, 0);
+
+    //hack to allow whole range to be inverted. chops off top as 128 is not
+    //possible with an 8 bit signed variable.
+    if(param == -128){
+        aNode->result = 127;
+    } else {
+        aNode->result = -param;
+    }
 }
 
-// accepts a single input and iverts it around the "center" (64 or -63) of the 
+// accepts a single input and iverts it around the "center" (64 or -63) of the
 // side of 0 that the input is: 1 becomes 127 but -1 becomes -126.
 // usefull for inverting envelopes without turning them negative.
 void nodeFuncInvertEachSide(Node *aNode){
-  unsigned short param;
-  param = getParam(aNode, 0);
+    short param;
+    param = getParam(aNode, 0);
 
-  if(param > 0){
-    aNode->result = 127-param;
-  } else {
-    aNode->result = -128-param;
-  }
+    if(param >= 0){
+        aNode->result = 127-param;
+    } else {
+        aNode->result = -129-param;
+    }
+}
+
+// calculate increment necessary to get the requested ramp timing.
+int calculateRampIncrement(short setting, short direction){
+    int highResSetting = setting;
+    if(direction == 0){
+        highResSetting = -highResSetting;
+    }
+    return highResSetting << 8;
+}
+
+// Ramp function, takes three parameters:
+// - param[0]: timing
+// - param[1]: trigger, ramp is reset when trigger != 0
+// - param[2]: start position (may be runtime input or config), depends on paramIsConstant setting
+// - param[3]: bitfield
+//   - B0=shoudResetWhenFinished
+//   - B1=direction, 0=down, 1=up
+//   - B2=bipolar, 0=false (only positive numbers are used), 1=true (full range)
+void nodeFuncRamp(Node *aNode){
+
+    int increment;
+    short trigger, startPosition;
+    bit shouldResetWhenFinished, direction, bipolar;
+
+    trigger = getParam(aNode, 1);
+    startPosition = getParam(aNode, 2);
+    shouldResetWhenFinished = aNode->params[3].B0;
+
+    //TODO: Implement usage of these
+    direction = aNode->params[3].B1;
+    bipolar= aNode->params[3].B2;
+
+    if(trigger){
+        aNode->highResState = startPosition << 8;
+        aNode->state.B0 = RUNNING;
+    } else {
+        increment = calculateRampIncrement(getParam(aNode, 0), direction);
+
+        //TODO: This may never reach max, is that a problem?
+        if(aNode->state.B0){ // RUNNING
+            if( direction == UP   && (aNode->highResState < 0 ||  32767 - aNode->highResState > increment) ||
+                direction == DOWN && (aNode->highResState > 0 || -32768 - aNode->highResState <= increment)){
+                aNode->highResState += increment;
+            } else {
+                aNode->state.B0 = STOPPED;
+                if(shouldResetWhenFinished){
+                    aNode->highResState = startPosition << 8;
+                }
+            }
+        }
+    }
+    aNode->result = (aNode->highResState >> 8);
 }
 
 // add Node to the matrix.
@@ -111,36 +178,40 @@ void addNode(Node *aNode){
 
 // loop over the matrix array once and calculate all results
 void runMatrix(){
-  unsigned short i;
-  Node *aNode;
-  for(i = 0; i<nodesInUse; i++){
-    aNode = nodes[i];
-    aNode->func(aNode);
-  }
+    unsigned short i;
+    Node *aNode;
+    for(i = 0; i<nodesInUse; i++){
+      aNode = nodes[i];
+      aNode->func(aNode);
+    }
 }
 
-//TODO: Does not work with -128 for some reason
 void printSignedShort(unsigned short row, unsigned short col, short in){
-  short rest;
+  unsigned short inExpanded;
+  unsigned short rest;
   if(in < 0){
     Lcd_Chr(row, col, '-');
-    in = -in;
+    inExpanded = -in;
   } else {
     Lcd_Chr(row, col, ' ');
+    inExpanded = in;
   }
 
-  rest = in % 10;
+  rest = inExpanded % 10;
   Lcd_Chr(row, col+3, 48 + rest);
-  
-  rest = (in / 10) % 10;
+
+  rest = (inExpanded / 10) % 10;
   Lcd_Chr(row, col+2, 48 + rest);
-  
-  rest = (in / 100) % 10;
+
+  rest = (inExpanded / 100) % 10;
   Lcd_Chr(row, col+1, 48 + rest);
 }
 
 void main() {
+    unsigned short iteration;
     Node aNode, aNode2, aNode3;
+
+    iteration =0;
 
     // DEBUG STUFF
     Lcd_Init();                        // Initialize Lcd
@@ -163,18 +234,34 @@ void main() {
     aNode2.paramIsConstant = 0b00000011;
     addNode(&aNode2);
 
-    aNode3.func = &nodeFuncInvert;
-    aNode3.params[0] = 0;
-    aNode3.paramsInUse = 1;
-    aNode3.paramIsConstant = 0b00000000;
+    aNode3.func = &nodeFuncRamp;
+    aNode3.params[0] = 1; // increment
+    aNode3.params[1] = 1; // trigger on first access
+    aNode3.params[2] = 0; // starting point
+    aNode3.params[3] = 0b00000011; // no reset, ramp up, unipolar
+    
+    aNode3.paramIsConstant = 0b00001111;
     addNode(&aNode3);
 
     runMatrix();
-
-    // DEBUG STUFF
-    printSignedShort(2,7,aNode.result);
-    Lcd_Chr(2,3,48+aNode2.result);
-    Lcd_Chr(2,5,48+aNode3.result);
+    printSignedShort(2,1,aNode3.result);
+    printSignedShort(2,12,iteration++);
     
-    printSignedShort(2,7,-128);
+
+    aNode3.params[1] = 0; // reset ramp trigger
+    while(1){
+
+        delay_ms(5);
+        runMatrix();
+        printSignedShort(2,1,aNode3.result);
+        printSignedShort(2,12,iteration++);
+    }
+    
+    // DEBUG STUFF
+    printSignedShort(2,1,aNode3.result);
+
+//    printSignedShort(2,6,aNode2.result);
+//    printSignedShort(2,11,aNode3.result);
+
+    //printSignedShort(2,7,-128);
 }
