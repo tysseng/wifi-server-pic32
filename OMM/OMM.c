@@ -42,6 +42,11 @@ typedef struct matrixNode{
 Node *nodes[MAX_OPERATIONS];
 short nodesInUse = 0;
 
+short inputBuffer[8];
+short outputBuffer[8];
+
+short temp;
+
 // Lcd module connections
 sbit LCD_RS at LATB2_bit;
 sbit LCD_EN at LATB3_bit;
@@ -87,7 +92,8 @@ void nodeFuncSum(Node *aNode){
     unsigned short i;
     aNode->result = 0;
     for(i=0; i<aNode->paramsInUse; i++){
-        aNode->result += getParam(aNode, i);
+      temp = getParam(aNode, i);
+        aNode->result += temp;
     }
 }
 
@@ -172,6 +178,26 @@ void nodeFuncRamp(Node *aNode){
     aNode->result = (aNode->highResState >> 8);
 }
 
+// "delay line", stores the input for one cycle and uses it as feedback in the
+// next, makes it possible to make loops in the network (may not be necessary?
+// as one can use the value of any Node's previous result in the next run).
+//   NB: result should be set to 0 initially (or to whatever starting feedback
+//   one wants.
+void nodeFuncDelayLine(Node *aNode){
+    aNode->result = getParam(aNode, 0);
+}
+
+// fetch  input from inputBuffer and add it as the result of a Node to be used
+// in the matrix
+void nodeFuncInput(Node *aNode){
+    aNode->result = inputBuffer[getParam(aNode, 0)];
+}
+
+// write output to outputBuffer
+void nodeFuncOutput(Node *aNode){
+    outputBuffer[getParam(aNode, 0)] = getParam(aNode, 1);
+}
+
 // add Node to the matrix.
 void addNode(Node *aNode){
     nodes[nodesInUse] = aNode;
@@ -209,61 +235,9 @@ void printSignedShort(unsigned short row, unsigned short col, short in){
   Lcd_Chr(row, col+1, 48 + rest);
 }
 
-void main() {
+void writeToDac(){
     unsigned int dacout;
-    unsigned short iteration;
-    Node aNode, aNode2, aNode3;
-
-    iteration =0;
-
-    // DEBUG STUFF
-    Lcd_Init();                        // Initialize Lcd
-    Lcd_Cmd(_LCD_CLEAR);               // Clear display
-    Lcd_Cmd(_LCD_CURSOR_OFF);          // Cursor off
-    Lcd_Out(1,1,txt1);                 // Write text in first row
-
-    aNode.func = &nodeFuncSum;
-    aNode.params[0] = 120;
-    aNode.params[1] = 2;
-    aNode.params[2] = 1;
-    aNode.paramsInUse = 3;
-    aNode.paramIsConstant = 0b00000111;
-    addNode(&aNode);
-
-    aNode2.func = &nodeFuncSum;
-    aNode2.params[0] = 1;
-    aNode2.params[1] = 1;
-    aNode2.paramsInUse = 2;
-    aNode2.paramIsConstant = 0b00000011;
-    addNode(&aNode2);
-
-    aNode3.func = &nodeFuncRamp;
-    aNode3.params[0] = 1; // increment
-    aNode3.params[1] = 1; // trigger on first access
-    aNode3.params[2] = 0; // starting point
-    aNode3.params[3] = 0b00000011; // no reset, ramp up, unipolar
     
-    aNode3.paramIsConstant = 0b00001111;
-    addNode(&aNode3);
-
-    runMatrix();
-    printSignedShort(2,1,aNode3.result);
-    printSignedShort(2,12,iteration++);
-    
-
-    aNode3.params[1] = 0; // reset ramp trigger
-    /*
-    while(1){
-
-        delay_ms(5);
-        runMatrix();
-        printSignedShort(2,1,aNode3.result);
-        printSignedShort(2,12,iteration++);
-    } */
-    
-    // DEBUG STUFF
-    printSignedShort(2,1,aNode3.result);
-
      /**** DAC ****/
      SPI1_Init();
      TRISC = 0; //trisc as output
@@ -278,4 +252,65 @@ void main() {
          LATC.B0 = 1; //latches values in DAC.
          dacout += 2048;
      }
+}
+
+void main() {
+    unsigned short iteration;
+    Node aNode0, aNode1, aNode2, aNode3, aNode4, aNode5;
+
+    iteration =0;
+
+    // DEBUG STUFF
+    Lcd_Init();                        // Initialize Lcd
+    Lcd_Cmd(_LCD_CLEAR);               // Clear display
+    Lcd_Cmd(_LCD_CURSOR_OFF);          // Cursor off
+    Lcd_Out(1,1,txt1);                 // Write text in first row
+
+    inputBuffer[0] = 2;
+    inputBuffer[1] = 4;
+
+    aNode0.func = &nodeFuncInput;
+    aNode0.params[0] = 0;
+    aNode0.paramIsConstant = 0b0000001;
+    addNode(&aNode0);
+
+    aNode1.func = &nodeFuncInput;
+    aNode1.params[0] = 1;
+    aNode1.paramIsConstant = 0b0000001;
+    addNode(&aNode1);
+
+    aNode2.func = &nodeFuncSum;
+    aNode2.params[0] = 0;
+    aNode2.params[1] = 4;
+    aNode2.paramsInUse = 2;
+    aNode2.paramIsConstant = 0b00000000;
+    addNode(&aNode2);
+
+    aNode3.func = &nodeFuncOutput;
+    aNode3.params[0] = 0; // write to 0
+    aNode3.params[1] = 2; // value from 2;
+    aNode3.paramIsConstant = 0b00000001;
+    addNode(&aNode3);
+
+    aNode4.func = &nodeFuncDelayLine;
+    aNode4.result = 0; //set initial state to 0
+    aNode4.params[0] = 2;
+    aNode4.paramIsConstant = 0b00000000;
+    addNode(&aNode4);
+
+    runMatrix();
+    printSignedShort(2,1,outputBuffer[0]);
+    printSignedShort(2,12,iteration++);
+
+    while(1){
+        delay_ms(1000);
+        runMatrix();
+        printSignedShort(2,1,outputBuffer[0]);
+        printSignedShort(2,12,iteration++);
+    }
+    
+    // DEBUG STUFF
+    printSignedShort(2,1,aNode3.result);
+
+
 }
