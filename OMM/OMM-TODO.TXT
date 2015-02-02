@@ -1,0 +1,2 @@
+Maybe considering limiting variables to +/- 127 to be able to rotate around 0.
+-> may be a problem when rotating not around 0 but each side though
