@@ -1,9 +1,9 @@
 #define MAX_OPERATIONS 20
 #define MAX_SH_OUTPUTS 8
 
+// ramp etc
 #define UP 1
 #define DOWN 0
-
 #define RUNNING 1
 #define STOPPED 0
 
@@ -14,8 +14,24 @@
 // datatype to use for matrix, makes it easier to switch between 8 and 16 bit
 // operations later.
 #define matrixint short
+#define matrixlongint int
 #define MAX_POSITIVE 127
 #define MAX_NEGATIVE -128
+
+// dac
+#define DAC_TRIS TRISC
+#define DAC_CS LATC.B0
+#define DAC_CS_ON 0
+#define DAC_CS_OFF 1
+
+// functions
+#define FUNC_SUM 0
+#define FUNC_INVERT 1
+#define FUNC_INVERT_EACH_SIDE 2
+#define FUNC_RAMP 3
+#define FUNC_DELAY_LINE 4
+#define FUNC_INPUT 5
+#define FUNC_OUTPUT 6
 
 #include <built_in.h>
 
@@ -24,18 +40,11 @@ typedef void (*nodeFunction)(struct matrixNode *);
 
 //node in matrix
 typedef struct matrixNode{
-  // placeholder for result from Node function
-    matrixint result;
+    // function to run when this Node is accessed
+    nodeFunction func;
 
     // parameters passed to this node
     matrixint params[8];
-
-    // high res status variable for ramps etc, to reduce effects of rounding
-    // errors.
-    int highResState;
-
-    // state, holds flags for
-    short state;
 
     // Bitwise variable that indicates usage of params:
     // 1 signifies that param is a constant
@@ -45,8 +54,16 @@ typedef struct matrixNode{
     // How many of the input params are used
     unsigned short paramsInUse;
 
-    // function to run when this Node is accessed
-    nodeFunction func;
+    // high res status variable for ramps etc, to reduce effects of rounding
+    // errors.
+    int highResState;
+
+    // state, holds flags for
+    short state;
+    
+    // placeholder for result from Node function
+    matrixint result;
+
 } Node;
 
 // matrix nodes
@@ -237,12 +254,13 @@ void nodeFuncRamp(Node *aNode){
         increment = calculateRampIncrement(getParam(aNode, 0), direction, bipolar);
 
         //TODO: This may never reach max, is that a problem?
+        //      should possibly add max value before resetting
         if(aNode->state.B0){ // RUNNING
             if( direction == UP   && (aNode->highResState < 0 ||  32767 - aNode->highResState > increment) ||
                 direction == DOWN && (aNode->highResState > 0 || -32768 - aNode->highResState <= increment)){
                 aNode->highResState += increment;
             } else {
-//                aNode->state.B0 = STOPPED;
+                aNode->state.B0 = STOPPED;
                 if(shouldResetWhenFinished){
                     aNode->highResState = startPosition << 8;
                 }
@@ -261,7 +279,7 @@ void nodeFuncDelayLine(Node *aNode){
     aNode->result = getParam(aNode, 0);
 }
 
-// memory with set and clear. 
+// memory with set and clear, may be used as sample and hold
 // Set if param 1 > 0, 
 // Clear if param 2 > 0 (resets to 0)
 void nodeFuncMemory(Node *aNode){
@@ -269,6 +287,78 @@ void nodeFuncMemory(Node *aNode){
         aNode->result = 0;
     } else if(getParam(aNode, 1)){
         aNode->result = getParam(aNode, 0);
+    }
+}
+
+// switch, passes value on input 0 when input 1 is true, reverts to 0 if not
+void nodeFuncSwitch(Node *aNode){
+    if(getParam(aNode, 1)){
+        aNode->result = getParam(aNode, 0);
+    } else {
+        aNode->result = 0;
+    }
+}
+
+// compares parameter 0 to parameter 1. If 0 is larger, output is BINARY_TRUE,
+// if, not it is BINARY_FALSE
+void nodeFuncCompare(Node *aNode){
+    if(getParam(aNode, 0) > getParam(aNode, 1)){
+        aNode->result = BINARY_TRUE;
+    } else {
+        aNode->result = BINARY_FALSE;
+    }
+}
+
+// returns the maximum of all inputs
+void nodeFuncMax(Node *aNode){
+    unsigned short i;
+    matrixint temp;
+    
+    aNode->result = MAX_NEGATIVE;
+    for(i = 0; i<aNode->paramsInUse; i++){
+        temp = getParam(aNode, i);
+        if(temp > aNode->result){
+            aNode->result = temp;
+        }
+    }
+}
+
+// returns the minimum of all inputs
+void nodeFuncMin(Node *aNode){
+    unsigned short i;
+    matrixint temp;
+
+    aNode->result = MAX_POSITIVE;
+    for(i = 0; i<aNode->paramsInUse; i++){
+        temp = getParam(aNode, i);
+        if(temp < aNode->result){
+            aNode->result = temp;
+        }
+    }
+}
+
+// scales input 0 by input 1 / MAX_POSITIVE
+void nodeFuncScale(Node *aNode){
+    matrixlongint temp;
+
+    temp = getParam(aNode, 0) * getParam(aNode, 1);
+    temp = temp >> 8;
+
+    aNode->result = temp;
+}
+
+// Generates a pulse (maximum output value) lasting for one iteration
+// after the input changes from negative to positive.
+void nodeFuncTrigger(Node *aNode){
+    if(getParam(aNode, 0) > 0 ){
+        if(aNode->state == 0){
+            aNode->result = MAX_POSITIVE;
+            aNode->state = MAX_POSITIVE;
+        } else {
+            aNode->result = 0;
+        }
+    } else {
+        aNode->state = 0;
     }
 }
 
@@ -297,7 +387,7 @@ void nodeFuncBinaryOr(Node *aNode){
 }
 
 // treat input as a binary value and binary INVERT it
-void nodeFuncBinaryInvert(Node *aNode){
+void nodeFuncBinaryNot(Node *aNode){
     if(getParam(aNode,0) > 0){
         aNode->result = BINARY_FALSE;
     } else {
@@ -315,6 +405,9 @@ void nodeFuncInput(Node *aNode){
 void nodeFuncOutput(Node *aNode){
     outputBuffer[getParam(aNode, 0)] = getParam(aNode, 1);
 }
+
+// do nothing
+void nodeFuncNoop(Node *aNode){}
 
 // add Node to the matrix.
 void addNode(Node *aNode){
@@ -334,6 +427,46 @@ void runMatrix(){
     // all nodes have written their data to the output buffer, tell
     // dac loop that new data can be loaded when dac cycle restarts
     outputBufferComplete = 1;
+}
+
+nodeFunction getFunctionPointer(unsigned short function){
+    switch(function){
+        case FUNC_SUM:
+            return &nodeFuncSum;
+        case FUNC_INVERT:
+            return &nodeFuncInvert;
+        case FUNC_INVERT_EACH_SIDE:
+            return &nodeFuncInvertEachSide;
+        case FUNC_RAMP:
+            return &nodeFuncRamp;
+        case FUNC_DELAY_LINE:
+            return &nodeFuncDelayLine;
+        case FUNC_INPUT:
+            return &nodeFuncInput;
+        case FUNC_OUTPUT:
+            return &nodeFuncOutput;
+        default:
+            return &nodeFuncNoop;
+    }
+}
+
+// Write output to DAC. NB: Only positive values are written!
+// TODO: Does not work once we switch to 16 bit.
+void writeToDac(short output){
+    unsigned short positiveOut;
+    if(output > 0) {
+        positiveOut = output; //7 to 8 bit, as input is signed. NB: this means that the maximum value is 254 (as the LSB is 0).
+        positiveOut = positiveOut << 1;
+    } else {
+        positiveOut = 0;
+    }
+    
+    DAC_CS = DAC_CS_ON;  //must write directly to latch (didn't work with PORTC.B0!)
+
+    SPI1_write(positiveOut);
+    SPI1_write(0);       // 0 as long as we are working with 8 bit numbers.
+
+    DAC_CS = DAC_CS_OFF; //latches values in DAC.
 }
 
 void printSignedShort(unsigned short row, unsigned short col, short in){
@@ -356,26 +489,6 @@ void printSignedShort(unsigned short row, unsigned short col, short in){
   rest = (inExpanded / 100) % 10;
   Lcd_Chr(row, col+1, 48 + rest);
 }
-
-void writeToDac(){
-    unsigned int dacout;
-    
-     /**** DAC ****/
-     SPI1_Init();
-     TRISC = 0; //trisc as output
-     LATC.B0 = 1;
-     dacout=0;
-
-     // The following code runs at about 89kHz.
-     while(1){
-         LATC.B0 = 0; //must write directly to latch (didn't work with PORTC.B0!)
-         SPI1_write(hi(dacout));
-         SPI1_write(lo(dacout) & 0b11111100);
-         LATC.B0 = 1; //latches values in DAC.
-         dacout += 2048;
-     }
-}
-
 
 void dacTimerInit(){
 
@@ -405,12 +518,19 @@ void dacTimerStop(){
   T1CON.TMR1ON = 0;
 }
 
+void dacInit(){
+    SPI1_Init();
+    DAC_TRIS = 0; //output
+    DAC_CS = DAC_CS_OFF;
+}
+
 
 void main() {
     unsigned short iteration;
     Node aNode0, aNode1, aNode2, aNode3, aNode4, aNode5;
 
     iteration = 0;
+	dacInit();
     dacUpdatesFinished = 0;             //necessary to start runMatrix.
     dacTimerInit();
     
@@ -423,30 +543,30 @@ void main() {
     inputBuffer[0] = 2;
     inputBuffer[1] = 4;
 
-    aNode0.func = &nodeFuncInput;
+    aNode0.func = getFunctionPointer(FUNC_INPUT);
     aNode0.params[0] = 0;
     aNode0.paramIsConstant = 0b0000001;
     addNode(&aNode0);
 
-    aNode1.func = &nodeFuncInput;
+    aNode1.func = getFunctionPointer(FUNC_INPUT);
     aNode1.params[0] = 1;
     aNode1.paramIsConstant = 0b0000001;
     addNode(&aNode1);
 
-    aNode2.func = &nodeFuncSum;
+    aNode2.func = getFunctionPointer(FUNC_SUM);
     aNode2.params[0] = 0;
     aNode2.params[1] = 4;
     aNode2.paramsInUse = 2;
     aNode2.paramIsConstant = 0b00000000;
     addNode(&aNode2);
 
-    aNode3.func = &nodeFuncOutput;
+    aNode3.func = getFunctionPointer(FUNC_OUTPUT);
     aNode3.params[0] = 0; // write to 0
     aNode3.params[1] = 2; // value from 2;
     aNode3.paramIsConstant = 0b00000001;
     addNode(&aNode3);
 
-    aNode4.func = &nodeFuncDelayLine;
+    aNode4.func = getFunctionPointer(FUNC_DELAY_LINE);
     aNode4.result = 0; //set initial state to 0
     aNode4.params[0] = 2;
     aNode4.paramIsConstant = 0b00000000;
@@ -468,9 +588,29 @@ void main() {
         printSignedShort(2,1,outputBuffer[0]);
         printSignedShort(2,12,iteration++);
     }
-    
-    // DEBUG STUFF
-    printSignedShort(2,1,aNode3.result);
-
-
 }
+
+/*
+TODO:
+- tuning lookup
+- exponential lookup
+- JSON parsing
+- SPI input
+- distance-in-samples-per-cents
+- multi stage envelopes (inc looping?)
+- LFOs
+- Trigger (sends trigger pulse if input is high)
+
+Mathematical expressions
+- divide
+- average
+
+Logical operators, all with adjustable thresholds (with defaults)
+- xor
+
+Outputs
+- CV
+- trigger pulse (for analog envelope)
+- gate (for analog envelope)
+- other binary pins (controlling switches etc)
+*/
