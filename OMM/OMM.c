@@ -1,10 +1,25 @@
 #define MAX_OPERATIONS 20
 
+// ramp etc
 #define UP 1
 #define DOWN 0
-
 #define RUNNING 1
 #define STOPPED 0
+
+// dac
+#define DAC_TRIS TRISC
+#define DAC_CS LATC.B0
+#define DAC_CS_ON 0
+#define DAC_CS_OFF 1
+
+// functions
+#define FUNC_SUM 0
+#define FUNC_INVERT 1
+#define FUNC_INVERT_EACH_SIDE 2
+#define FUNC_RAMP 3
+#define FUNC_DELAY_LINE 4
+#define FUNC_INPUT 5
+#define FUNC_OUTPUT 6
 
 #include <built_in.h>
 
@@ -13,18 +28,11 @@ typedef void (*nodeFunction)(struct matrixNode *);
 
 //node in matrix
 typedef struct matrixNode{
-  // placeholder for result from Node function
-    short result;
+    // function to run when this Node is accessed
+    nodeFunction func;
 
     // parameters passed to this node
     short params[8];
-
-    // high res status variable for ramps etc, to reduce effects of rounding
-    // errors.
-    int highResState;
-
-    // state, holds flags for
-    short state;
 
     // Bitwise variable that indicates usage of params:
     // 1 signifies that param is a constant
@@ -34,8 +42,16 @@ typedef struct matrixNode{
     // How many of the input params are used
     unsigned short paramsInUse;
 
-    // function to run when this Node is accessed
-    nodeFunction func;
+    // high res status variable for ramps etc, to reduce effects of rounding
+    // errors.
+    int highResState;
+
+    // state, holds flags for
+    short state;
+    
+    // placeholder for result from Node function
+    short result;
+
 } Node;
 
 // matrix nodes
@@ -77,14 +93,14 @@ void interrupt(){
 // they can be constants. This function figures out which one and returns its
 // value.
 short getParam(Node *aNode, unsigned short paramId){
-    unsigned short type;
+     unsigned short type;
 
-    type = (aNode->paramIsConstant >> paramId) & 0b00000001;
-    if(type == 1){
-        return aNode->params[paramId];
-    } else {
-        return nodes[aNode->params[paramId]]->result;
-    }
+     type = (aNode->paramIsConstant >> paramId) & 0b00000001;
+     if(type == 1){
+         return aNode->params[paramId];
+     } else {
+         return nodes[aNode->params[paramId]]->result;
+     }
 }
 
 // sum an arbitrary number of inputs.
@@ -92,8 +108,7 @@ void nodeFuncSum(Node *aNode){
     unsigned short i;
     aNode->result = 0;
     for(i=0; i<aNode->paramsInUse; i++){
-      temp = getParam(aNode, i);
-        aNode->result += temp;
+        aNode->result += getParam(aNode, i);
     }
 }
 
@@ -198,6 +213,9 @@ void nodeFuncOutput(Node *aNode){
     outputBuffer[getParam(aNode, 0)] = getParam(aNode, 1);
 }
 
+// do nothing
+void nodeFuncNoop(Node *aNode){}
+
 // add Node to the matrix.
 void addNode(Node *aNode){
     nodes[nodesInUse] = aNode;
@@ -212,6 +230,51 @@ void runMatrix(){
       aNode = nodes[i];
       aNode->func(aNode);
     }
+}
+
+nodeFunction getFunctionPointer(unsigned short function){
+    switch(function){
+        case FUNC_SUM:
+            return &nodeFuncSum;
+        case FUNC_INVERT:
+            return &nodeFuncInvert;
+        case FUNC_INVERT_EACH_SIDE:
+            return &nodeFuncInvertEachSide;
+        case FUNC_RAMP:
+            return &nodeFuncRamp;
+        case FUNC_DELAY_LINE:
+            return &nodeFuncDelayLine;
+        case FUNC_INPUT:
+            return &nodeFuncInput;
+        case FUNC_OUTPUT:
+            return &nodeFuncOutput;
+        default:
+            return &nodeFuncNoop;
+    }
+}
+
+void initDac(){
+    SPI1_Init();
+    DAC_TRIS = 0; //output
+    DAC_CS = DAC_CS_OFF;
+}
+
+// Write output to DAC. NB: Only positive values are written!
+void writeToDac(short output){
+    unsigned short positiveOut;
+    if(output > 0) {
+        positiveOut = output; //7 to 8 bit, as input is signed. NB: this means that the maximum value is 254 (as the LSB is 0).
+        positiveOut = positiveOut << 1;
+    } else {
+        positiveOut = 0;
+    }
+    
+    DAC_CS = DAC_CS_ON;  //must write directly to latch (didn't work with PORTC.B0!)
+
+    SPI1_write(positiveOut);
+    SPI1_write(0);       // 0 as long as we are working with 8 bit numbers.
+
+    DAC_CS = DAC_CS_OFF; //latches values in DAC.
 }
 
 void printSignedShort(unsigned short row, unsigned short col, short in){
@@ -235,30 +298,13 @@ void printSignedShort(unsigned short row, unsigned short col, short in){
   Lcd_Chr(row, col+1, 48 + rest);
 }
 
-void writeToDac(){
-    unsigned int dacout;
-    
-     /**** DAC ****/
-     SPI1_Init();
-     TRISC = 0; //trisc as output
-     LATC.B0 = 1;
-     dacout=0;
-
-     // The following code runs at about 89kHz.
-     while(1){
-         LATC.B0 = 0; //must write directly to latch (didn't work with PORTC.B0!)
-         SPI1_write(hi(dacout));
-         SPI1_write(lo(dacout) & 0b11111100);
-         LATC.B0 = 1; //latches values in DAC.
-         dacout += 2048;
-     }
-}
-
 void main() {
     unsigned short iteration;
     Node aNode0, aNode1, aNode2, aNode3, aNode4, aNode5;
 
     iteration =0;
+
+    initDac();
 
     // DEBUG STUFF
     Lcd_Init();                        // Initialize Lcd
@@ -269,30 +315,30 @@ void main() {
     inputBuffer[0] = 2;
     inputBuffer[1] = 4;
 
-    aNode0.func = &nodeFuncInput;
+    aNode0.func = getFunctionPointer(FUNC_INPUT);
     aNode0.params[0] = 0;
     aNode0.paramIsConstant = 0b0000001;
     addNode(&aNode0);
 
-    aNode1.func = &nodeFuncInput;
+    aNode1.func = getFunctionPointer(FUNC_INPUT);
     aNode1.params[0] = 1;
     aNode1.paramIsConstant = 0b0000001;
     addNode(&aNode1);
 
-    aNode2.func = &nodeFuncSum;
+    aNode2.func = getFunctionPointer(FUNC_SUM);
     aNode2.params[0] = 0;
     aNode2.params[1] = 4;
     aNode2.paramsInUse = 2;
     aNode2.paramIsConstant = 0b00000000;
     addNode(&aNode2);
 
-    aNode3.func = &nodeFuncOutput;
+    aNode3.func = getFunctionPointer(FUNC_OUTPUT);
     aNode3.params[0] = 0; // write to 0
     aNode3.params[1] = 2; // value from 2;
     aNode3.paramIsConstant = 0b00000001;
     addNode(&aNode3);
 
-    aNode4.func = &nodeFuncDelayLine;
+    aNode4.func = getFunctionPointer(FUNC_DELAY_LINE);
     aNode4.result = 0; //set initial state to 0
     aNode4.params[0] = 2;
     aNode4.paramIsConstant = 0b00000000;
@@ -303,14 +349,12 @@ void main() {
     printSignedShort(2,12,iteration++);
 
     while(1){
-        delay_ms(1000);
+        writeToDac(outputBuffer[0]);
         runMatrix();
-        printSignedShort(2,1,outputBuffer[0]);
-        printSignedShort(2,12,iteration++);
+//        printSignedShort(2,1,outputBuffer[0]);
+//        printSignedShort(2,12,iteration++);
     }
-    
-    // DEBUG STUFF
-    printSignedShort(2,1,aNode3.result);
+
 
 
 }
