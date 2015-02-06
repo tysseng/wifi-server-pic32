@@ -75,14 +75,17 @@ unsigned short nodesInUse = 0;
 // a timer interrupt that increments what dac to update.
 // NB: As dacs may have been updated multiple times since the matrix run started,
 // any ramp increments should be multiplied by this number to get correct timing.
+// This is done by using intervalMultiplier, which is a copy of dacUpdatesFinished
+// that stays constant through a whole run of the matrix.
 unsigned short dacUpdatesFinished;
+unsigned short intervalMultiplier;  //TODO: set og reset denne
 
 // what sample-and-hold output to update
 unsigned short shToUpdate;
 
 // true if a matrix run has been completed and data is ready to be copied to
 // the dac buffer before the next dac cycle.
-unsigned short outputBufferComplete;
+unsigned short matrixCalculationCompleted;
 
 // dac update timing - interval between each dac update (= s&h acquisition time)
 unsigned short dacIntervalTimerStartH;
@@ -91,13 +94,17 @@ unsigned short dacIntervalTimerStartL;
 // place where matrix reads inputs from
 matrixint inputBuffer[8];
 
-// place where matrix write outputs to
-matrixint outputBuffer[MAX_SH_OUTPUTS];
+// buffers to hold output values, will be mapped to outputBuffer and dacBuffer
+matrixint outputBuffer1[MAX_SH_OUTPUTS];
+matrixint outputBuffer2[MAX_SH_OUTPUTS];
 
-// buffer that dac reads from. outputs should be copied here before dac starts
-// writing them out, to make it possible to write to output while simultaneously
-// calculating the next run.
-matrixint dacBuffer[MAX_SH_OUTPUTS];
+// place where matrix write outputs to
+matrixint *outputBuffer;
+
+// buffer that dac reads from. outputs should be moved here by swapping output
+// buffers before dac starts writing outputs, to make it possible to write to
+// output while simultaneously calculating the next matrix run.
+matrixint *dacBuffer;
 
 // Lcd module connections
 sbit LCD_RS at LATB2_bit;
@@ -120,7 +127,8 @@ char txt2[] = "EasyPIC7";
 
 void interrupt() {
     unsigned short i;
-
+    matrixint *tempOutputBuffer;
+    
     if(PIR1.TMR1IF){
         //restart timer
         TMR1H = dacIntervalTimerStartH;
@@ -128,14 +136,15 @@ void interrupt() {
         PIE1.TMR1IE = 1;
         PIR1.TMR1IF = 0;
 
-        // copies output buffer to dac buffer to make sure nothing changes
-        // while updating dacs.
         if(shToUpdate == 0){
-            if(outputBufferComplete){
-                for(i = 0; i < MAX_SH_OUTPUTS; i++){
-                    dacBuffer[i] = outputBuffer[i];
-                }
-                outputBufferComplete = 0;
+        
+            if(matrixCalculationCompleted){
+                // swap output buffer with dac buffer to make sure nothing 
+                // changes while updating dacs.
+                tempOutputBuffer = outputBuffer;
+                outputBuffer = dacBuffer;
+                dacBuffer = tempOutputBuffer;
+                matrixCalculationCompleted = 0;
             }
 
             // signal that data has been copied and that next matrix calculation
@@ -143,13 +152,13 @@ void interrupt() {
             dacUpdatesFinished++;
         }
 
-        // TODO: Write to dac here
-        // writeToDac(dacBuffer[shToUpdate]);
+        //writeToDac(dacBuffer[shToUpdate]);
 
         // step to next sample and hold output
+        // TODO: Fix sh shift register
         shToUpdate++;
         
-        // finished cycling through all outputs //TODO: timing!
+        // finished cycling through all outputs
         if(shToUpdate == MAX_SH_OUTPUTS){
             shToUpdate = 0;
         }
@@ -166,7 +175,8 @@ matrixint getParam(Node *aNode, unsigned short paramId){
     if(type == 1){
         return aNode->params[paramId];
     } else {
-        return nodes[aNode->params[paramId]]->result; //TODO will this work with a 16 bit param?
+        //TODO will this work with a 16 bit param?
+        return nodes[aNode->params[paramId]]->result;
     }
 }
 
@@ -245,7 +255,7 @@ void nodeFuncRamp(Node *aNode){
 
     //TODO: Implement usage of these
     direction = aNode->params[3].B1;
-    bipolar= aNode->params[3].B2;
+    bipolar = aNode->params[3].B2;
 
     if(trigger){
         aNode->highResState = startPosition << 8;
@@ -268,6 +278,43 @@ void nodeFuncRamp(Node *aNode){
         }
     }
     aNode->result = (aNode->highResState >> 8);
+}
+
+// A square/pulse wave LFO with settable speed, pulse width, positive and 
+// negative amplitude, retrigger and start position
+void nodeFuncLfoPulse(Node *aNode){
+    matrixint cyclelength = getParam(anode, 0);
+    matrixint pulsewidth = getParam(aNode, 1);
+    matrixint trigger = getParam(aNode, 2);
+    
+    //may be set to any value to limit amplitude and save using a scale shape.
+    matrixint positive = getParam(aNode, 3);
+    matrixint negative = getParam(aNode, 4);
+    
+    bit startPosition;
+    startPosition = aNode->params[5].B0; // 0 = bottom, 1 = top;
+    
+    if(trigger){
+        if(startPosition){
+            aNode->result = positive;
+        } else {
+            aNode->result = negative;
+        }
+        aNode->highResState = 0;
+    } else {
+        aNode->highResState++;
+        if(aNode->highResState == pulsewidth || aNode->highResState == cyclelength){
+           //flip
+           if(aNode->result > 0 ){
+               aNode->result = negative;
+           } else {
+               aNode->result = positive;
+           }
+        }
+        if(aNode->highResState == cyclelength){
+            aNode->highResState = 0;
+        }
+    }
 }
 
 // "delay line", stores the input for one cycle and uses it as feedback in the
@@ -386,6 +433,21 @@ void nodeFuncBinaryOr(Node *aNode){
     }
 }
 
+// treat input as a binary values and binary XOR them
+void nodeFuncBinaryXor(Node *aNode){
+    unsigned short param0;
+    unsigned short param1;
+    
+    param0 = getParam(aNode, 0) > 0;
+    param1 = getParam(aNode, 1) > 0;
+    
+    if(param0 != param1){
+      aNode->result = BINARY_TRUE;
+    } else {
+      aNode->result = BINARY_FALSE;
+    }
+}
+
 // treat input as a binary value and binary INVERT it
 void nodeFuncBinaryNot(Node *aNode){
     if(getParam(aNode,0) > 0){
@@ -426,7 +488,7 @@ void runMatrix(){
 
     // all nodes have written their data to the output buffer, tell
     // dac loop that new data can be loaded when dac cycle restarts
-    outputBufferComplete = 1;
+    matrixCalculationCompleted = 1;
 }
 
 nodeFunction getFunctionPointer(unsigned short function){
@@ -524,12 +586,24 @@ void dacInit(){
     DAC_CS = DAC_CS_OFF;
 }
 
+// initialize output buffers and set buffer pointers
+void outputBufferInit(){
+    unsigned short i;
+    outputBuffer = &outputBuffer1;
+    dacBuffer    = &outputBuffer2;
+    
+    for(i=0; i<MAX_SH_OUTPUTS; i++){
+        outputBuffer[i] = 0;
+        dacBuffer[i]    = 0;
+    }
+}
 
 void main() {
     unsigned short iteration;
     Node aNode0, aNode1, aNode2, aNode3, aNode4, aNode5;
 
     iteration = 0;
+    outputBufferInit();
 	dacInit();
     dacUpdatesFinished = 0;             //necessary to start runMatrix.
     dacTimerInit();
@@ -583,6 +657,7 @@ void main() {
     while(1){
         if(dacUpdatesFinished){
             dacUpdatesFinished = 0;
+            intervalMultiplier = 0;
             runMatrix();
         }
         printSignedShort(2,1,outputBuffer[0]);
@@ -600,13 +675,11 @@ TODO:
 - multi stage envelopes (inc looping?)
 - LFOs
 - Trigger (sends trigger pulse if input is high)
+- set og reset denne intervalMultiplier
 
 Mathematical expressions
 - divide
 - average
-
-Logical operators, all with adjustable thresholds (with defaults)
-- xor
 
 Outputs
 - CV
