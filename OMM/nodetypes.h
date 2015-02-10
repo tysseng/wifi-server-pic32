@@ -9,5 +9,6 @@
 #define NODE_DELAY_LINE 4
 #define NODE_INPUT 5
 #define NODE_OUTPUT 6
-
+#define NODE_MULTIPLY 7
+#define NODE_MEMORY 8
 #endif

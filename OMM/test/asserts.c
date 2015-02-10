@@ -1,6 +1,6 @@
 #include "munit.h"
 
-void assertEquals(short expected, short actual, char* message){
+void assertEquals(int expected, int actual, char* message){
     if(expected != actual){
         msg(message);
         error();

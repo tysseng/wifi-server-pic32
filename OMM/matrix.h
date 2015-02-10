@@ -5,8 +5,9 @@
 
 extern matrixint inputBuffer[8];
 extern unsigned short matrixCalculationCompleted;
-void addNode(Node *aNode);
-void runMatrix();
+extern void addNode(Node *aNode);
+extern void runMatrix();
+extern void resetMatrix();
 nodeFunction getFunctionPointer(unsigned short function);
 
 #endif

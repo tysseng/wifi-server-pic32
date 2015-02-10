@@ -1,11 +1,13 @@
-#include "Matrix.h"
-#include "test/Matrix.test.h"
-#include "Output.h"
+#include "matrix.h"
+#include "test/matrix.test.h"
+#include "output.h"
 #include "types.h"
 #include "config.h"
 #include "nodetypes.h"
 
 #include <built_in.h>
+
+#define RUNTESTS
 
 // The number of dac updates finished since last time the matrix were run.
 // This is checked before a new runMatrix is called as timing is done through
@@ -97,15 +99,20 @@ void printSignedShort(unsigned short row, unsigned short col, short in){
   Lcd_Chr(row, col+1, 48 + rest);
 }
 
+#ifdef RUNTESTS
+void main() {
+    runMatrixTests();
+}
+#endif
+
+#ifndef RUNTESTS
 void main() {
     unsigned short iteration;
     Node aNode0, aNode1, aNode2, aNode3, aNode4, aNode5;
 
-    runMatrixTests();
-
     iteration = 0;
     outputBufferInit();
-        dacInit();
+    dacInit();
     dacUpdatesFinished = 0;             //necessary to start runMatrix.
     dacTimerInit();
     
@@ -155,6 +162,7 @@ void main() {
     dacTimerStart();
 
     // tight loop that runs at most once for every dacUpdate cycle.
+    /*
     while(1){
         if(dacUpdatesFinished){
             dacUpdatesFinished = 0;
@@ -163,8 +171,9 @@ void main() {
         }
         printSignedShort(2,1,outputBuffer[0]);
         printSignedShort(2,12,iteration++);
-    }
+    } */
 }
+#endif
 
 /*
 TODO:

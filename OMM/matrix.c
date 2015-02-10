@@ -42,8 +42,8 @@ void nodeFuncSum(Node *aNode){
 // multiply an arbitrary number of inputs.
 void nodeFuncMultiply(Node *aNode){
     unsigned short i;
-    aNode->result = 0;
-    for(i=0; i<aNode->paramsInUse; i++){
+    aNode->result = getParam(aNode, 0);
+    for(i=1; i<aNode->paramsInUse; i++){
         aNode->result *= getParam(aNode, i);
     }
 }
@@ -341,6 +341,14 @@ void runMatrix(){
     matrixCalculationCompleted = 1;
 }
 
+extern void resetMatrix(){
+    unsigned short i;
+    for(i=0; i<MAX_OPERATIONS; i++){
+        nodes[i] = 0;
+    }
+    nodesInUse = 0;
+}
+
 nodeFunction getFunctionPointer(unsigned short function){
     switch(function){
         case NODE_SUM:
@@ -357,6 +365,10 @@ nodeFunction getFunctionPointer(unsigned short function){
             return &nodeFuncInput;
         case NODE_OUTPUT:
             return &nodeFuncOutput;
+        case NODE_MULTIPLY:
+            return &nodeFuncMultiply;
+        case NODE_MEMORY:
+            return &nodeFuncMemory;
         default:
             return &nodeFuncNoop;
     }
