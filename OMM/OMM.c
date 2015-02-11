@@ -1,5 +1,5 @@
 #include "matrix.h"
-#include "test/matrix.test.h"
+#include "matrix.test.h"
 #include "output.h"
 #include "types.h"
 #include "config.h"

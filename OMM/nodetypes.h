@@ -12,5 +12,6 @@
 #define NODE_MULTIPLY 7
 #define NODE_MEMORY 8
 #define NODE_LFO_PULSE 9
-
+#define NODE_SWITCH 10
+#define NODE_COMPARE 11
 #endif

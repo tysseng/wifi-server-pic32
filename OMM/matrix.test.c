@@ -1,9 +1,9 @@
-#include "munit.h"
-#include "asserts.h"
-#include "../nodetypes.h"
-#include "../matrix.private.h"
-#include "../matrix.h"
-#include "../definitions.h"
+#include "test/munit.h"
+#include "test/asserts.h"
+#include "nodetypes.h"
+#include "matrix.private.h"
+#include "matrix.h"
+#include "definitions.h"
 
 void testSum(){
     Node aNode;
@@ -264,7 +264,63 @@ void testLfoPulseStartOnBottom(){
     assertEquals(-5,aNode.result,"LFO Pulse start low");
 }
 
-// TODO: retrigger, negative start.
+void testSwitch(){
+
+    Node aNode;
+    aNode.func = getFunctionPointer(NODE_SWITCH);
+    aNode.params[0] = 10; // input
+    aNode.params[1] = 0; // switch is initially off
+    aNode.paramIsConstant = 0b00000011;
+    aNode.result = 0;
+    addNode(&aNode);
+
+    runMatrix();
+
+    // switch is off so output should be 0
+    assertEquals(0,aNode.result,"Switch off");
+
+    //turn on switch
+    aNode.params[1] = 1;
+    runMatrix();
+
+    // switch is on so output should be equal to input
+    assertEquals(10,aNode.result,"Switch on");
+
+    //turn off switch
+    aNode.params[1] = 0;
+    runMatrix();
+
+    // switch is off so output should revert to 0
+    assertEquals(0,aNode.result,"Switch off again");
+}
+
+void testCompare(){
+
+    Node aNode;
+    aNode.func = getFunctionPointer(NODE_COMPARE);
+    aNode.params[0] = 10; // input 0 is larger than input 1
+    aNode.params[1] = -10;
+    aNode.paramIsConstant = 0b00000011;
+    aNode.result = 0;
+    addNode(&aNode);
+
+    runMatrix();
+    assertEquals(BINARY_TRUE,aNode.result,"Compare true");
+
+    aNode.params[0] = -10; // input 0 is smaller than input 1
+    aNode.params[1] = 10;
+
+    runMatrix();
+    assertEquals(BINARY_FALSE,aNode.result,"Compare false");
+
+    aNode.params[0] = 10; // inputs are equal
+    aNode.params[1] = 10;
+
+    runMatrix();
+    assertEquals(BINARY_FALSE,aNode.result,"Compare false");
+}
+
+
 
 // setup and run test suite
 void runMatrixTests(){
@@ -291,6 +347,8 @@ void runMatrixTests(){
     add(&testLfoPulse);
     add(&testLfoPulseRetrigger);
     add(&testLfoPulseStartOnBottom);
+    add(&testSwitch);
+    add(&testCompare);
     
     run(resetMatrix);
 }
