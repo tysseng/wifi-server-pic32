@@ -179,6 +179,21 @@ void testMemoryClear(){
     assertEquals(0,aNode.result,"memory hold");
 }
 
+void testLfoPulse(){
+    Node aNode;
+    aNode.func = getFunctionPointer(NODE_LFO_PULSE);
+    aNode.result = 7; //initial value
+    aNode.params[0] = 10;
+    aNode.params[1] = 0; // should not set
+    aNode.params[2] = 1; // should clear
+    aNode.paramIsConstant = 0b00000111;
+    addNode(&aNode);
+
+    runMatrix();
+
+    assertEquals(0,aNode.result,"memory hold");
+}
+
 
 // setup and run test suite
 void runMatrixTests(){

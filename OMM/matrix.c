@@ -369,6 +369,8 @@ nodeFunction getFunctionPointer(unsigned short function){
             return &nodeFuncMultiply;
         case NODE_MEMORY:
             return &nodeFuncMemory;
+        case NODE_LFO_PULSE:
+            return &nodeFuncLfoPulse;
         default:
             return &nodeFuncNoop;
     }
