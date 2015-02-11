@@ -133,7 +133,7 @@ void nodeFuncRamp(Node *aNode){
 // A square/pulse wave LFO with settable speed, pulse width, positive and
 // negative amplitude, retrigger and start position
 void nodeFuncLfoPulse(Node *aNode){
-    matrixint cyclelength = getParam(anode, 0);
+    matrixint cyclelength = getParam(aNode, 0);
     matrixint pulsewidth = getParam(aNode, 1);
     matrixint trigger = getParam(aNode, 2);
 

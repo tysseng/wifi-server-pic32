@@ -182,22 +182,94 @@ void testMemoryClear(){
 void testLfoPulse(){
     Node aNode;
     aNode.func = getFunctionPointer(NODE_LFO_PULSE);
-    aNode.result = 7; //initial value
-    aNode.params[0] = 10;
-    aNode.params[1] = 0; // should not set
-    aNode.params[2] = 1; // should clear
-    aNode.paramIsConstant = 0b00000111;
+    aNode.params[0] = 3; // cycle width = 3
+    aNode.params[1] = 2; // pulse width = 2
+    aNode.params[2] = 1; // trigger pulse start (not necessary though)
+    aNode.params[3] = 10; // max positive
+    aNode.params[4] = -5; // max negative
+    aNode.params[5] = 0b00000001; // start on top
+    aNode.paramIsConstant = 0b00111111;
+    aNode.result = 0;
+    addNode(&aNode);
+
+    runMatrix(); // on the first run, trigger should cause the output to go high and reset the iteration counter
+
+    assertEquals(10,aNode.result,"LFO Pulse trigger");
+    assertEquals(0,aNode.highResState,"LFO Pulse init iterator");
+    
+    aNode.params[2] = 0; // remove trigger
+
+    runMatrix();
+
+    // after one cycle, nothing should have changed except the counter
+    assertEquals(10,aNode.result,"LFO Pulse step 2");
+    assertEquals(1,aNode.highResState,"LFO Pulse iterator increment");
+
+    runMatrix();
+    
+    // after two cycles we should have reached the pulse length and the lfo should drop to its minimum value
+    assertEquals(-5,aNode.result,"LFO Pulse step 3");
+
+    runMatrix();
+
+    // after three cycles, we should be back to start:
+    assertEquals(10,aNode.result,"LFO Pulse step 4");
+    assertEquals(0,aNode.highResState,"LFO Pulse iterator reset");
+
+}
+
+void testLfoPulseRetrigger(){
+    Node aNode;
+    aNode.func = getFunctionPointer(NODE_LFO_PULSE);
+    aNode.params[0] = 3; // cycle width = 3
+    aNode.params[1] = 2; // pulse width = 2
+    aNode.params[2] = 1; // trigger pulse start (not necessary though)
+    aNode.params[3] = 10; // max positive
+    aNode.params[4] = -5; // max negative
+    aNode.params[5] = 0b00000001; // start on top
+    aNode.paramIsConstant = 0b00111111;
+    aNode.result = 0;
     addNode(&aNode);
 
     runMatrix();
 
-    assertEquals(0,aNode.result,"memory hold");
+    // on the first run, trigger should cause the output to go high and reset 
+    // the iteration counter
+    assertEquals(10,aNode.result,"LFO Pulse trigger");
+    assertEquals(0,aNode.highResState,"LFO Pulse init iterator");
+
+    runMatrix();
+
+    // running again with the trigger high should reset state
+    assertEquals(10,aNode.result,"LFO Pulse retrigger");
+    assertEquals(0,aNode.highResState,"LFO Pulse reset iterator");
 }
 
+void testLfoPulseStartOnBottom(){
+    Node aNode;
+    aNode.func = getFunctionPointer(NODE_LFO_PULSE);
+    aNode.params[0] = 3; // cycle width = 3
+    aNode.params[1] = 2; // pulse width = 2
+    aNode.params[2] = 1; // trigger pulse start (not necessary though)
+    aNode.params[3] = 10; // max positive
+    aNode.params[4] = -5; // max negative
+    aNode.params[5] = 0b00000000; // start on bottom
+    aNode.paramIsConstant = 0b00111111;
+    aNode.result = 0;
+    addNode(&aNode);
+
+    runMatrix();
+
+    // on the first run, trigger should cause the output to go low
+    assertEquals(-5,aNode.result,"LFO Pulse start low");
+}
+
+// TODO: retrigger, negative start.
 
 // setup and run test suite
 void runMatrixTests(){
     reset();
+    /*
     add(&testSum);
     add(&testMultiply);
     
@@ -214,7 +286,11 @@ void runMatrixTests(){
 
     add(&testMemorySet);
     add(&testMemoryHold);
-    add(&testMemoryClear);
+    add(&testMemoryClear);*/
+    
+    add(&testLfoPulse);
+    add(&testLfoPulseRetrigger);
+    add(&testLfoPulseStartOnBottom);
     
     run(resetMatrix);
 }
