@@ -14,4 +14,7 @@
 #define NODE_LFO_PULSE 9
 #define NODE_SWITCH 10
 #define NODE_COMPARE 11
+#define NODE_MAX 12
+#define NODE_MIN 13
+#define NODE_SCALE 14
 #endif
