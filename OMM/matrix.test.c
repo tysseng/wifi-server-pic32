@@ -364,6 +364,13 @@ void testScale(){
 
     runMatrix();
     assertEquals(MAX_POSITIVE,aNode.result,"Scale max positive");
+    
+    // Full scale, no reduction
+    aNode.params[0] = MAX_POSITIVE;
+    aNode.params[1] = MAX_POSITIVE - 1;
+
+    runMatrix();
+    assertEquals(MAX_POSITIVE-2,aNode.result,"Scale almost max positive"); //-2 since we get a rounding error.
 
     // scaling by zero should always be zero
     aNode.params[0] = MAX_POSITIVE;
@@ -385,33 +392,55 @@ void testScale(){
     runMatrix();
     assertEquals(-1,aNode.result,"Scale minus 1");
     
-    // edge cases for multiplying maximum values
+    // edge cases for multiplying maximum values - will not reach max negative
+    // as the positive scale factor is less than the negative.
     aNode.params[0] = MAX_NEGATIVE;
     aNode.params[1] = MAX_POSITIVE;
 
     runMatrix();
-    assertEquals(MAX_NEGATIVE,aNode.result,"Scale max negative");
+    assertEquals(MAX_NEGATIVE+1,aNode.result,"Scale max negative");
 
-    //This one is tricky, as you can get more negative than positive.
+    //Edge case, as it is possible to get more negative than positive
     aNode.params[0] = MAX_NEGATIVE;
     aNode.params[1] = MAX_NEGATIVE;
 
     runMatrix();
     assertEquals(MAX_POSITIVE,aNode.result,"Scale max negative");
 
-    //Normal cases, positive
-    aNode.params[0] = 128;
-    aNode.params[1] = 128;
+    //Edge case, as it is possible to get more negative than positive
+    aNode.params[0] = MAX_NEGATIVE+1;
+    aNode.params[1] = MAX_NEGATIVE;
 
     runMatrix();
-    assertEquals(64,aNode.result,"Scale normal");
+    assertEquals(MAX_POSITIVE,aNode.result,"Scale max negative on param0");
+
+    //Edge case, as it is possible to get more negative than positive
+    aNode.params[0] = MAX_NEGATIVE;
+    aNode.params[1] = MAX_NEGATIVE+1;
+
+    runMatrix();
+    assertEquals(MAX_POSITIVE,aNode.result,"Scale max negative on param1");
+
+    //Normal cases, positive
+    aNode.params[0] = 64;
+    aNode.params[1] = 64;
+
+    runMatrix();
+    assertEquals(32,aNode.result,"Scale normal");
 
     //Normal cases, negative
-    aNode.params[0] = 128;
-    aNode.params[1] = -128;
+    aNode.params[0] = -64;
+    aNode.params[1] = -64;
 
     runMatrix();
-    assertEquals(64,aNode.result,"Scale normal negative");
+    assertEquals(32,aNode.result,"Scale normal negative");
+
+    //Normal cases, mixed
+    aNode.params[0] = -64;
+    aNode.params[1] = 64;
+
+    runMatrix();
+    assertEquals(-32,aNode.result,"Scale normal mixed");
 }
 
 // setup and run test suite
@@ -434,7 +463,7 @@ void runMatrixTests(){
 
     add(&testMemorySet);
     add(&testMemoryHold);
-    add(&testMemoryClear);*/
+    add(&testMemoryClear);
     
     add(&testLfoPulse);
     add(&testLfoPulseRetrigger);
@@ -442,7 +471,7 @@ void runMatrixTests(){
     add(&testSwitch);
     add(&testCompare);
     add(&testMax);
-    add(&testMin);
+    add(&testMin);*/
     add(&testScale);
     
     run(resetMatrix);

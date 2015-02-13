@@ -234,12 +234,31 @@ void nodeFuncMin(Node *aNode){
     }
 }
 
-// scales input 0 by input 1 / MAX_POSITIVE
+// scales input 0 by input 1 / (MAX_POSITIVE + 1)
 void nodeFuncScale(Node *aNode){
     matrixlongint temp;
+    matrixint param1, param2;
 
-    temp = getParam(aNode, 0) * getParam(aNode, 1);
-    temp = temp >> 8;
+    param1 = getParam(aNode, 0);
+    param2 = getParam(aNode, 1);
+
+    // special edge cases
+    if(param1 == MAX_POSITIVE && param2 == MAX_POSITIVE){
+        //prevents attenuation due to rounding error if both inputs are max positive
+        aNode->result = MAX_POSITIVE;
+        return;
+    } else if(param1 <= MAX_NEGATIVE+1 && param2 <= MAX_NEGATIVE+1 ){
+        //prevents overflow
+        aNode->result = MAX_POSITIVE;
+        return;
+    }
+
+    temp = param1 * param2;
+
+    //This leads to a slight error - the correct way to do it would be
+    //dividing the input by MAX_POSITIVE, but that is an expensive operation.
+    //Instead, we shift by 7, which is equal to dividing by MAX_POSITIV+1.
+    temp = temp >> 7;
 
     aNode->result = temp;
 }
@@ -371,6 +390,16 @@ nodeFunction getFunctionPointer(unsigned short function){
             return &nodeFuncMemory;
         case NODE_LFO_PULSE:
             return &nodeFuncLfoPulse;
+        case NODE_SWITCH:
+            return &nodeFuncSwitch;
+        case NODE_COMPARE:
+            return &nodeFuncCompare;
+        case NODE_MAX:
+            return &nodeFuncMax;
+        case NODE_MIN:
+            return &nodeFuncMin;
+        case NODE_SCALE:
+            return &nodeFuncScale;
         default:
             return &nodeFuncNoop;
     }
