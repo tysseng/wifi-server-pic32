@@ -17,4 +17,11 @@
 #define NODE_MAX 12
 #define NODE_MIN 13
 #define NODE_SCALE 14
+#define NODE_TRIGGER 15
+#define NODE_BINARY_AND 16
+#define NODE_BINARY_OR 17
+#define NODE_BINARY_XOR 18
+#define NODE_BINARY_NOT 19
+#define NODE_INPUT 16
+#define NODE_OUTPUT 16
 #endif

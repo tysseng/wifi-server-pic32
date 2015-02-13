@@ -443,6 +443,34 @@ void testScale(){
     assertEquals(-32,aNode.result,"Scale normal mixed");
 }
 
+void testTrigger(){
+
+    Node aNode;
+    aNode.func = getFunctionPointer(NODE_TRIGGER);
+    aNode.params[0] = 1; //trigger input
+    aNode.paramIsConstant = 0b00000001;
+    aNode.result = 0;
+    addNode(&aNode);
+
+    //output should trigger on first high input
+    runMatrix();
+    assertEquals(MAX_POSITIVE,aNode.result,"Trigger high");
+
+    //output should go low after one cycle
+    runMatrix();
+    assertEquals(0, aNode.result,"Trigger low");
+
+    //output should go stay low when input is removed
+    aNode.params[0] = 0; //trigger input removed
+    runMatrix();
+    assertEquals(0, aNode.result,"Trigger stays low");
+
+    //output should retrigger if input goes high again
+    aNode.params[0] = 1; //trigger input removed
+    runMatrix();
+    assertEquals(MAX_POSITIVE, aNode.result,"Trigger retrigger");
+}
+
 // setup and run test suite
 void runMatrixTests(){
     reset();
@@ -471,8 +499,10 @@ void runMatrixTests(){
     add(&testSwitch);
     add(&testCompare);
     add(&testMax);
-    add(&testMin);*/
-    add(&testScale);
+    add(&testMin);
+    add(&testScale);*/
+    add(&testTrigger);
+
     
     run(resetMatrix);
 }

@@ -400,6 +400,20 @@ nodeFunction getFunctionPointer(unsigned short function){
             return &nodeFuncMin;
         case NODE_SCALE:
             return &nodeFuncScale;
+        case NODE_TRIGGER:
+            return &nodeFuncTrigger;
+        case NODE_BINARY_AND:
+            return &nodeFuncBinaryAnd;
+        case NODE_BINARY_OR:
+            return &nodeFuncBinaryOr;
+        case NODE_BINARY_XOR:
+            return &nodeFuncBinaryXor;
+        case NODE_BINARY_NOT:
+            return &nodeFuncBinaryNot;
+        case NODE_INPUT:
+            return &nodeFuncInput;
+        case NODE_OUTPUT:
+            return &nodeFuncOutput;
         default:
             return &nodeFuncNoop;
     }
