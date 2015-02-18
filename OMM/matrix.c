@@ -439,6 +439,10 @@ nodeFunction getFunctionPointer(unsigned short function){
             return &nodeFuncInput;
         case NODE_OUTPUT:
             return &nodeFuncOutput;
+        case NODE_GLIDE:
+            return &nodeFuncGlide;
+        case NODE_QUANTIZE:
+            return &nodeFuncNoop;
         default:
             return &nodeFuncNoop;
     }
