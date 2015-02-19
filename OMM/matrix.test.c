@@ -471,6 +471,61 @@ void testTrigger(){
     assertEquals(MAX_POSITIVE, aNode.result,"Trigger retrigger");
 }
 
+void testBinaryAnd(){
+    Node aNode;
+    aNode.func = getFunctionPointer(NODE_BINARY_AND);
+    aNode.params[0] = 1;
+    aNode.params[1] = 1;
+    aNode.params[2] = 0;
+    aNode.paramIsConstant = 0b00000111;
+    aNode.result = 0;
+    addNode(&aNode);
+
+    //should be false if at least one is false
+    runMatrix();
+    assertEquals(BINARY_FALSE,aNode.result,"Binary and false");
+
+    //should be true if all are true
+    runMatrix();
+    aNode.params[2] = 1;
+    assertEquals(BINARY_TRUE,aNode.result,"Binary and true");
+}
+
+void testBinaryOr(){
+    Node aNode;
+    aNode.func = getFunctionPointer(NODE_BINARY_OR);
+    aNode.params[0] = 0;
+    aNode.params[1] = 1;
+    aNode.params[2] = 0;
+    aNode.paramIsConstant = 0b00000111;
+    aNode.result = 0;
+    addNode(&aNode);
+
+    //should be true if at least one is true
+    runMatrix();
+    assertEquals(BINARY_TRUE,aNode.result,"Binary or true");
+
+    //should be false if all are false
+    runMatrix();
+    aNode.params[1] = 0;
+    assertEquals(BINARY_FALSE,aNode.result,"Binary or false");
+}
+
+void testBinaryXor(){
+    Node aNode;
+    aNode.func = getFunctionPointer(NODE_BINARY_OR);
+    aNode.params[0] = 0;
+    aNode.params[1] = 0;
+    aNode.paramIsConstant = 0b00000111;
+    aNode.result = 0;
+    addNode(&aNode);
+
+    //should be false if both are 0
+    runMatrix();
+    assertEquals(BINARY_FALSE,aNode.result,"Binary xor 0 false");
+
+}
+
 // setup and run test suite
 void runMatrixTests(){
     reset();
@@ -500,11 +555,13 @@ void runMatrixTests(){
     add(&testCompare);
     add(&testMax);
     add(&testMin);
-    add(&testScale);*/
+    add(&testScale);
     add(&testTrigger);
+    add(&testBinaryAnd);
+    add(&testBinaryOr);
 
     
-    run(resetMatrix);
+    run(resetMatrix); */
 }
 
 // TODO void nodeFuncRamp(Node *aNode){

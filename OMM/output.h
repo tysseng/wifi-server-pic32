@@ -8,7 +8,7 @@ extern unsigned short dacIntervalTimerStartH;
 extern unsigned short dacIntervalTimerStartL;
 extern unsigned short shToUpdate;
 
-void writeToDac(short output);
+void writeToDac(unsigned short output);
 void dacTimerInit();
 void dacTimerStart();
 void dacTimerStop();
