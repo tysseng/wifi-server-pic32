@@ -225,6 +225,8 @@ TODO:
 - distance-in-samples-per-cents
 - multi stage envelopes (inc looping?)
 - LFOs
+- quantizer - quantize to tone or other unit
+- glide/slide/resistance
 - Trigger (sends trigger pulse if input is high)
 - set og reset denne intervalMultiplier
 

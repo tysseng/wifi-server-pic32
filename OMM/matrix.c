@@ -337,6 +337,31 @@ void nodeFuncOutput(Node *aNode){
     outputBuffer[getParam(aNode, 0)] = getParam(aNode, 1);
 }
 
+//glide any output. resists change.
+void nodeFuncGlide(Node *aNode){
+    matrixint input = getParam(aNode,0);
+    matrixint maxchange = getParam(aNode,1); // maximum rate of change - consider inverting this to get 0=no glide, max = max glide.
+    matrixint glideUp   = getParam(aNode,2); // should glide up?
+    matrixint glideDown = getParam(aNode,3); // should glide down?
+    
+    matrixint change = input - aNode->result;
+    if(change > 0 && glideUp){ // input is larger than current output
+        if(change > maxchange){
+            aNode->result += maxchange;
+        } else {
+            aNode->result += change;
+        }
+    } else if(change < 0 && glideDown) { // input is smaller than current output
+        if(change < maxchange * -1){
+            aNode->result -= maxchange;
+        } else {
+            aNode->result += change;
+        }
+    } else {
+        aNode->result = input;
+    }
+}
+
 // do nothing
 void nodeFuncNoop(Node *aNode){}
 
@@ -414,6 +439,10 @@ nodeFunction getFunctionPointer(unsigned short function){
             return &nodeFuncInput;
         case NODE_OUTPUT:
             return &nodeFuncOutput;
+        case NODE_GLIDE:
+            return &nodeFuncGlide;
+        case NODE_QUANTIZE:
+            return &nodeFuncNoop;
         default:
             return &nodeFuncNoop;
     }

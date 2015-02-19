@@ -22,6 +22,8 @@
 #define NODE_BINARY_OR 17
 #define NODE_BINARY_XOR 18
 #define NODE_BINARY_NOT 19
-#define NODE_INPUT 16
-#define NODE_OUTPUT 16
+#define NODE_INPUT 20
+#define NODE_OUTPUT 21
+#define NODE_QUANTIZE 22
+#define NODE_GLIDE 23
 #endif
