@@ -4,7 +4,14 @@
 // datatype to use for matrix, makes it easier to switch between 8 and 16 bit
 // operations later.
 #define matrixint short
+#define matrixintrange 256
+#define matrixintmin -128
+#define matrixintmax 127
+
 #define matrixlongint int
+#define matrixlongintrange 65535
+#define matrixlongintmin -32768
+#define matrixlongintmax 32767
 
 //function pointer to a matrix node function
 typedef void (*nodeFunction)(struct matrixNode *);
