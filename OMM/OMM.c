@@ -1,5 +1,5 @@
 #include "matrix.h"
-#include "matrix.test.h"
+//#include "matrix.test.h"
 #include "output.h"
 #include "types.h"
 #include "config.h"
@@ -7,7 +7,8 @@
 
 #include <built_in.h>
 
-#define RUNTESTS
+//#define RUNTESTS
+#define DACTESTS
 
 // The number of dac updates finished since last time the matrix were run.
 // This is checked before a new runMatrix is called as timing is done through
@@ -105,17 +106,57 @@ void main() {
 }
 #endif
 
-#ifndef RUNTESTS
+#ifdef DACTESTS
 void main() {
-    unsigned short iteration;
+    unsigned short iteration, dacStep;
+
+    iteration = 0;
+    dacStep = 0;
+    outputBufferInit();
+    dacInit();
+
+    Lcd_Init();                        // Initialize Lcd
+    Lcd_Cmd(_LCD_CLEAR);               // Clear display
+    Lcd_Cmd(_LCD_CURSOR_OFF);          // Cursor off
+    Lcd_Out(1,1,txt1);                 // Write text in first row
+
+    writeToDac(255);
+    TRISB = 0;
+    while(1){
+
+        PORTB = iteration | 0b00010000;
+        delay_us(20);
+        PORTB = iteration | 0b00000000;
+
+        iteration++;
+        if(iteration > 7){
+          iteration = 0;
+          dacStep++;
+        }
+        PORTB = iteration | 0b00000000;
+        writeToDac(dacStep);
+        /*
+        delay_ms(1);
+        writeToDac(0);
+        delay_ms(1);*/
+    }
+}
+#endif
+
+#ifndef RUNTESTS
+#ifndef DACTESTS
+void main() {
+    unsigned short iteration, dacStep;
     Node aNode0, aNode1, aNode2, aNode3, aNode4, aNode5;
 
     iteration = 0;
+    dacStep = 0;
     outputBufferInit();
     dacInit();
+
     dacUpdatesFinished = 0;             //necessary to start runMatrix.
     dacTimerInit();
-    
+
     // DEBUG STUFF
     Lcd_Init();                        // Initialize Lcd
     Lcd_Cmd(_LCD_CLEAR);               // Clear display
@@ -162,7 +203,6 @@ void main() {
     dacTimerStart();
 
     // tight loop that runs at most once for every dacUpdate cycle.
-    /*
     while(1){
         if(dacUpdatesFinished){
             dacUpdatesFinished = 0;
@@ -171,8 +211,9 @@ void main() {
         }
         printSignedShort(2,1,outputBuffer[0]);
         printSignedShort(2,12,iteration++);
-    } */
+    }
 }
+#endif
 #endif
 
 /*

@@ -27,18 +27,19 @@ unsigned short shToUpdate;
 
 // Write output to DAC. NB: Only positive values are written!
 // TODO: Does not work once we switch to 16 bit.
-void writeToDac(short output){
+void writeToDac(unsigned short output){/*
     unsigned short positiveOut;
     if(output > 0) {
         positiveOut = output; //7 to 8 bit, as input is signed. NB: this means that the maximum value is 254 (as the LSB is 0).
         positiveOut = positiveOut << 1;
     } else {
         positiveOut = 0;
-    }
+    }*/
 
     DAC_CS = DAC_CS_ON;  //must write directly to latch (didn't work with PORTC.B0!)
 
-    SPI1_write(positiveOut);
+//    SPI1_write(positiveOut);
+    SPI1_write(output);
     SPI1_write(0);       // 0 as long as we are working with 8 bit numbers.
 
     DAC_CS = DAC_CS_OFF; //latches values in DAC.
