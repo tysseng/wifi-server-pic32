@@ -15,6 +15,10 @@ matrixint inputBuffer[8];
 // the dac buffer before the next dac cycle.
 unsigned short matrixCalculationCompleted;
 
+// lookup table for linear to exponential conversion that only converts positive
+// values (and eases of to 0 to allow maximum offness
+matrixint lookupTablePositiveExponential[matrixintrange];
+
 // params can be pointers to the result of the previous Node in the matrix or
 // they can be constants. This function figures out which one and returns its
 // value.
@@ -362,8 +366,44 @@ void nodeFuncGlide(Node *aNode){
     }
 }
 
+void nodeFuncQuantize(Node *aNode){
+     //TODO
+}
+
+// Convert linear value to exponential. Only positive values are converted,
+// all others are 0, to allow maximum offness.
+void nodeFuncPositiveExp(Node *aNode){
+    matrixint input = getParam(aNode,0);
+    if(input > 0){
+        aNode->result = lookupTablePositiveExponential[input];
+    } else {
+        aNode->result = 0;
+    }
+}
+
 // do nothing
 void nodeFuncNoop(Node *aNode){}
+
+// precalculate a 70dB exponential curve for positive input values.
+void precalcPositiveExponentialLookup(){
+
+    // dB calculation
+    // The maximum attenuation is found like this:
+    //  * Change in dB = 20 * log(Output/Input)
+    //  * Output = Input * 10^(Change in dB / 20)
+    // For -70dB:
+    //  * Output = Input * 10^(-70 / 20) = Input * 0.000316
+    //
+    // To calculate the curve we have that:
+    // f(0) = 0.000316
+    // f(max) = 1;
+    //
+    unsigned matrixint i;
+    lookupTablePositiveExponential[0] = 0;
+    for(i=1; i<=matrixintmax; i++){
+        lookupTablePositiveExponential[i] = 0;
+    }
+}
 
 // add Node to the matrix.
 void addNode(Node *aNode){
@@ -443,6 +483,10 @@ nodeFunction getFunctionPointer(unsigned short function){
             return &nodeFuncGlide;
         case NODE_QUANTIZE:
             return &nodeFuncNoop;
+        case NODE_TUNE:
+            return &nodeFuncNoop;
+        case NODE_POSITIVE_EXP:
+            return &nodeFuncPositiveExp;
         default:
             return &nodeFuncNoop;
     }
