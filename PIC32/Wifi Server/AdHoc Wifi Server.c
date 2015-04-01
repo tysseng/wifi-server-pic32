@@ -21,40 +21,44 @@ sbit Net_Wireless_MCW1001_Chip_RST_Direction at TRISC1_bit;
 ////////////////////////////////////////////////////////////////////////////////
 // Global variables
 
+// TCP/IP transfer related variables
 // Const MAX_SIZE_OF_DATA refers to Net_Wireless_MCW1001_TCP_SendBytes function. There
 // is possible only to transmit messages to the MCW1001A in packets of max 500 byte size.
 // Size of: AP header + Trailer = 11bytes  (for Net_Wireless_MCW1001_TCP_SendBytes function), and because of that max size of TCP
 // data is 500 - 11 = 489
 const unsigned int MAX_SIZE_OF_DATA = 489;
-char txBuffer[MAX_SIZE_OF_DATA];
+char responseBuffer[MAX_SIZE_OF_DATA];
 unsigned int bufferIndex = 0;
+unsigned char requestBuffer[15] ;                                     // HTTP request buffer
+unsigned char dyna[29] ;                                              // buffer for dynamic response
+unsigned long httpCounter = 0 ;                                       // counter of HTTP requests
 
+char socketHandle, socketChild;
+char bindResponse, backLog, listenResponse;
+char remoteIpAdd[4];
+unsigned int remotePort;
+char wifiStatus;
+
+// TCP/IP settings
 char myIpAdd[4]    = {169, 254, 0, 10};
 char myMacAdd[6]   = {0x22, 0x33, 0x44, 0x55, 0x66, 0x88};
 char netMask[4]    = {255, 255, 0, 0};
 char gatewayAdd[4] = {169, 254, 0, 1};
-char remoteIpAdd[4];
-unsigned int remotePort, localPort;
+
+unsigned int localPort = 80;
+
+// Wifi settings
 char *strSSID = "Joakims kompetansedag";
 char channels[11]  = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11};
-char wifiStatus, bindResponse, backLog, listenResponse;
-char socketHandle, socketChild;
-char response;
 
-unsigned char   getRequest[15] ;                                        // HTTP request buffer
-unsigned char   dyna[29] ;                                              // buffer for dynamic response
-unsigned long   httpCounter = 0 ;                                       // counter of HTTP requests
 
-/************************************************************
- * ROM constant strings
- */
-const code   char httpHeader[] = "HTTP/1.1 200 OK\nContent-type: " ;  // HTTP header
-const code   char httpMimeTypeHTML[] = "text/html\n\n" ;              // HTML MIME type
-const code   char httpMimeTypeScript[] = "text/plain\n\n" ;           // TEXT MIME type
+// Strings for generating HTTP response
+const code char httpHeader[] = "HTTP/1.1 200 OK\nContent-type: " ;  // HTTP header
+const code char httpMimeTypeHTML[] = "text/html\n\n" ;              // HTML MIME type
+const code char httpMimeTypeScript[] = "text/plain\n\n" ;           // TEXT MIME type
 unsigned char httpMethod[] = "GET /";
 
-// web page
-const code char *indexPage = 
+const code char *indexPage =
       "<HTML><HEAD><meta name=\"viewport\" content=\"width=device-width, initial-scale=2\"></HEAD>\
       <BODY style='font-size: 20px'>\
       <p><a href=\"/paa\">Skru p&aring;</a></p>\
@@ -74,8 +78,9 @@ void interrupt() iv IVT_UART_2 ilevel 7 ics ICS_SRS {
 ////////////////////////////////////////////////////////////////////////////////
 // Interrupt routine which increment Net_Wireless_MCW1001_Time variable every second.
 
-// timer prescaler. each timer interval is 100ms @ 80MHz
+// Timer prescaler. Each timer interval is 100ms @ 80MHz
 unsigned int wifiTmr = 0;
+
 void Timer1Interrupt() iv IVT_TIMER_1 ilevel 7 ics ICS_SRS {
   wifiTmr++;
   if(wifiTmr >= 10) {
@@ -103,9 +108,6 @@ void InitTimer1(){
 
 void InitMcu() {
 
-  AD1PCFG |= 0xFF7F;         // all digital but rb7(AN7)
-  TRISB.B7 = 1;              // set PORTB as input for buttons and adc
-
   InitTimer1();
 
   // Debug leds etc
@@ -122,10 +124,6 @@ void InitMcu() {
   U2RXIE_bit = 1;           // enable intterupt
 
   EnableInterrupts();       // Enable all interrupts
-
-  // Set RE7 pin as digital output, so we can monitor TCP status on that pin
-  TRISE.B7 = 0;
-  PORTE.B7 = 0;
 
   Net_Wireless_MCW1001_HwReset();
   
@@ -166,9 +164,9 @@ unsigned int PutConstString(const code char *s) {
   unsigned int numOfSentBytes;
 
   while(*s) {
-   txBuffer[bufferIndex++] = *s++;
+   responseBuffer[bufferIndex++] = *s++;
     if(bufferIndex == MAX_SIZE_OF_DATA) {
-      Net_Wireless_MCW1001_TCP_SendBytes(socketChild, txBuffer, MAX_SIZE_OF_DATA, &numOfSentBytes);
+      Net_Wireless_MCW1001_TCP_SendBytes(socketChild, responseBuffer, MAX_SIZE_OF_DATA, &numOfSentBytes);
       bufferIndex = 0;
     }
   }
@@ -180,9 +178,9 @@ unsigned int PutString(char *s) {
   unsigned int numOfSentBytes;
 
   while(*s) {
-    txBuffer[bufferIndex++] = *s++;
+    responseBuffer[bufferIndex++] = *s++;
     if(bufferIndex == MAX_SIZE_OF_DATA) {
-      Net_Wireless_MCW1001_TCP_SendBytes(socketChild, txBuffer, MAX_SIZE_OF_DATA, &numOfSentBytes);
+      Net_Wireless_MCW1001_TCP_SendBytes(socketChild, responseBuffer, MAX_SIZE_OF_DATA, &numOfSentBytes);
       bufferIndex = 0;
     }
   }
@@ -192,14 +190,14 @@ unsigned int PutString(char *s) {
 void SendHttpResponse() {
 
   char response, i;
-  unsigned int numOfReceiveBytes = 0, numOfSentBytes;
+  unsigned int numOfReceivedBytes = 0, numOfSentBytes;
   unsigned int length;                     // my reply length
 
   length = 0;
-  Net_Wireless_MCW1001_TCP_ReadBytes(&socketChild, 10, getRequest, &numOfReceiveBytes);
-  getRequest[10] = 0;
+  Net_Wireless_MCW1001_TCP_ReadBytes(&socketChild, 10, requestBuffer, &numOfReceivedBytes);
+  requestBuffer[10] = 0;
 
-  if(memcmp(getRequest, httpMethod, 5)) {     // only GET method is supported here
+  if(memcmp(requestBuffer, httpMethod, 5)) {     // only GET method is supported here
     return;
   }
 
@@ -212,13 +210,13 @@ void SendHttpResponse() {
   httpCounter++ ;                          // one more request done
   
   // if request path name starts with a, turn off leds
-  if(getRequest[5] == 'a') {
+  if(requestBuffer[5] == 'a') {
     LATB = 0;
     PutConstString("<p>Status: AV</p>");
   }
   
   // if request path name starts with p, turn on leds
-  else if(getRequest[5] == 'p') {
+  else if(requestBuffer[5] == 'p') {
     LATB = 0xff;
     PutConstString("<p>Status: P&Aring;</p>");
   }
@@ -226,20 +224,18 @@ void SendHttpResponse() {
   // output page end
   length = PutConstString(indexPage2) ;
 
-  // If there is some data (in txBuffer) which is not sent
+  // If there is some data (in responseBuffer) which is not sent
   if(length != 0){
-    Net_Wireless_MCW1001_TCP_SendBytes(socketChild, txBuffer, length, &numOfSentBytes);
+    Net_Wireless_MCW1001_TCP_SendBytes(socketChild, responseBuffer, length, &numOfSentBytes);
   }
 }
 
 // Eternally looping service method
 void RunHttpServer() {
 
-  LATD=10;
   while(1) {
     socketHandle = 0;
     backLog = 1;
-    localPort = 80;
     Net_Wireless_MCW1001_SocketCreate(&socketHandle, _NET_WIRELESS_MCW1001_SOCKET_TYPE_TCP);   // Create TCP socket
     Net_Wireless_MCW1001_SocketBind(socketHandle, &localPort, &bindResponse);                  // Bind socket to the listen port
     Net_Wireless_MCW1001_TCP_Listen(socketHandle, &backLog, &listenResponse);                  // Prepare the socket to listen for connection
@@ -271,7 +267,6 @@ void main() {
   InitWiFi();
   // Open "ad-hoc server"
   Net_Wireless_MCW1001_Connect(_NET_WIRELESS_MCW1001_CP_1, &wifiStatus);
-  localPort = 80;
 
   // Signal "wifi ready"
   LATD.B0=1;
