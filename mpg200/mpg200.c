@@ -62,13 +62,18 @@
 #define PG200_PING_DATA 0
 
 //JX3P Busy data line
-#define STATUS_TRIS TRISC5_bit
-#define STATUS_PORT PORTC.F5 //Change this to real data line later. (PORTC.F5)
+//#define STATUS_TRIS TRISC5_bit
+//#define STATUS_PORT PORTC.F5 //Change this to real data line later. (PORTC.F5)
+#define STATUS_TRIS TRISB5_bit
+#define STATUS_PORT PORTB.F5 //Change this to real data line later. (PORTC.F5)
 #define JX3P_IS_BUSY 0
 
 //JX3P RXMODE line
-#define TXMODE_TRIS TRISC4_bit
-#define TXMODE_PORT PORTC.F4 //Change this to real data line later. (PORTC.F5)
+//#define TXMODE_TRIS TRISC4_bit
+//#define TXMODE_PORT PORTC.F4 //Change this to real data line later. (PORTC.F5)
+#define TXMODE_TRIS TRISB4_bit
+#define TXMODE_PORT PORTB.F4 //Change this to real data line later. (PORTC.F5)
+
 #define TXMODE_MIDI 1
 #define TXMODE_PG200 0
 
@@ -76,6 +81,20 @@
 #define OUTPUTMODE_BLOCK_MIDI 0
 #define OUTPUTMODE_REVERT_TO_MIDI 1
 #define OUTPUTMODE_INSTANT_SWITCH 2
+
+// Mode switches
+//#define SWITCH_PORT_BLOCK_MIDI PORTC.F0
+//#define SWITCH_PORT_REVERT_TO_MIDI PORTC.F1
+//#define SWITCH_PORT_INSTANT_SWITCH PORTC.F2
+
+#define SWITCH_PORT_BLOCK_MIDI PORTB.F0
+#define SWITCH_PORT_REVERT_TO_MIDI PORTB.F1
+#define SWITCH_PORT_INSTANT_SWITCH PORTB.F2
+
+
+// LEDS
+//#define STATUS_LED PORTC.F5
+#define STATUS_LED PORTB.F5
 
 //COMMENTS:
 //- Midi note messages and cc messages must not be mixed (e.g. they must originate from the same source) to prevent problems with running statuses. This should not really be a problem in real life though.
@@ -252,13 +271,13 @@ void interrupt(){
     //we can get a long enough delay
     TMR0IF_bit = 0;
     if(timer0TimeoutCount < settings[POS_SWITCH_TO_MIDI_TIMER_OVERFLOWS] ){
-      PORTC.F3 = 1;
+      //PORTC.F3 = 1;
       timer0TimeoutCount++;
       TMR0H = 0;
       TMR0L = 0;
     } else {
       timer0TimeoutCount = 0;
-      PORTC.F3 = 0;
+      //PORTC.F3 = 0;
       switchToMidi();
       TMR0ON_bit = 0;
     }
@@ -932,9 +951,9 @@ void setupTxPort(){
 void flashStatus(char times){
   char i;
   for(i=0; i< times; i++){
-    PORTC.F5 = 1;
+    STATUS_LED = 1;
     delay_ms(100);
-    STATUS_PORT = 0;
+    STATUS_LED = 0;
     delay_ms(100);
   }
 }
@@ -946,36 +965,36 @@ void readSwitch(){
   char line2;
   char line3;
 
-  if(PORTC.F0 == 1){
+  if(SWITCH_PORT_BLOCK_MIDI == 1){
     if(settings[POS_OUT_MODE] != 0){
-      PORTC.F5 = 0;
+      STATUS_LED = 0;
       delay_ms(500);
       flashStatus(1);
       settings[POS_OUT_MODE] = OUTPUTMODE_BLOCK_MIDI;
       TXMODE_PORT = TXMODE_PG200;
       delay_ms(500);
-      PORTC.F5 = 1;
+      STATUS_LED = 1;
     }
-  } else if(PORTC.F1 == 1){
+  } else if(SWITCH_PORT_REVERT_TO_MIDI == 1){
     if(settings[POS_OUT_MODE] != 1){
-      PORTC.F5 = 0;
+      STATUS_LED = 0;
       delay_ms(500);
       flashStatus(2);
       settings[POS_OUT_MODE] = OUTPUTMODE_REVERT_TO_MIDI;
       TXMODE_PORT = TXMODE_MIDI;
       clearToSendMidi = 1;
       delay_ms(500);
-      PORTC.F5 = 1;
+      STATUS_LED = 1;
     }
-  } else if(PORTC.F2 == 1){
+  } else if(SWITCH_PORT_INSTANT_SWITCH == 1){
     if(settings[POS_OUT_MODE] != 2){
-      PORTC.F5 = 0;
+      STATUS_LED = 0;
       delay_ms(500);
       flashStatus(3);
       settings[POS_OUT_MODE] = OUTPUTMODE_INSTANT_SWITCH;
       TXMODE_PORT = TXMODE_MIDI;
       delay_ms(500);
-      PORTC.F5 = 1;
+      STATUS_LED = 1;
     }
   }
 }
@@ -1005,16 +1024,19 @@ void main() {
 
   TRISA = 0;
   TRISB = 0;
-  TRISC = 0;
+  //TRISC = 0;
 
   PORTA = 0;
   PORTB = 0;
-  PORTC = 0;
+  //PORTC = 0;
 
   //Set read direction on switch lines
-  TRISC0_bit=1;
-  TRISC1_bit=1;
-  TRISC2_bit=1;
+  //TRISC0_bit=1;
+  //TRISC1_bit=1;
+  //TRISC2_bit=1;
+  TRISB0_bit=1;
+  TRISB1_bit=1;
+  TRISB2_bit=1;
 
   STATUS_TRIS = 0;
   flashStatus(3);
@@ -1038,7 +1060,7 @@ void main() {
   sendPing();
 
   flashStatus(3);
-  PORTC.F5=1;
+  STATUS_LED=1;
 
   while(1){
     if(clearToSendMissingNoteOffs == 1){
