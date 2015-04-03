@@ -28,9 +28,9 @@ unsigned short state=0;
 void main() {
   int rData;
 
+  //Visualise output on port B
   TRISB = 0; // debug output
   PORTB = 0;
-  PORTA = 0;
 
   //NB: SPI4 = SPI3A on the chip as Mikroelektronika and Microchip use
   //    different naming schemes
@@ -39,7 +39,7 @@ void main() {
     _SPI_8_BIT,
     1024,
     _SPI_SS_DISABLE,
-    _SPI_DATA_SAMPLE_END,
+    _SPI_DATA_SAMPLE_MIDDLE,
     _SPI_CLK_IDLE_LOW,
     _SPI_ACTIVE_2_IDLE);
   
@@ -47,6 +47,6 @@ void main() {
     SPI4_write(state);
     PORTB = state;
     state++;
-    delay_ms(1);
+    delay_ms(200);
   }
 }
