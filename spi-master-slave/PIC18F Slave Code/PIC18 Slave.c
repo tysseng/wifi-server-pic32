@@ -21,6 +21,17 @@
 unsigned short rcdata;
 
 void main() {
+
+  unsigned short i;
+
+  // The clock pin has to be set to the opposite of clock idle (?). Without 
+  // this, it seems that the PIC does not detect that the clock has started
+  // and won't receive any data.
+  LATC.B3 = 1;
+  
+  // Clear buffer before starting.
+  SSPBUF = 0;
+  
   SPI1_Init_Advanced(
     _SPI_SLAVE_SS_DIS,
     _SPI_DATA_SAMPLE_MIDDLE,
@@ -28,9 +39,9 @@ void main() {
     _SPI_HIGH_2_LOW
   );
 
+  //Visualise input on port D
   TRISD=0;
   PORTD=0;
-  LATC.B3 = 1; //weird bug! This is required????
 
   while(1){
      rcdata=SSPBUF;
