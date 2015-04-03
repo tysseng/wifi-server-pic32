@@ -23,16 +23,15 @@ unsigned short rcdata;
 void main() {
   SPI1_Init_Advanced(
     _SPI_SLAVE_SS_DIS,
-    _SPI_DATA_SAMPLE_END,
+    _SPI_DATA_SAMPLE_MIDDLE,
     _SPI_CLK_IDLE_LOW,
     _SPI_HIGH_2_LOW
   );
-  Delay_ms(50);
 
   TRISD=0;
   PORTD=0;
-  PORTC=0xFF; //weird bug! This is required????
-  
+  LATC.B3 = 1; //weird bug! This is required????
+
   while(1){
      rcdata=SSPBUF;
      PORTD = rcdata;
