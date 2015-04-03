@@ -21,6 +21,7 @@
  *  - Data sent through SPI is displayed on PORTB
  *  - PIC32 SPI is 5v tolerant so no voltage conversion is needed between a 
  *    PIC18F and a PIC32.
+ *  - Data sent has been confirmed with a Saleae logic probe.
  */
 unsigned short state=0;
 
@@ -46,6 +47,6 @@ void main() {
     SPI4_write(state);
     PORTB = state;
     state++;
-    delay_ms(1000);
+    delay_ms(1);
   }
 }
