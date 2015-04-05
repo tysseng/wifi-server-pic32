@@ -30,7 +30,7 @@ void SPI4_interrupt() iv IVT_SPI_4 ilevel 6 ics ICS_SOFT{
   char rxByte;
 
   // read bytes until the enhanced circular buffer is empty
-  // (in this demo only the last recevived byte will be visible
+  // (in this demo only the last received byte will be visible
   // on PORTB. A real world case would of course do something useful to the 
   // bytes).
   //
