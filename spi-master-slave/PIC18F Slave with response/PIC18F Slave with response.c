@@ -27,12 +27,13 @@
 /**
  PIC SPI theory
  ==============
- SPI data transfer works like this: Whenever the clock runs, anything that is
- in the SSPBUF will be sent through the SPI pin on both the master and slave.
+ SPI data transfer works like this: Whenever the SPI clock runs, anything that 
+ is  in the SSPBUF will be sent through the SDO pin on both the master and
+ slave.
 
- As the master is the one to control the clock, no data is sent from the master
+ As the master is the one to control the clock, no data is sent from the slave
  without the clock running, and the easiest way to get the clock running is
- to send data. An easier way to think of it may be this:
+ to send data from the master. An easier way to think of it may be this:
 
  Whenever data is received from the master, whatever is in the slave's SSPBUF
  at the time the data is received is returned and SSPBUF is filled with the
@@ -63,7 +64,7 @@
     data to the SSPBUF, but the data is not sent yet as the SPIclock is not
     running - remember, the clock is only running while the master sends data.
 
- 5) The MASTER now issues a SPI_read(). This actually sends data to the slave
+ 5) The MASTER now issues an SPI_read(). This actually sends data to the slave
     but the value may be ignored.
 
  6) Since the SLAVE receives data, it also sends back the data that is in the
@@ -81,7 +82,7 @@ unsigned short GET_DATA_COMMAND=0xFF;
 
 // Counter that just counts the number of get data commands received. It is
 // sent back to the master the next time data is written.
-char txByte = 1;
+char txByte = 0;
 
 void interrupt(){
 
@@ -102,7 +103,7 @@ void interrupt(){
       SSPBUF = txByte++;
     }
     // there is no else here, but in the 'else' case, data from the SSPBUF
-    // is returned
+    // that was written during the previous call is returned
     
     //reset interrupt
     SSPIF_bit = 0;

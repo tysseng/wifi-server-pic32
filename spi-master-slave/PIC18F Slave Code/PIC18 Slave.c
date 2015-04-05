@@ -24,9 +24,8 @@ void main() {
 
   unsigned short i;
 
-  // The clock pin has to be set to the opposite of clock idle (?). Without 
-  // this, it seems that the PIC does not detect that the clock has started
-  // and won't receive any data.
+  // The clock pin has to be set to 1. Without this, it seems that the PIC does 
+  // not detect that the clock has started and won't receive any data.
   LATC.B3 = 1;
   
   // Clear buffer before starting.
