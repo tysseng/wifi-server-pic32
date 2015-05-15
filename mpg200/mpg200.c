@@ -61,18 +61,17 @@
 #define PG200_PING_ADDR 128
 #define PG200_PING_DATA 0
 
-//JX3P Busy data line
-//#define STATUS_TRIS TRISC5_bit
-//#define STATUS_PORT PORTC.F5 //Change this to real data line later. (PORTC.F5)
-#define STATUS_TRIS TRISB5_bit
-#define STATUS_PORT PORTB.F5 //Change this to real data line later. (PORTC.F5)
-#define JX3P_IS_BUSY 0
+// Mode switch
+#define SWITCH_TRIS1 TRISB0_bit
+#define SWITCH_TRIS2 TRISB1_bit
+#define SWITCH_TRIS3 TRISB2_bit
+#define SWITCH_PORT_REVERT_TO_MIDI RB0_bit
+#define SWITCH_PORT_BLOCK_MIDI RB1_bit
+#define SWITCH_PORT_INSTANT_SWITCH RB2_bit
 
 //JX3P RXMODE line
-//#define TXMODE_TRIS TRISC4_bit
-//#define TXMODE_PORT PORTC.F4 //Change this to real data line later. (PORTC.F5)
-#define TXMODE_TRIS TRISB4_bit
-#define TXMODE_PORT PORTB.F4 //Change this to real data line later. (PORTC.F5)
+#define TXMODE_TRIS TRISC2_bit
+#define TXMODE_PORT RC2_bit
 
 #define TXMODE_MIDI 1
 #define TXMODE_PG200 0
@@ -82,19 +81,11 @@
 #define OUTPUTMODE_REVERT_TO_MIDI 1
 #define OUTPUTMODE_INSTANT_SWITCH 2
 
-// Mode switches
-//#define SWITCH_PORT_BLOCK_MIDI PORTC.F0
-//#define SWITCH_PORT_REVERT_TO_MIDI PORTC.F1
-//#define SWITCH_PORT_INSTANT_SWITCH PORTC.F2
-
-#define SWITCH_PORT_BLOCK_MIDI PORTB.F0
-#define SWITCH_PORT_REVERT_TO_MIDI PORTB.F1
-#define SWITCH_PORT_INSTANT_SWITCH PORTB.F2
-
-
 // LEDS
-//#define STATUS_LED PORTC.F5
-#define STATUS_LED PORTB.F5
+#define STATUS_LED_TRIS TRISA0_bit
+#define STATUS_LED RA0_bit
+#define STATUS_LED_ON 0
+#define STATUS_LED_OFF 1
 
 //COMMENTS:
 //- Midi note messages and cc messages must not be mixed (e.g. they must originate from the same source) to prevent problems with running statuses. This should not really be a problem in real life though.
@@ -207,7 +198,10 @@ char sysexAddress[] = {0, 43, 102}; //randomly chosen but must start with 0
 #define POS_MIDI_CH 1
 #define POS_OUT_MODE 2
 #define POS_CONTROLLERS 3
-#define POS_SWITCH_TO_MIDI_TIMER_OVERFLOWS 37
+
+// 37 overflows at 20MHz gives a delay of 481 ms
+// 30 overflows at 16MHz gives a delay of 492 ms
+#define POS_SWITCH_TO_MIDI_TIMER_OVERFLOWS 30
 #define SETTINGS_LENGTH 38
 
 char settings[] = {
@@ -262,6 +256,7 @@ char settings[] = {
 void interrupt(){
   char midiByte;
   char midiStatus;
+  char i;
 
   if (PIR1.RCIF){
     midiByte = RCREG;
@@ -289,11 +284,14 @@ void interrupt(){
 }
 
 void startSetClearToSendTimer(){
+  TMR1ON_bit = 1;
+  
   // timer1 has a max timeout of 105 ms at 20MHz.
   // With a 1:2 prescaler, the delay is 26ms.
-  TMR1ON_bit = 1;
-  TMR1H = 0;
-  TMR1L = 0;
+  
+  // At 16MHz to get 25ms with a 1:2 prescaler:
+  TMR1H         = 0x3C;
+  TMR1L         = 0xB0;
 }
 
 void switchToMidi(){
@@ -305,7 +303,7 @@ void switchToMidi(){
 void startSwitchToMidiTimer(){
   //if already running, do nothing.
   if(TMR0ON_bit == 0){
-    // timer0 has a max timeout of 13 ms at 20MHz
+    // timer0 has a max timeout of 13 ms at 20MHz, 16.4ms at 16MHz
     TMR0H = 0;
     TMR0L = 0;
 
@@ -558,7 +556,6 @@ void readFromRxBuffer(){
 void treatMidiByte(char midiByte){
 
   if(midiByte.F7 == 1){ //status byte
-  
     lastMidiStatus = (midiByte & 0xF0);
 
     //cc message designated for this device, these are not passed on.
@@ -846,7 +843,7 @@ void convertAndTransmitData(char midiValue){
       transmit(lastPg200Address, TYPE_ADDR, TXMODE_PG200);
       transmit(mask, TYPE_DATA, TXMODE_PG200);
       transmit(newCombinedSwitchesState, TYPE_DATA, TXMODE_PG200);
-      
+
       //Store the new switch state
       pg200switchStates[lastPg200Address] = newCombinedSwitchesState;
     }
@@ -864,7 +861,6 @@ void convertAndTransmitData(char midiValue){
 
 
 void transmit(char input, char pg200type, char txmode){
-
   // switch between sending midi and pg200 messages
   switchTxMode(txmode);
 
@@ -883,7 +879,7 @@ void transmit(char input, char pg200type, char txmode){
   }
 }
 
-void resetSwitchStates(){
+void resetPg200SwitchStates(){
   char i;
   for(i=0; i<3; i++){
     pg200switchStates[i] = 0;
@@ -951,50 +947,40 @@ void setupTxPort(){
 void flashStatus(char times){
   char i;
   for(i=0; i< times; i++){
-    STATUS_LED = 1;
+    STATUS_LED = STATUS_LED_ON;
     delay_ms(100);
-    STATUS_LED = 0;
+    STATUS_LED = STATUS_LED_OFF;
     delay_ms(100);
   }
 }
 
 // read switch and change output mode.
-void readSwitch(){
-
-  char line1;
-  char line2;
-  char line3;
+void readModeSwitch(){
 
   if(SWITCH_PORT_BLOCK_MIDI == 1){
-    if(settings[POS_OUT_MODE] != 0){
-      STATUS_LED = 0;
+    if(settings[POS_OUT_MODE] != OUTPUTMODE_BLOCK_MIDI){
       delay_ms(500);
       flashStatus(1);
       settings[POS_OUT_MODE] = OUTPUTMODE_BLOCK_MIDI;
       TXMODE_PORT = TXMODE_PG200;
       delay_ms(500);
-      STATUS_LED = 1;
     }
   } else if(SWITCH_PORT_REVERT_TO_MIDI == 1){
-    if(settings[POS_OUT_MODE] != 1){
-      STATUS_LED = 0;
+    if(settings[POS_OUT_MODE] != OUTPUTMODE_REVERT_TO_MIDI){
       delay_ms(500);
       flashStatus(2);
       settings[POS_OUT_MODE] = OUTPUTMODE_REVERT_TO_MIDI;
       TXMODE_PORT = TXMODE_MIDI;
       clearToSendMidi = 1;
       delay_ms(500);
-      STATUS_LED = 1;
     }
   } else if(SWITCH_PORT_INSTANT_SWITCH == 1){
-    if(settings[POS_OUT_MODE] != 2){
-      STATUS_LED = 0;
+    if(settings[POS_OUT_MODE] != OUTPUTMODE_INSTANT_SWITCH){
       delay_ms(500);
       flashStatus(3);
       settings[POS_OUT_MODE] = OUTPUTMODE_INSTANT_SWITCH;
       TXMODE_PORT = TXMODE_MIDI;
       delay_ms(500);
-      STATUS_LED = 1;
     }
   }
 }
@@ -1010,46 +996,88 @@ void setupTimers(){
   TMR0IF_bit = 0;
   TMR0IE_bit = 1;
 
-  T1CKPS0_bit = 1;
+  //prescaler, 01 = 1:2 prescale
   T1CKPS1_bit = 0;
-  TMR1CS_bit = 0;
+  T1CKPS0_bit = 1;
+
+  // clock source, 00 = use instruction clock (Fosc/4)
+  TMR1CS1_bit = 0;
+  TMR1CS0_bit = 0;
   TMR1ON_bit = 0;
+  TMR1GE_bit = 0; // counts regardless of gate function
   TMR1IF_bit = 0;
   TMR1IE_bit = 1;
 }
 
+void setupOscillator(){
+  //Additional settings in project -> edit project
+  // PLL enabled: disabled
+  // Oscillator selection: internal oscillator
+  // Frequency: 16MHz
+  INTSRC_bit = 1;
+  IRCF2_bit = 1;
+  IRCF1_bit = 1;
+  IRCF0_bit = 1;
+}
+
+void setupModeSwitch(){
+  //Set direction on switch lines to read
+  SWITCH_TRIS1=1;
+  SWITCH_TRIS2=1;
+  SWITCH_TRIS3=1;
+
+  // Set default mode to something that is not a real state, to make leds
+  // flash the first time the switch is read.
+  settings[POS_OUT_MODE] = 3;
+}
+
+void setupLeds(){
+  STATUS_LED_TRIS = 0;
+  STATUS_LED = 1;
+}
+
+void disableAnalogPins(){
+  //turn off analog inputs (set ports to digital)
+  ANSELA  = 0;
+  ANSELB  = 0;
+  ANSELC  = 0;
+
+  // turn off A/D converter
+  ADCON0 = 0;
+}
+
+void writeToRxBufferCopy(char input){
+  char nextRxPtr;
+  nextRxPtr = (rxWritePtr + 1) % RX_LEN;
+
+  //check if the read pointer is ahead of the write pointer
+  if(nextRxPtr != rxReadPtr){
+    rxWritePtr = nextRxPtr;
+    rxBuffer[rxWritePtr] = input;
+  }
+}
+
 void main() {
-  ADCON0 = 0; // turn off A/D converter
-  ADCON1 = 0x07; //turn off analogue inputs (for P18F458)
-
-  TRISA = 0;
-  TRISB = 0;
-  //TRISC = 0;
-
-  PORTA = 0;
-  PORTB = 0;
-  //PORTC = 0;
-
-  //Set read direction on switch lines
-  //TRISC0_bit=1;
-  //TRISC1_bit=1;
-  //TRISC2_bit=1;
-  TRISB0_bit=1;
-  TRISB1_bit=1;
-  TRISB2_bit=1;
-
-  STATUS_TRIS = 0;
+  setupOscillator();
+  disableAnalogPins();
+  setupLeds();
+  
+  // tell the world we are starting up.
   flashStatus(3);
 
   setupInterrupts();
-  resetSwitchStates();
-
+  setupModeSwitch();
+  
   // overwrite default settings with settings from EE.
-  if(hasSettingsInEE()){
-    readSettingsFromEE();
-  }
+  //TODO: Make a 'clear EE' by checking if all switch inputs are 0.
+
+  //if(hasSettingsInEE()){
+  //  readSettingsFromEE();
+  //}
   
   loadPg200maps();
+  resetPg200SwitchStates();
+  
   setupRxBuffer();
   setupMidi();
   setupUsart();
@@ -1059,10 +1087,13 @@ void main() {
   //Send 'ping' to JX-3P, telling it that the PG-200 is connected.
   sendPing();
 
+  // tell the world we're ready to run
   flashStatus(3);
-  STATUS_LED=1;
 
   while(1){
+    // check if mode switch has changed
+    readModeSwitch();
+    
     if(clearToSendMissingNoteOffs == 1){
       sendMissingNoteOffs();
     }
@@ -1070,6 +1101,5 @@ void main() {
     //read from the rx data and convert and transmit midi and pg-200 messages
     //to the JX-3P - for ever and ever!
     readFromRxBuffer();
-    readSwitch();
   }
 }
