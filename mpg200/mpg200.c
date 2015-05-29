@@ -5,7 +5,7 @@
 //PG200 TX type
 #define TYPE_ADDR 1
 #define TYPE_DATA 0
-#define TYPE_IGNORED 0
+#define TYPE_IGNORED 0 //not important what this is, just indicates that what is sent is of no significance.
 
 //RX ring buffer length. Must not exceed 256 bytes...
 #define RX_LEN 256
@@ -18,6 +18,7 @@
 //midi routing modes
 #define MIDI_ROUTE_TO_THRU 0
 #define MIDI_ROUTE_TO_PG200 1
+#define MIDI_ROUTE_IGNORE 2
 
 //Constants for all PG200 controllers
 #define NUMBER_OF_SWITCHES 16
@@ -92,6 +93,7 @@
 //COMMENTS:
 //- Midi note messages and cc messages must not be mixed (e.g. they must originate from the same source) to prevent problems with running statuses. This should not really be a problem in real life though.
 //- Programmer switch must be in MIDI BUS position for both midi and pg-200 to work at the same time.
+//- Realtime and MIDI timecode messages are removed
 
 //TODO: 
 //- Reset counter to 0 if an unknown CC number is received
@@ -102,7 +104,7 @@
 //- update map on sysex (write to flash memory)
 //- read map from flash on startup
 //- check that switches are correctly implemented (0 vs. 1)
-//- implement Manual and Write
+//- implement Write
 //- Send initial button states if they haven't yet been sent (on startup - but only the first time parts of a button changes..
 //  May be able to just send a button state whenever a button state message arrives, and use the same
 //  mask every time instead of calculating it.
@@ -213,7 +215,7 @@ char settings[] = {
   OUTPUTMODE_REVERT_TO_MIDI, //default output mode (but is overwritten by the switch detector)
 
   //Default midi mapping
-  //switches
+  //switches (16)
   72,  // SW_A_RANGE
   73,  // SW_A_WAVE
   82,  // SW_A_LFO
@@ -231,7 +233,7 @@ char settings[] = {
   127, // SW_MANUAL
   127, // SW_WRITE
 
-  //Pots
+  //Pots (18)
   12, // POT_B_FINE
   13, // POT_B_TUNE
   14, // POT_DCO_ENV
@@ -559,6 +561,13 @@ void readFromRxBuffer(){
 void treatMidiByte(char midiByte){
 
   if(midiByte.F7 == 1){ //status byte
+    // to prevent switching between midi and pg-200 because of realtime events, we have chosen to ignore these midi messages.
+    // 248 to 255 are realtime events, 241 is MIDI Time Code Quarter Frame.
+    if(settings[POS_OUT_MODE] == OUTPUTMODE_REVERT_TO_MIDI && (midiByte > 247 || midiByte == 241)){
+      midiRouting = MIDI_ROUTE_IGNORE;
+      return;
+    }
+    
     lastMidiStatus = (midiByte & 0xF0);
 
     //cc message designated for this device, these are not passed on.
@@ -567,7 +576,7 @@ void treatMidiByte(char midiByte){
       midiByteCounter = 1;
     } else {
       midiRouting = MIDI_ROUTE_TO_THRU;
-      if(OUTPUTMODE_INSTANT_SWITCH || TXMODE_PORT == TXMODE_MIDI && clearToSendMidi == 1){
+      if(settings[POS_OUT_MODE] == OUTPUTMODE_INSTANT_SWITCH || TXMODE_PORT == TXMODE_MIDI && clearToSendMidi == 1){
         // We have switched to midi mode and waited the necessary time for the signal to settle.
         // If message is destined for this device (and thus the jx-3p), we have to change the
         // midi channel to 0. NB: Non musical commands like sysex messages are left untouched 
@@ -605,7 +614,10 @@ void treatMidiByte(char midiByte){
       }
     }
   } else { // data byte
-    if(midiRouting == MIDI_ROUTE_TO_PG200){
+    // to prevent switching between midi and pg-200 because of realtime events, we have chosen to ignore these midi messages.
+    if(midiRouting == MIDI_ROUTE_IGNORE){
+      return;
+    } else if(midiRouting == MIDI_ROUTE_TO_PG200){
       if(midiByteCounter == 1){ //convert CC number to pg200controller and store address, prepares for data transfer
       
         //TODO: Reset counter to 0 if an unknown CC number is received
@@ -1122,11 +1134,12 @@ void main() {
   
   // overwrite default settings with settings from EE.
   //TODO: Make a 'clear EE' by checking if all switch inputs are 0.
+  /*
   if(shouldDoFactoryReset()){
     clearSettingsFromEE();
   } else if(hasSettingsInEE()){
     readSettingsFromEE();
-  }
+  } */
   
   loadPg200maps();
   resetPg200SwitchStates();
