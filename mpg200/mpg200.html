@@ -1,0 +1,155 @@
+<html>
+  <head>
+    <script src="./mpg200.js"></script>
+    <script src="./jquery-2.1.4.min.js"></script>
+	<script src="./FileSaver.min.js"></script>
+	<!--script src="./Blob.js"></script-->
+  </head>
+  <body>
+    <h1>MPG-200 sysex generator</h1>
+    <h2>Switches</h2>
+    <table>
+      <tr>
+        <td>DCO-1 Range</td><td><input type="text" pos="0"></td>
+        <td>DCO-2 Range</td><td><input type="text" pos="4"></td>
+      </tr>
+      <tr>
+        <td>DCO-1 Waveform</td><td><input type="text" pos="1"></td>
+        <td>DCO-2 Waveform</td><td><input type="text" pos="5"></td>
+      </tr>
+      <tr>
+        <td>DCO-1 LFO</td><td><input type="text" pos="2"></td>
+        <td>DCO-2 LFO</td><td><input type="text" pos="6"></td>
+      </tr>
+      <tr>
+        <td>DCO-1 ENV</td><td><input type="text" pos="3"></td>
+        <td>DCO-2 ENV</td><td><input type="text" pos="7"></td>
+      </tr>
+      <tr>
+        <td>LFO Wave</td><td><input type="text" pos="13"></td>
+        <td>DCO-2 Cross Mod</td><td><input type="text" pos="8"></td>
+      </tr>
+      <tr>
+        <td>DCO Envelope polarity</td><td><input type="text" pos="12"></td>
+        <td>VCF Envelope polarity</td><td><input type="text" pos="9"></td>
+      </tr>
+      <tr>
+        <td>VCA Mode</td><td><input type="text" pos="10"></td>
+        <td>Chorus</td><td><input type="text" pos="11"></td>
+      </tr>
+      <tr>
+        <td>Manual</td><td><input type="text" pos="14"></td>
+        <td>Write</td><td><input type="text" pos="15"></td>
+      </tr>
+    </table>
+    
+    <h2>Potentiometers</h2>
+    <table>
+      <tr>
+        <td>Tune</td><td><input type="text" pos="17"></td>
+        <td>Fine tune</td><td><input type="text" pos="16"></td>
+      </tr>
+      <tr>
+        <td>Source mix</td><td><input type="text" pos="20"></td>
+        <td>HPF</td><td><input type="text" pos="21"></td>
+      </tr>     
+      <tr>
+        <td>Cutoff Freq</td><td><input type="text" pos="23"></td>
+        <td>Resonance</td><td><input type="text" pos="22"></td>
+      </tr>     
+      <tr>
+        <td>VCF LFO Mod</td><td><input type="text" pos="25"></td>
+        <td>VCF ENV Mod</td><td><input type="text" pos="24"></td>
+      </tr>
+      <tr>
+        <td>DCO LFO Mod</td><td><input type="text" pos="19"></td>
+        <td>DCO ENV Mod</td><td><input type="text" pos="18"></td>
+      </tr>
+      <tr>
+        <td>Pitch Follow</td><td><input type="text" pos="26"></td>
+        <td>VCA Level</td><td><input type="text" pos="27"></td>
+      </tr>
+      <tr>
+        <td>LFO Delay Time</td><td><input type="text" pos="29"></td>
+        <td>LFO Rate</td><td><input type="text" pos="28"></td>
+      </tr>
+      <tr>
+        <td>Attack</td><td><input type="text" pos="30"></td>
+        <td>Decay</td><td><input type="text" pos="31"></td>
+      </tr>
+      <tr>
+        <td>Sustain</td><td><input type="text" pos="32"></td>
+        <td>Release</td><td><input type="text" pos="33"></td>
+      </tr>
+    </table>
+    
+	<h2>Other settings</h2>
+    <table>
+      <tr>
+        <td><input type="checkbox" pos="34"></td><td>Save settings to EE prom after every sysex update</td>
+      </tr>
+      <tr>
+        <td><input type="checkbox" pos="37"></td><td>Remove realtime MIDI and MIDI not destined for the JX-3P</td>
+      </tr>
+	  
+      <tr>
+        <td>MIDI Channel</td>
+		<td>
+			<select pos="35">
+				<option value="0" selected>1</option>
+				<option value="1">2</option>
+				<option value="2">3</option>
+				<option value="3">4</option>
+				<option value="4">5</option>
+				<option value="5">6</option>
+				<option value="6">7</option>
+				<option value="7">8</option>
+				<option value="8">9</option>
+				<option value="9">10</option>
+				<option value="10">11</option>
+				<option value="11">12</option>
+				<option value="12">13</option>
+				<option value="13">14</option>
+				<option value="14">15</option>
+				<option value="15">16</option>
+			</select>
+		</td>			
+      </tr>
+      <tr>
+        <td>MIDI mix mode</td>
+		<td>
+			<select pos="36">
+				<option value="1">Revert to MIDI after PG-200 message</option>
+				<option value="2">Switch instantly between MIDI and PG-200</option>
+				<option value="0">Block all midi messages</option>
+			</select>
+		</td>
+      </tr>	  
+      <tr>
+        <td><label for="timeouts">Timeouts before midi</label></td><td><input id="timeouts" type="text" pos="38"></td>
+      </tr>	  
+      <tr>
+        <td colspan="2">Number of timeouts after last PG-200 message before switching to midi. Approximately 10ms delay per timeout + another 26ms before midi will be sent<br><br></td>
+      </tr>	 
+	  <tr>
+		<td>Two pole switch boundary</td><td><input type="text" pos="39" ></td>
+	  </tr>
+	  <tr>
+		<td>Three pole switch boundaries</td><td><input type="text" pos="40">, <input type="text" pos="41"></td>
+	  </tr>
+	  <tr>
+		<td>Four pole switch boundaries</td><td><input type="text" pos="42">, <input type="text" pos="43">, <input type="text" pos="44"></td>
+	  </tr>
+      <tr>
+        <td colspan="2">Each interval is [0, boundary>, e.g. exclusive of upper boundary value.</td>
+      </tr>	 	  
+	</table>
+	<p>
+		<button onclick="generateSettings()">Download settings as sysex</button> 
+		<button onclick="downloadClearSettings()">Download clear-settings sysex</button>
+	</p>
+	<script>
+	  populateFields(defaultsettings);	  
+	</script>
+  </body>
+</html>

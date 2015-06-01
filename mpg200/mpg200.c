@@ -14,6 +14,12 @@
 #define MIDI_NOTE_OFF 0x80
 #define MIDI_NOTE_ON 0x90
 #define MIDI_MODE_CC 0xB0
+#define MIDI_SYSEX_START 0xF0
+#define MIDI_SYSEX_END 0xF7
+
+//midi bitmasks
+#define MIDI_BITMASK_STATUS 0xF0
+#define MIDI_BITMASK_CHANNEL 0x0F
 
 //midi routing modes
 #define MIDI_ROUTE_TO_THRU 0
@@ -93,18 +99,16 @@
 //COMMENTS:
 //- Midi note messages and cc messages must not be mixed (e.g. they must originate from the same source) to prevent problems with running statuses. This should not really be a problem in real life though.
 //- Programmer switch must be in MIDI BUS position for both midi and pg-200 to work at the same time.
-//- Realtime and MIDI timecode messages are removed
+//- Realtime and MIDI timecode messages and messages for other midi channels than the configured one for this device are removed by default. This can be overridden in the config.
+//- Write is done by sending a CC with number 127 and value 0. NB: mode switch may have to be manually set to "Programmer".
 
 //TODO: 
 //- Reset counter to 0 if an unknown CC number is received
 //- Allow variable boundaries for switch midi input
 //- Check if we need to send not 2*midi value but 2*midi value +1 or something, to get proper tuning from centerable pots like osc2 tune.
-//- remove bytes not addressed for this device
-//- change midi channel
 //- update map on sysex (write to flash memory)
 //- read map from flash on startup
 //- check that switches are correctly implemented (0 vs. 1)
-//- implement Write
 //- Send initial button states if they haven't yet been sent (on startup - but only the first time parts of a button changes..
 //  May be able to just send a button state whenever a button state message arrives, and use the same
 //  mask every time instead of calculating it.
@@ -196,24 +200,22 @@ char sysexDataCounter = 0;
 char sysexAddress[] = {0, 43, 102}; //randomly chosen but must start with 0
 
 /**** SETTINGS  ****/
-#define SETTINGS_LENGTH 39
-#define POS_SETTINGS_IN_EE 0
-#define POS_SAVE_SETTINGS_AFTER_SYSEX 1
-#define POS_MIDI_CH 2
-#define POS_OUT_MODE 3
-#define POS_CONTROLLERS 4 //where in the settings array the controller mappings start
-
-// 37 overflows at 20MHz gives a delay of 481 ms
-// 30 overflows at 16MHz gives a delay of 492 ms
+#define SETTINGS_LENGTH 45
+#define POS_CONTROLLERS 0 //where in the settings array the controller mappings start
+#define POS_SAVE_SETTINGS_AFTER_SYSEX 34
+#define POS_MIDI_CH 35
+#define POS_OUT_MODE 36
+#define POS_FILTER_MIDI 37
 #define POS_SWITCH_TO_MIDI_TIMER_OVERFLOWS 38
+#define POS_2_POLE_SWITCH_BOUNDARY 39
+#define POS_3_POLE_SWITCH_BOUNDARY_1 40
+#define POS_3_POLE_SWITCH_BOUNDARY_2 41
+#define POS_4_POLE_SWITCH_BOUNDARY_1 42
+#define POS_4_POLE_SWITCH_BOUNDARY_2 43
+#define POS_4_POLE_SWITCH_BOUNDARY_3 44
 
 
 char settings[] = {
-  0, // default: no settings in ee. If any settings are found in ee memory on startup, they are used instead. This property is set by the system and cannot be changed using sysex
-  0, // Save settings to EE prom after sysex update.
-  0, // default midi channel
-  OUTPUTMODE_REVERT_TO_MIDI, //default output mode (but is overwritten by the switch detector)
-
   //Default midi mapping
   //switches (16)
   72,  // SW_A_RANGE
@@ -230,7 +232,7 @@ char settings[] = {
   85,  // SW_CHORUS
   84,  // SW_DCO_POL
   83,  // SW_LFO_WAVE
-  127, // SW_MANUAL
+  126, // SW_MANUAL
   127, // SW_WRITE
 
   //Pots (18)
@@ -252,8 +254,24 @@ char settings[] = {
   27, // POT_D 31
   28, // POT_S 32
   29, // POT_R 33
-  
+
+  0, // Save settings to EE prom after sysex update.
+  0, // default midi channel
+  OUTPUTMODE_REVERT_TO_MIDI, //default output mode (but is overwritten by the switch detector)
+  1, // Remove realtime midi and midi not destined for the JX-3P
   4, //DEFAULT_SWITCH_TO_MIDI_TIMER_OVERFLOWS - 20MHz: 4 timeouts approx 50ms delay after PG-200 before switching to midi (+ another 26ms before midi can be sent).
+
+  //two pole switch boundary
+  64,
+
+  //three pole switch boundaries
+  42,
+  84,
+
+  //four pole switch boundaries
+  32,
+  64,
+  96
 };
 
 /**** PROGRAM START ****/
@@ -560,18 +578,27 @@ void readFromRxBuffer(){
 // will return 1 and try to read the byte again later).
 void treatMidiByte(char midiByte){
 
+  unsigned short isCorrectMidiChannel;
+
   if(midiByte.F7 == 1){ //status byte
-    // to prevent switching between midi and pg-200 because of realtime events, we have chosen to ignore these midi messages.
+  
+    isCorrectMidiChannel = (midiByte & MIDI_BITMASK_CHANNEL) == settings[POS_MIDI_CH];
+  
+    // to prevent switching between midi and pg-200 because of realtime events, 
+    // these messages may be ignored.
     // 248 to 255 are realtime events, 241 is MIDI Time Code Quarter Frame.
-    if(settings[POS_OUT_MODE] == OUTPUTMODE_REVERT_TO_MIDI && (midiByte > 247 || midiByte == 241)){
+    if(settings[POS_FILTER_MIDI] && (
+                                 isCorrectMidiChannel == 0 ||
+                                 midiByte > 247 || 
+                                 midiByte == 241)){
       midiRouting = MIDI_ROUTE_IGNORE;
       return;
     }
     
-    lastMidiStatus = (midiByte & 0xF0);
+    lastMidiStatus = (midiByte & MIDI_BITMASK_STATUS);
 
-    //cc message designated for this device, these are not passed on.
-    if(lastMidiStatus == MIDI_MODE_CC && (midiByte & 0x0F) == settings[POS_MIDI_CH]){
+    //cc message designated for this device, these are not passed on as the jx-3p don't understand CCs anyway.
+    if(lastMidiStatus == MIDI_MODE_CC && isCorrectMidiChannel){
       midiRouting = MIDI_ROUTE_TO_PG200;
       midiByteCounter = 1;
     } else {
@@ -580,8 +607,9 @@ void treatMidiByte(char midiByte){
         // We have switched to midi mode and waited the necessary time for the signal to settle.
         // If message is destined for this device (and thus the jx-3p), we have to change the
         // midi channel to 0. NB: Non musical commands like sysex messages are left untouched 
-        // (all these start with 0xFx).
-        if(lastMidiStatus != 0xF0 && ((midiByte & 0x0F) == settings[POS_MIDI_CH])){
+        // (all these start with 0xFx,  but the last four bits are stripped by the status mask so 
+        // we only need to check for 0xF0).
+        if(lastMidiStatus != 0xF0 && isCorrectMidiChannel){
           midiByte = lastMidiStatus; //strip address bits.
         }
         transmit(midiByte, TYPE_IGNORED, TXMODE_MIDI);
@@ -591,19 +619,17 @@ void treatMidiByte(char midiByte){
         // while the second/third etc were not. This would lead to errors.
         hasSentFirstMidiByte = 1;
       } else {
-        //do not send midi, tell the world that the first byte was not send in order to block subsequent bytes.
+        //do not send midi, tell the world that the first byte was not sent in order to block subsequent bytes.
         hasSentFirstMidiByte = 0;
       }
 
       // Treat sysex status messages.
-      if(midiByte == 0xF0){
+      if(midiByte == MIDI_SYSEX_START){ //sysex start
         sysexByteCounter = 0;
         sysexDataCounter = 0;
         inSysexMode = 1;
         sysexForThisDevice = 1; //will be set to false if address check fails later.
-        //sysex start
-      } else if(midiByte == 0xF7){
-        //sysex end
+      } else if(midiByte == MIDI_SYSEX_END){ //sysex end
         if(settings[POS_SAVE_SETTINGS_AFTER_SYSEX]){
           writeSettingsToEE();
         }
@@ -614,7 +640,7 @@ void treatMidiByte(char midiByte){
       }
     }
   } else { // data byte
-    // to prevent switching between midi and pg-200 because of realtime events, we have chosen to ignore these midi messages.
+    //if status byte was ignores, so must the data bytes.
     if(midiRouting == MIDI_ROUTE_IGNORE){
       return;
     } else if(midiRouting == MIDI_ROUTE_TO_PG200){
@@ -701,7 +727,7 @@ char hasSettingsInEE(){
 
 void writeSettingsToEE(){
   char i;
-  settings[0] = 1; //indicate that ee has settings data.
+  EEPROM_Write(0, 1); //indicate that ee has settings data.
   for(i=0; i<SETTINGS_LENGTH; i++){
     EEPROM_Write(i, settings[i]);
   }
@@ -710,14 +736,15 @@ void writeSettingsToEE(){
 void readSettingsFromEE(){
   char i;
   for(i=0; i<SETTINGS_LENGTH; i++){
-    settings[i] = EEPROM_Read(i);
+    settings[i] = EEPROM_Read(i + 1);
   }
 }
 
 void clearSettingsFromEE(){
   char i;
+  EEPROM_Write(0, 0); //indicate that ee has no settings data.
   for(i=0; i<SETTINGS_LENGTH; i++){
-    EEPROM_Write(i, 0);
+    EEPROM_Write(i + 1, 0);
   }
 }
 
@@ -773,7 +800,7 @@ char getNewStateFour(char shift, char oldState){
 char getNewStateTwoOptions(char shift, char oldState, char midiValue){
   char mask;
 
-  if(midiValue < 64){
+  if(midiValue < settings[POS_2_POLE_SWITCH_BOUNDARY]){
     // Set option bits to 0
     mask = 0b00000001 << shift;
     mask = ~mask; //all bits except the one to set to 0 is now 1
@@ -784,12 +811,11 @@ char getNewStateTwoOptions(char shift, char oldState, char midiValue){
     return oldState | mask;
   }
 }
-
 // Convert a 0-127 midi value into a three state switch value
 char getNewStateThreeOptions(char shift, char oldState, char midiValue){
-  if(midiValue < 42){
+  if(midiValue < settings[POS_3_POLE_SWITCH_BOUNDARY_1]){
     return getNewStateOne(shift, oldState);
-  } else if(midiValue < 84){
+  } else if(midiValue < settings[POS_3_POLE_SWITCH_BOUNDARY_2]){
     return getNewStateTwo(shift, oldState);
   } else{
     return getNewStateThree(shift, oldState);
@@ -798,11 +824,11 @@ char getNewStateThreeOptions(char shift, char oldState, char midiValue){
 
 // Convert a 0-127 midi value into a four state switch value
 char getNewStateFourOptions(char shift, char oldState, char midiValue){
-  if(midiValue < 32){
+  if(midiValue < settings[POS_4_POLE_SWITCH_BOUNDARY_1]){
     return getNewStateOne(shift, oldState);
-  } else if(midiValue < 64){
+  } else if(midiValue < settings[POS_4_POLE_SWITCH_BOUNDARY_2]){
     return getNewStateTwo(shift, oldState);
-  } else if(midiValue < 96){
+  } else if(midiValue < settings[POS_4_POLE_SWITCH_BOUNDARY_3]){
     return getNewStateThree(shift, oldState);
   } else {
     return getNewStateFour(shift, oldState);
@@ -1089,7 +1115,7 @@ void simulateSysexSaveSettings(){
   // settings array is set > 0.
 
   // Start sysex and send sysex address (3 bytes)
-  treatMidiByte(0xF0);
+  treatMidiByte(MIDI_SYSEX_START);
   treatMidiByte(0);
   treatMidiByte(43);
   treatMidiByte(102);
@@ -1107,11 +1133,11 @@ void simulateSysexSaveSettings(){
   treatMidiByte(1);
 
   //exit sysex mode, saves to EE since we set this earlier.
-  treatMidiByte(0xF7);
+  treatMidiByte(MIDI_SYSEX_END);
 }
 
 void simulateSysexClearSettings(){
-  treatMidiByte(0xF0);
+  treatMidiByte(MIDI_SYSEX_START);
   treatMidiByte(0);
   treatMidiByte(43);
   treatMidiByte(102);
@@ -1157,8 +1183,9 @@ void main() {
   flashStatus(3);
 
   while(1){
-    // check if mode switch has changed
-    readModeSwitch();
+    // check if mode switch has changed. Commented out for newer mpg-200 devices
+    // as it is set by sysex instead.
+    // readModeSwitch();
     
     if(clearToSendMissingNoteOffs == 1){
       sendMissingNoteOffs();
