@@ -1,8 +1,10 @@
-#define BASE_NOTE 164 //C0 = 0100100
-#define KEYCOUNT 61
+#include "PVScontroller.h"
+#include "PVScontroller.test.h"
 
-#define COLUMNS 8
-#define ROWS 8
+#define RUNTESTS
+
+#define BASE_NOTE 164 //C0 = 0100100
+
 
 #define NOTE_ON b0
 #define NOTE_ON_SENT b1
@@ -100,14 +102,32 @@ unsigned short calcVelocity(unsigned short newState, unsigned short column){
   noteEndSwitchStates[column] = newState;
 }
 
+
+
 void initSwitchStates(){
   unsigned short i;
   for(i=0; i<COLUMNS; i++){
     noteStartSwitchStates[i]=0;
     noteEndSwitchStates[i]=0;
+    readyToSendOff[COLUMNS]=0;
+    readyToSendOn[COLUMNS]=0;
+
   }
 }
 
-void main() {
+void init(){
   initSwitchStates();
 }
+
+#ifdef RUNTESTS
+void main() {
+  init();
+  runTests();
+}
+#endif
+
+#ifndef RUNTESTS
+void main() {
+  init();
+}
+#endif
