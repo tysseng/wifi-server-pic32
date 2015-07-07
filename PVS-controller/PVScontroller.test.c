@@ -71,7 +71,74 @@ void testThatCorrectTimerBytesAreSet(){
     
     calcNoteOnOff(0b10000001, 7); // note 0 * 8 + 7 = 7
     assertEquals(2, noteTimers[7], "Note 7 not set");
-    //TO DO: Sjekk note 61, 62 og 63, og sjekk notes off i separat test
+
+}
+
+void testThatNotesAbove60AreIgnoredInCalcNoteOnOff(){
+    noteStartSwitchStates[5] = 0b11111111; // simulate that all keys are pressed
+    calcNoteOnOff(0b00000000, 5); //simulate all keys released
+    assertEquals(0b01111111, readyToSendOff[5], "Note 61 should not be sent");
+
+    noteStartSwitchStates[6] = 0b11111111; // simulate that all keys are pressed
+    calcNoteOnOff(0b00000000, 6); //simulate all keys released
+    assertEquals(0b01111111, readyToSendOff[6], "Note 62 should not be sent");
+
+    noteStartSwitchStates[7] = 0b11111111; // simulate that all keys are pressed
+    calcNoteOnOff(0b00000000, 7); //simulate all keys released
+    assertEquals(0b01111111, readyToSendOff[7], "Note 63 should not be sent");
+}
+
+void testVelocityCalculationNormal(){
+    noteTimers[0] = 0; // simulate key strike at cycle 0.
+
+    cycleCounter=2; // simulate that key hits bottom after 2 ticks
+    calcVelocity(0b00000001, 0); // simulate key strike end
+    
+    assertEquals(2, noteVelocity[0], "Normal velocity is wrong");
+}
+
+void testVelocityCalculationInverse(){
+    noteTimers[0] = 4; // simulate key strike at cycle 2.
+
+    cycleCounter=2; // simulate that key hits bottom after 254 ticks (counter has overflowed and restarted.
+    calcVelocity(0b00000001, 0); // simulate key strike end
+
+    assertEquals(254, noteVelocity[0], "Inverse velocity is wrong");
+}
+
+void testThatReadyToSendIsSetOnKeyBottom(){
+    calcVelocity(0b00000001, 2); // simulate key strike end
+    
+    assertEquals(0b00000001, readyToSendOn[2], "ready to send not set");
+}
+
+void testThatReadyToSendIsNotRetriggered(){
+    calcVelocity(0b00000001, 2); // simulate key strike end
+
+    readyToSendOn[2] = 0; // simulate that key has been sent
+
+    calcVelocity(0b00000001, 2); // same state (key has not been released
+
+    assertEquals(0b00000000, readyToSendOn[2], "ready to send should not be retriggered");
+}
+
+void testThatReadyToSendsAreMerged(){
+    calcVelocity(0b00000001, 2); // simulate key strike end 1
+    calcVelocity(0b10000000, 2); // simulate key strike end 2
+
+    assertEquals(0b10000001, readyToSendOn[2], "ready to sends shoud have been merged");
+}
+
+void testThatNotesAbove60AreIgnoredInCalcVelocity(){
+    calcVelocity(0b11111111, 5);
+    assertEquals(0b01111111, readyToSendOn[5], "Note 61 should not be sent");
+
+    calcVelocity(0b11111111, 6);
+    assertEquals(0b01111111, readyToSendOn[6], "Note 62 should not be sent");
+
+    calcVelocity(0b11111111, 7);
+    assertEquals(0b01111111, readyToSendOn[7], "Note 63 should not be sent");
+
 }
 
 void runTests(){
@@ -80,5 +147,12 @@ void runTests(){
     add(&testThatNoteOnDoesNotTriggerTwice);
     add(&testThatNoteOffUpdatesReadyToSendOffBit);
     add(&testThatCorrectTimerBytesAreSet);
+    add(&testThatNotesAbove60AreIgnoredInCalcNoteOnOff);
+    add(&testVelocityCalculationNormal);
+    add(&testVelocityCalculationInverse);
+    add(&testThatReadyToSendIsSetOnKeyBottom);
+    add(&testThatReadyToSendIsNotRetriggered);
+    add(&testThatReadyToSendsAreMerged);
+    add(&testThatNotesAbove60AreIgnoredInCalcVelocity);
     run(&init);
 }
