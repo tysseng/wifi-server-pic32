@@ -1,3 +1,9 @@
+//TODO:
+// korrekte verdider for commands
+// korrekte output pins
+// lage transfer-funksjon for calculate velociry
+// reset CD4022 on init
+
 #include "PVScontroller.h"
 #include "PVScontroller.test.h"
 
@@ -5,10 +11,15 @@
 
 #define BASE_NOTE 164 //C0 = 0100100
 
+// I/O pins
+#define READY_TO_SEND_PIN porta.f0
+#define OUTPUT_BUS portb
+#define KEYS_START_ROW portc
+#define KEYS_END_ROW portd
 
-#define NOTE_ON b0
-#define NOTE_ON_SENT b1
-#define NOTE_OFF_SENT b1
+// commands to send to the master MCU
+#define COMMAND_NOTE_ON 0b10000000
+#define COMMAND_NOTE_OFF 0b00000000
 
 unsigned short noteTimers[KEYCOUNT];
 unsigned short noteVelocity[KEYCOUNT];
@@ -19,13 +30,28 @@ unsigned short noteEndSwitchStates[COLUMNS];
 unsigned short readyToSendOff[COLUMNS];
 unsigned short readyToSendOn[COLUMNS];
 
-unsigned short currentColumn = 0;
-
-unsigned short cycleCounter = 0;
+unsigned short currentColumn;
+unsigned short cycleCounter;
 
 void interrupt() {
+  unsigned short column;
+
+  // colScanTimer must run 8 times faster than the desired cycle counter speed
+  // as we only update the cycleCounter once every key has been scanned.
   if(/*colScanTimer*/ 0){
-    cycleCounter++;
+
+    calcNoteOnOff(KEYS_START_ROW, currentColumn);
+    calcVelocity(KEYS_END_ROW, currentColumn);
+
+    //TODO: switch to next row - lets values settle untill next timeout.
+    currentColumn = (currentColumn + 1) % COLUMNS;
+    //TODO: Send clock pulse to counter
+
+    // Increment counter before starting a new round.
+    // Counter is only incremented once per round, not once per column
+    if(currentColumn == 0){
+      cycleCounter++;
+    }
   }
 }
 
@@ -102,8 +128,24 @@ void calcVelocity(unsigned short newState, unsigned short column){
   noteEndSwitchStates[column] = newState;
 }
 
+// blocking send, sets a data value on the output and waits until the receiver
+// indicates that the value has been read.
+void send(unsigned short value){
+
+  OUTPUT_BUS = value;
+  while(READY_TO_SEND_PIN == 0){
+    sleep_us(10);
+  }
+}
+
+unsigned short calculateVelocity(unsigned short velocityTime){
+  return 0;
+}
+
 void sendNoteOn(unsigned short noteIndex, unsigned short velocityTime){
-  // must block untill note has been accepted
+  unsigned short velocity = calculateVelocity(velocityTime);
+  send(COMMAND_NOTE_ON | (BASE_NOTE + noteIndex);
+  send(velocity);
 }
 
 void sendNoteOns(){
@@ -116,7 +158,10 @@ void sendNoteOns(){
     for(column=0; column < COLUMNS; column++){
       if(readyToSendOn[column] & mask){
         sendNoteOn(noteIndex, noteVelocity[noteIndex]);
-        readyToSendOn[column] & ~mask; // clear readyToSend
+        
+        // clear readyToSend. Only the current bit may be cleared, as new
+        // ones may have been set through interrupts while we are in this loop
+        readyToSendOn[column] & ~mask;
       }
       noteIndex++;
     }
@@ -124,8 +169,8 @@ void sendNoteOns(){
   }
 }
 
-void sendNoteOff(unsigned short noteIndex, unsigned short velocityTime){
-  // must block untill note has been accepted
+void sendNoteOff(unsigned short noteIndex){
+  send(COMMAND_NOTE_OFF | (BASE_NOTE + noteIndex);
 }
 
 void sendNoteOffs(){
@@ -138,7 +183,10 @@ void sendNoteOffs(){
     for(column=0; column < COLUMNS; column++){
       if(readyToSendOff[column] & mask){
         sendNoteOff(noteIndex);
-        readyToSendOff[column] & ~mask; // clear readyToSend
+        
+        // clear readyToSend. Only the current bit may be cleared, as new
+        // ones may have been set through interrupts while we are in this loop
+        readyToSendOff[column] & ~mask;
       }
       noteIndex++;
     }
@@ -146,28 +194,30 @@ void sendNoteOffs(){
   }
 }
 
-void initSwitchStates(){
+void initKeyScanner(){
   unsigned short i;
   for(i=0; i<COLUMNS; i++){
     noteStartSwitchStates[i]=0;
     noteEndSwitchStates[i]=0;
     readyToSendOff[COLUMNS]=0;
     readyToSendOn[COLUMNS]=0;
-
   }
+  currentColumn = 0;
+  //TODO: Make sure counter is at 0, may read input from counter.
 }
 
-void initVelocity(){
+void initVelocityTiming(){
   unsigned short i;
   for(i=0; i<KEYCOUNT; i++){
     noteTimers[i]=0;
     noteVelocity[i]=0;
   }
+  cycleCounter = 0;
 }
 
 void init(){
-  initSwitchStates();
-  initVelocity();
+  initKeyScanner();
+  initVelocityTiming();
 }
 
 #ifdef RUNTESTS
