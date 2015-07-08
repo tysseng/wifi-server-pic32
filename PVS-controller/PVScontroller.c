@@ -4,16 +4,31 @@
 // lage transfer-funksjon for calculate velociry
 // reset CD4022 on init
 
+#define RUNTESTS
+
+// Mock ports when in test mode
+#ifdef RUNTESTS
+  #define OUTPUT_BUS mockedOutputBus
+  #define READY_TO_SEND_PIN mockedReadyToSendPin.b0
+  unsigned short mockedOutputBus;
+  unsigned short mockedReadyToSendPin;
+  unsigned short lastNoteSent;
+  unsigned short lastVelocitySent;
+#endif
+
+// Real ports when not in test mode
+#ifndef RUNTESTS
+  #define OUTPUT_BUS portb
+  #define READY_TO_SEND_PIN porta.f0
+#endif
+
 #include "PVScontroller.h"
 #include "PVScontroller.test.h"
 
-#define RUNTESTS
-
-#define BASE_NOTE 164 //C0 = 0100100
+#define BASE_NOTE 24 //C0 = 0100100
 
 // I/O pins
-#define READY_TO_SEND_PIN porta.f0
-#define OUTPUT_BUS portb
+
 #define KEYS_START_ROW portc
 #define KEYS_END_ROW portd
 
@@ -40,8 +55,8 @@ void interrupt() {
   // as we only update the cycleCounter once every key has been scanned.
   if(/*colScanTimer*/ 0){
 
-    calcNoteOnOff(KEYS_START_ROW, currentColumn);
-    calcVelocity(KEYS_END_ROW, currentColumn);
+    checkKeyStartSwitches(KEYS_START_ROW, currentColumn);
+    checkKeyBottomSwitches(KEYS_END_ROW, currentColumn);
 
     //TODO: switch to next row - lets values settle untill next timeout.
     currentColumn = (currentColumn + 1) % COLUMNS;
@@ -55,7 +70,7 @@ void interrupt() {
   }
 }
 
-void calcNoteOnOff(unsigned short newState, unsigned short column){
+void checkKeyStartSwitches(unsigned short newState, unsigned short column){
 
   unsigned short changes;
   unsigned short row = 0;
@@ -90,7 +105,7 @@ void calcNoteOnOff(unsigned short newState, unsigned short column){
   noteStartSwitchStates[column] = newState;
 }
 
-void calcVelocity(unsigned short newState, unsigned short column){
+void checkKeyBottomSwitches(unsigned short newState, unsigned short column){
 
   unsigned short changes;
   unsigned short row = 0;
@@ -134,7 +149,7 @@ void send(unsigned short value){
 
   OUTPUT_BUS = value;
   while(READY_TO_SEND_PIN == 0){
-    sleep_us(10);
+    delay_us(10);
   }
 }
 
@@ -144,7 +159,12 @@ unsigned short calculateVelocity(unsigned short velocityTime){
 
 void sendNoteOn(unsigned short noteIndex, unsigned short velocityTime){
   unsigned short velocity = calculateVelocity(velocityTime);
-  send(COMMAND_NOTE_ON | (BASE_NOTE + noteIndex);
+  unsigned short noteToSend = COMMAND_NOTE_ON | (BASE_NOTE + noteIndex);
+  #ifdef RUNTESTS
+    lastNoteSent = noteToSend;
+    lastVelocitySent = velocity;
+  #endif
+  send(noteToSend);
   send(velocity);
 }
 
@@ -161,7 +181,7 @@ void sendNoteOns(){
         
         // clear readyToSend. Only the current bit may be cleared, as new
         // ones may have been set through interrupts while we are in this loop
-        readyToSendOn[column] & ~mask;
+        readyToSendOn[column] &= ~mask;
       }
       noteIndex++;
     }
@@ -170,7 +190,7 @@ void sendNoteOns(){
 }
 
 void sendNoteOff(unsigned short noteIndex){
-  send(COMMAND_NOTE_OFF | (BASE_NOTE + noteIndex);
+  send(COMMAND_NOTE_OFF | (BASE_NOTE + noteIndex));
 }
 
 void sendNoteOffs(){
@@ -186,7 +206,7 @@ void sendNoteOffs(){
         
         // clear readyToSend. Only the current bit may be cleared, as new
         // ones may have been set through interrupts while we are in this loop
-        readyToSendOff[column] & ~mask;
+        readyToSendOff[column] &= ~mask;
       }
       noteIndex++;
     }
@@ -199,8 +219,8 @@ void initKeyScanner(){
   for(i=0; i<COLUMNS; i++){
     noteStartSwitchStates[i]=0;
     noteEndSwitchStates[i]=0;
-    readyToSendOff[COLUMNS]=0;
-    readyToSendOn[COLUMNS]=0;
+    readyToSendOff[i]=0;
+    readyToSendOn[i]=0;
   }
   currentColumn = 0;
   //TODO: Make sure counter is at 0, may read input from counter.
@@ -223,6 +243,8 @@ void init(){
 #ifdef RUNTESTS
 void main() {
   init();
+  lastNoteSent = 0;
+  lastVelocitySent = 0;
   runTests();
 }
 #endif

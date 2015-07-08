@@ -1,7 +1,7 @@
 #include "munit.h"
 
 unsigned short failedtests;
-testFunc tests[255];
+testFunc tests[100];
 unsigned short currTest = 0;
 
 void msg(char* messsage){
