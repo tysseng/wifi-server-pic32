@@ -3,40 +3,52 @@
 // korrekte output pins
 // lage transfer-funksjon for calculate velociry
 // reset CD4022 on init
+// lytte på carry fra CD4022? Er dette nødvendig?
+// sjekke om klokkepulsbredde til CD4022 er bred nok.
 
+// turn on/off tests. remove for production code.
 #define RUNTESTS
 
-// Mock ports when in test mode
 #ifdef RUNTESTS
+  // debug output buffers, used in asserts in tests
+  unsigned short lastNoteSent;
+  unsigned short lastVelocitySent;
+
+  // Mock ports when in test mode
   #define OUTPUT_BUS mockedOutputBus
   #define DATA_BUS_DISABLED_PIN mockedDataBusDisabledPin.b0
-  #define OUTPUT_READY_PIN mockedOutputReadyPin.b0
+  #define OUTPUT_NOT_READY_PIN mockedOutputNotReadyPin.b0
   #define COL_SCAN_TIMER_INTERRUPT mockedColScanTimerInterrupt.b0
   unsigned short mockedOutputBus;
   unsigned short mockedDataBusDisabledPin;
-  unsigned short mockedOutputReadyPin;
+  unsigned short mockedOutputNotReadyPin;
   unsigned short mockedColScanTimerInterrupt;
-  unsigned short lastNoteSent;
-  unsigned short lastVelocitySent;
 #endif
 
 // Real ports when not in test mode
 #ifndef RUNTESTS
   #define OUTPUT_BUS portb
   #define DATA_BUS_DISABLED_PIN porta.f0
-  #define OUTPUT_READY_PIN porta.f1
-  #define COL_SCAN_TIMER_INTERRUPT timer1_if
+  #define OUTPUT_NOT_READY_PIN porta.f1
+  #define COL_SCAN_TIMER_INTERRUPT TMR1IF_bit
 #endif
+
+#define OUTPUT_BUS_TRIS trisa
+#define DATA_BUS_DISABLED_PIN_TRIS trisa.f0
+#define OUTPUT_READY_PIN_TRIS trisa.f1
+#define COLUMN_CLOCK_PIN porta.f2
+#define COLUMN_CLOCK_PIN_TRIS trisa.f2
+#define KEYS_START_ROW portc
+#define KEYS_END_ROW portd
+#define KEYS_START_ROW_TRIS trisc
+#define KEYS_END_ROW_TRIS trisd
+
 
 #include "PVScontroller.h"
 #include "PVScontroller.test.h"
 
-#define BASE_NOTE 24 //C0 = 0100100
-
-// I/O pins
-
-#define KEYS_START_ROW portc
-#define KEYS_END_ROW portd
+//Lowest possible note, C0 = 0100100
+#define BASE_NOTE 24
 
 // commands to send to the master MCU
 #define COMMAND_NOTE_ON 0b10000000
@@ -72,11 +84,15 @@ void interruptBody(){
     checkKeyStartSwitches(KEYS_START_ROW, currentColumn);
     checkKeyBottomSwitches(KEYS_END_ROW, currentColumn);
 
-    //TODO: switch to next row - lets values settle untill next timeout.
-    currentColumn = (currentColumn + 1) % COLUMNS;
-    //TODO: Send clock pulse to counter
+    // Switch to next row - lets values settle untill next timeout.
+    currentColumn = ++currentColumn % COLUMNS;
 
-    // Increment counter before starting a new round.
+    // Send clock pulse to increment CD4022 counter (column selector)
+    COLUMN_CLOCK_PIN = 1;
+    delay_us(1);
+    COLUMN_CLOCK_PIN = 0;
+
+    // Increment cycle counter before starting a new round.
     // Counter is only incremented once per round, not once per column
     if(currentColumn == 0){
       cycleCounter++;
@@ -159,11 +175,11 @@ void checkKeyBottomSwitches(unsigned short newState, unsigned short column){
 void send(unsigned short value){
 
   OUTPUT_BUS = value;
-  OUTPUT_READY_PIN = 1; //indicate to the main mcu that data is ready
+  OUTPUT_NOT_READY_PIN = 0; //indicate to the main mcu that data is ready
 
   // remove waiting code when in test mode to allow tests to pass
   #ifndef RUNTESTS
-    // wait until main mcu indicates that data bus is ready (output is blocked 
+    // wait until main mcu indicates that data bus is ready. Output is blocked
     // by the 74HC367 transparent latches until the data bus disabled line goes 
     // low, so data may be put on the output bus even before this flag is read.
     while(DATA_BUS_DISABLED_PIN){
@@ -173,8 +189,9 @@ void send(unsigned short value){
     while(DATA_BUS_DISABLED_PIN == 0){
       delay_us(1);
     }
+    OUTPUT_BUS = 0;
   #endif
-  OUTPUT_READY_PIN = 0;
+  OUTPUT_NOT_READY_PIN = 1;
 }
 
 unsigned short calculateVelocity(unsigned short velocityTime){
@@ -184,6 +201,8 @@ unsigned short calculateVelocity(unsigned short velocityTime){
 void sendNoteOn(unsigned short noteIndex, unsigned short velocityTime){
   unsigned short velocity = calculateVelocity(velocityTime);
   unsigned short noteToSend = COMMAND_NOTE_ON | (BASE_NOTE + noteIndex);
+  
+  // store calculated results when in test mode to allow asserts on them
   #ifdef RUNTESTS
     lastNoteSent = noteToSend;
     lastVelocitySent = velocity;
@@ -251,7 +270,8 @@ void initKeyScanner(){
     readyToSendOn[i]=0;
   }
   currentColumn = 0;
-  //TODO: Make sure counter is at 0, may read input from counter.
+  // TODO: Make sure CD4022 counter is at 0 when we start, may read input
+  // from counter.
 }
 
 void initVelocityTiming(){
@@ -261,6 +281,73 @@ void initVelocityTiming(){
     noteVelocity[i]=0;
   }
   cycleCounter = 0;
+}
+
+
+void disableAnalogPins(){
+/*
+  //turn off analog inputs (set ports to digital)
+  ANSELA  = 0;
+  ANSELB  = 0;
+  ANSELC  = 0;
+
+  // turn off A/D converter
+  ADCON0 = 0;
+  */
+}
+
+void setupIOPorts(){
+  OUTPUT_BUS_TRIS = 0xFF;
+  DATA_BUS_DISABLED_PIN_TRIS = 0;
+  OUTPUT_READY_PIN_TRIS = 1;
+  COLUMN_CLOCK_PIN_TRIS = 1;
+  KEYS_START_ROW_TRIS = 0;
+  KEYS_END_ROW_TRIS = 0;
+}
+
+void setupTimers(){
+/*
+  PSA_bit = 0;
+  T0PS0_bit = 1;
+  T0PS1_bit = 1;
+  T0PS2_bit = 1;
+  T0CS_bit = 0;
+  TMR0ON_bit = 0;
+  TMR0IF_bit = 0;
+  TMR0IE_bit = 1;
+
+  //prescaler, 01 = 1:2 prescale
+  T1CKPS1_bit = 0;
+  T1CKPS0_bit = 1;
+
+  // clock source, 00 = use instruction clock (Fosc/4)
+  TMR1CS1_bit = 0;
+  TMR1CS0_bit = 0;
+  TMR1ON_bit = 0;
+  TMR1GE_bit = 0; // counts regardless of gate function
+  TMR1IF_bit = 0;
+  TMR1IE_bit = 1;
+*/
+}
+
+void setupOscillator(){
+  //Additional settings in project -> edit project
+  // PLL enabled: disabled
+  // Oscillator selection: internal oscillator
+  // Frequency: 16MHz
+  /*
+  INTSRC_bit = 1;
+  IRCF2_bit = 1;
+  IRCF1_bit = 1;
+  IRCF0_bit = 1;
+  */
+}
+
+void setupInterrupts(){
+  //enable interrupts. NB: PEIE/GIE also affects timer0/1
+  PEIE_bit = 1;
+  GIE_bit = 1;
+  RCIE_bit = 1;            // enable USART RX interrupt
 }
 
 void init(){
@@ -279,6 +366,11 @@ void main() {
 
 #ifndef RUNTESTS
 void main() {
+  setupOscillator();
   init();
+  disableAnalogPins();
+  setupIOPorts();
+  setupInterrupts();
+  setupTimers();
 }
 #endif
