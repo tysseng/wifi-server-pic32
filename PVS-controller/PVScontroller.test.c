@@ -144,28 +144,23 @@ void testThatNotesAbove60AreIgnoredInCalcVelocity(){
 
 void testThatSendCopiesValueToOutputBus(){
     mockedOutputBus = 0;
-    mockedReadyToSendPin.b0 = 1; // must be ready to send to pass waiting loop
     
     send(8);
     assertEquals(8, mockedOutputBus, "wrong value on output bus");
 }
 
 void testThatSendNoteOnSendsCorrectNote(){
-    mockedReadyToSendPin.b0 = 1; // must be ready to send to pass waiting loop
     sendNoteOn(23, 10);
-    
     assertEquals(0b10101111, lastNoteSent, "wrong note sent"); // 24 + 23 + MSB set
 }
 
 void testThatSendNoteOnSendsCorrectVelocity(){
-    mockedReadyToSendPin.b0 = 1; // must be ready to send to pass waiting loop
     sendNoteOn(23, 10);
 // TODO
 //    assertEquals(0b10101111, lastVelocitySent, "wrong velocity sent");
 }
 
 void testThatSendNoteOnsClearsReadyToSend(){
-    mockedReadyToSendPin.b0 = 1; // must be ready to send to pass waiting loop
     readyToSendOn[1] = 0b00000001; //note 8 is ready to send
    
     sendNoteOns();

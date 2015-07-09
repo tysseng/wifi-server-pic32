@@ -9,9 +9,11 @@
 // Mock ports when in test mode
 #ifdef RUNTESTS
   #define OUTPUT_BUS mockedOutputBus
-  #define READY_TO_SEND_PIN mockedReadyToSendPin.b0
+  #define DATA_BUS_DISABLED_PIN mockedDataBusDisabledPin.b0
+  #define OUTPUT_READY_PIN mockedOutputReadyPin.b0
   unsigned short mockedOutputBus;
-  unsigned short mockedReadyToSendPin;
+  unsigned short mockedDataBusDisabledPin;
+  unsigned short mockedOutputReadyPin;
   unsigned short lastNoteSent;
   unsigned short lastVelocitySent;
 #endif
@@ -19,7 +21,8 @@
 // Real ports when not in test mode
 #ifndef RUNTESTS
   #define OUTPUT_BUS portb
-  #define READY_TO_SEND_PIN porta.f0
+  #define DATA_BUS_DISABLED_PIN porta.f0
+  #define OUTPUT_READY_PIN porta.f1
 #endif
 
 #include "PVScontroller.h"
@@ -148,9 +151,22 @@ void checkKeyBottomSwitches(unsigned short newState, unsigned short column){
 void send(unsigned short value){
 
   OUTPUT_BUS = value;
-  while(READY_TO_SEND_PIN == 0){
-    delay_us(10);
-  }
+  OUTPUT_READY_PIN = 1; //indicate to the main mcu that data is ready
+
+  // remove waiting code when in test mode to allow tests to pass
+  #ifdef RUNTESTS
+    // wait until main mcu indicates that data bus is ready (output is blocked in
+    // the 74HC367 transparent latches until the data bus disabled line goes low,
+    // so data may be put on the output bus even before this flag is read.
+    while(DATA_BUS_DISABLED_PIN){
+      delay_us(1);
+    }
+    // keep output until main mcu disables the data bus.
+    while(DATA_BUS_DISABLED_PIN == 0){
+      delay_us(1);
+    }
+  #endif
+  OUTPUT_READY_PIN = 0;
 }
 
 unsigned short calculateVelocity(unsigned short velocityTime){
