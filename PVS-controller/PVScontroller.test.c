@@ -139,7 +139,6 @@ void testThatNotesAbove60AreIgnoredInCalcVelocity(){
 
     checkKeyBottomSwitches(0b11111111, 7);
     assertEquals(0b01111111, readyToSendOn[7], "Note 63 should not be sent");
-
 }
 
 void testThatSendCopiesValueToOutputBus(){
@@ -151,7 +150,7 @@ void testThatSendCopiesValueToOutputBus(){
 
 void testThatSendNoteOnSendsCorrectNote(){
     sendNoteOn(23, 10);
-    assertEquals(0b10101111, lastNoteSent, "wrong note sent"); // 24 + 23 + MSB set
+    assertEquals(0b10101111, lastNoteSent, "wrong note on sent"); // 24 + 23 + MSB set
 }
 
 void testThatSendNoteOnSendsCorrectVelocity(){
@@ -165,6 +164,50 @@ void testThatSendNoteOnsClearsReadyToSend(){
    
     sendNoteOns();
     assertEquals(0, readyToSendOn[1], "ready to send should have been cleared");
+}
+
+void testThatSendNoteOffSendsCorrectNote(){
+    sendNoteOff(23);
+    assertEquals(0b00101111, lastNoteSent, "wrong note off sent"); // 24 + 23 + MSB not set
+}
+
+void testThatColScanInterruptIncrementsCurrentColumn(){
+    mockedColScanTimerInterrupt = 1;
+    currentColumn = 0;
+    interruptBody();
+    assertEquals(1, currentColumn, "current column not incremented");
+}
+
+void testThatColScanColumnIncrementRollsOver(){
+    mockedColScanTimerInterrupt = 1;
+    currentColumn = COLUMNS-1;
+    interruptBody();
+    assertEquals(0, currentColumn, "current column should have rolled over");
+}
+
+void testThatColScanInterruptIncrementsTimerOncePerTotalKeyboardScan(){
+    unsigned short i = 0;
+    currentColumn = 0;
+    cycleCounter = 0;
+    
+    for(i=0; i<COLUMNS-1; i++){
+      interruptBody();
+      assertEquals(0, cycleCounter, "cycle counter incremented too early");
+    }
+
+    interruptBody();
+    assertEquals(1, cycleCounter, "cycle counter should have been incremented");
+}
+
+void testThatCycleCounterOverflowsCorrectly(){
+    unsigned short i = 0;
+    cycleCounter = 255;
+
+    for(i=0; i<COLUMNS; i++){
+      interruptBody();
+    }
+    
+    assertEquals(0, cycleCounter, "cycle counter should have overflowed");
 }
 
 void runTests(){
@@ -184,5 +227,10 @@ void runTests(){
     add(&testThatSendNoteOnSendsCorrectNote);
     add(&testThatSendNoteOnSendsCorrectVelocity);
     add(&testThatSendNoteOnsClearsReadyToSend);
+    add(&testThatSendNoteOffSendsCorrectNote);
+    add(&testThatColScanInterruptIncrementsCurrentColumn);
+    add(&testThatColScanColumnIncrementRollsOver);
+    add(&testThatColScanInterruptIncrementsTimerOncePerTotalKeyboardScan);
+    add(&testThatCycleCounterOverflowsCorrectly);
     run(&init);
 }

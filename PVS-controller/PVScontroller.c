@@ -11,9 +11,11 @@
   #define OUTPUT_BUS mockedOutputBus
   #define DATA_BUS_DISABLED_PIN mockedDataBusDisabledPin.b0
   #define OUTPUT_READY_PIN mockedOutputReadyPin.b0
+  #define COL_SCAN_TIMER_INTERRUPT mockedColScanTimerInterrupt.b0
   unsigned short mockedOutputBus;
   unsigned short mockedDataBusDisabledPin;
   unsigned short mockedOutputReadyPin;
+  unsigned short mockedColScanTimerInterrupt;
   unsigned short lastNoteSent;
   unsigned short lastVelocitySent;
 #endif
@@ -23,6 +25,7 @@
   #define OUTPUT_BUS portb
   #define DATA_BUS_DISABLED_PIN porta.f0
   #define OUTPUT_READY_PIN porta.f1
+  #define COL_SCAN_TIMER_INTERRUPT timer1_if
 #endif
 
 #include "PVScontroller.h"
@@ -51,12 +54,20 @@ unsigned short readyToSendOn[COLUMNS];
 unsigned short currentColumn;
 unsigned short cycleCounter;
 
+// use different name for interrupt function in test mode to be able to
+// call it from a test.
+#ifndef RUNTESTS
 void interrupt() {
+  interruptBody();
+}
+#endif
+
+void interruptBody(){
   unsigned short column;
 
   // colScanTimer must run 8 times faster than the desired cycle counter speed
   // as we only update the cycleCounter once every key has been scanned.
-  if(/*colScanTimer*/ 0){
+  if(COL_SCAN_TIMER_INTERRUPT){
 
     checkKeyStartSwitches(KEYS_START_ROW, currentColumn);
     checkKeyBottomSwitches(KEYS_END_ROW, currentColumn);
@@ -154,10 +165,10 @@ void send(unsigned short value){
   OUTPUT_READY_PIN = 1; //indicate to the main mcu that data is ready
 
   // remove waiting code when in test mode to allow tests to pass
-  #ifdef RUNTESTS
-    // wait until main mcu indicates that data bus is ready (output is blocked in
-    // the 74HC367 transparent latches until the data bus disabled line goes low,
-    // so data may be put on the output bus even before this flag is read.
+  #ifndef RUNTESTS
+    // wait until main mcu indicates that data bus is ready (output is blocked 
+    // by the 74HC367 transparent latches until the data bus disabled line goes 
+    // low, so data may be put on the output bus even before this flag is read.
     while(DATA_BUS_DISABLED_PIN){
       delay_us(1);
     }
@@ -206,7 +217,11 @@ void sendNoteOns(){
 }
 
 void sendNoteOff(unsigned short noteIndex){
-  send(COMMAND_NOTE_OFF | (BASE_NOTE + noteIndex));
+  unsigned short noteToSend = COMMAND_NOTE_OFF | (BASE_NOTE + noteIndex);
+  send(noteToSend);
+  #ifdef RUNTESTS
+    lastNoteSent = noteToSend;
+  #endif
 }
 
 void sendNoteOffs(){
