@@ -86,13 +86,13 @@ void interruptBody(){
 
 void checkKeyStartSwitches(unsigned short newState, unsigned short column){
 
-  unsigned short changes;
   unsigned short row = 0;
   unsigned short mask = 0b00000001;
   unsigned short noteIndex = column;
-  changes = noteStartSwitchStates[column] ^ newState;
+  unsigned short changes = noteStartSwitchStates[column] ^ newState;
 
-  if(!changes){
+  // most times nothing has changed, so return without further checking.
+  if(changes == 0){
     return;
   }
 
@@ -121,26 +121,23 @@ void checkKeyStartSwitches(unsigned short newState, unsigned short column){
 
 void checkKeyBottomSwitches(unsigned short newState, unsigned short column){
 
-  unsigned short changes;
   unsigned short row = 0;
   unsigned short mask = 0b00000001;
   unsigned short noteIndex = column;
-  changes = noteEndSwitchStates[column] ^ newState;
+  unsigned short changes = noteEndSwitchStates[column] ^ newState;
 
-  if(!changes){
+  // most times nothing has changed, so return without further checking.
+  if(changes == 0){
     return;
   }
-
+  
   for(row=0; row < ROWS; row++){
-    if(changes & mask){ // row has changed
-      if(newState & mask){ // row has been turned on, calculate velocity
-      
-        // since we're using unsigned shorts, we will get a mod 256 effect,
-        // so the calculation will be correct even if cycleCounter is less
-        // than noteTimer
-        noteVelocity[noteIndex] = cycleCounter - noteTimers[noteIndex];
-        readyToSendOn[column] = readyToSendOn[column] | mask; // set bit at row position
-      } 
+    if((changes & mask) && (newState & mask)){ // row has changed and is now turned on.
+      // since we're using unsigned shorts, we will get a mod 256 effect,
+      // so the calculation will be correct even if cycleCounter is less
+      // than noteTimer
+      noteVelocity[noteIndex] = cycleCounter - noteTimers[noteIndex];
+      readyToSendOn[column] = readyToSendOn[column] | mask; // set bit at row position
     }
 
     //step to next note which is COLUMNS higher than the previous one.
