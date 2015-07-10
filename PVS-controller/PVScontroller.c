@@ -7,6 +7,7 @@
 // sjekke om klokkepulsbredde til CD4022 er bred nok.
 // sjekk polaritet for KYINT og KYBD
 // korrigér velocity for offset på start, både her og i blogpost
+// vurdere om KYBD bør være koblet til interrupt for å sikre at vi ikke mister data.
 
 // turn on/off tests. remove for production code.
 #define RUNTESTS
@@ -29,30 +30,30 @@
 
 // Real ports when not in test mode
 #ifndef RUNTESTS
-  #define OUTPUT_BUS portb
-  #define DATA_BUS_DISABLED_PIN porta.f0
-  #define OUTPUT_NOT_READY_PIN porta.f1
-  #define COL_SCAN_TIMER_INTERRUPT TMR1IF_bit
+  #define OUTPUT_BUS latd
+  #define DATA_BUS_DISABLED_PIN porta.f3
+  #define OUTPUT_NOT_READY_PIN late.f2
+  #define COL_SCAN_TIMER_INTERRUPT TMR0IF_bit
 #endif
 
-#define OUTPUT_BUS_TRIS trisa
-#define DATA_BUS_DISABLED_PIN_TRIS trisa.f0
-#define OUTPUT_READY_PIN_TRIS trisa.f1
-#define COLUMN_CLOCK_PIN porta.f2
-#define COLUMN_CLOCK_PIN_TRIS trisa.f2
+#define OUTPUT_BUS_TRIS trisd
+#define DATA_BUS_DISABLED_PIN_TRIS trisa.f3
+#define OUTPUT_READY_PIN_TRIS trise.f2
+#define COLUMN_CLOCK_PIN lata.f6
+#define COLUMN_CLOCK_PIN_TRIS trisa.f6
 #define KEYS_START_ROW portc
-#define KEYS_END_ROW portd
 #define KEYS_START_ROW_TRIS trisc
-#define KEYS_END_ROW_TRIS trisd
+#define KEYS_END_ROW portb
+#define KEYS_END_ROW_TRIS trisb
 
 #include "PVSvelocityTable.h"
 #include "PVScontroller.h"
 #include "PVScontroller.test.h"
 
-//Lowest possible note, C0 = 0100100
+// Lowest possible note, C0 = 0100100
 #define BASE_NOTE 36
 
-// commands to send to the master MCU. note off is 0 so no need to use a command
+// Commands to send to the master MCU. note off is 0 so no need to use a command
 #define COMMAND_NOTE_ON 0b10000000
 
 volatile unsigned short noteTimers[KEYCOUNT];
@@ -81,6 +82,10 @@ void interruptBody(){
   // colScanTimer must run 8 times faster than the desired cycle counter speed
   // as we only update the cycleCounter once every key has been scanned.
   if(COL_SCAN_TIMER_INTERRUPT){
+  
+    // clear interrupt and restart timer
+    COL_SCAN_TIMER_INTERRUPT = 0;
+    TMR0L = 0x28;
 
     checkKeyStartSwitches(KEYS_START_ROW, currentColumn);
     checkKeyBottomSwitches(KEYS_END_ROW, currentColumn);
@@ -290,51 +295,33 @@ void initVelocityTiming(){
 
 
 void disableAnalogPins(){
-/*
+
   //turn off analog inputs (set ports to digital)
-  ANSELA  = 0;
-  ANSELB  = 0;
-  ANSELC  = 0;
+  ANCON1  = 0;
 
   // turn off A/D converter
   ADCON0 = 0;
-  */
 }
 
 void setupIOPorts(){
-  OUTPUT_BUS_TRIS = 0xFF;
-  DATA_BUS_DISABLED_PIN_TRIS = 0;
-  OUTPUT_READY_PIN_TRIS = 1;
-  COLUMN_CLOCK_PIN_TRIS = 1;
-  KEYS_START_ROW_TRIS = 0;
-  KEYS_END_ROW_TRIS = 0;
+  // 0 = output
+  // 1 = input
+  OUTPUT_BUS_TRIS = 0;
+  DATA_BUS_DISABLED_PIN_TRIS = 1;
+  OUTPUT_READY_PIN_TRIS = 0;
+  COLUMN_CLOCK_PIN_TRIS = 0;
+  KEYS_START_ROW_TRIS = 0xFF;
+  KEYS_END_ROW_TRIS = 0xFF;
 }
 
 void setupTimers(){
-  // timer should trigger interrupt every 53uS for a total cycle length of 
-  // 474uS. Remember to extract time in interrupt routine from timer on restart.
-/*
-  PSA_bit = 0;
-  T0PS0_bit = 1;
-  T0PS1_bit = 1;
-  T0PS2_bit = 1;
-  T0CS_bit = 0;
-  TMR0ON_bit = 0;
-  TMR0IF_bit = 0;
+  // timer should trigger interrupt every 54uS for a total cycle length of
+  // 432uS.
+  T0CON	     = 0xC8; // prescaler 1:1 if frequency is 16MHz
+  //T0CON	 = 0xC1; // prescaler 1:4 if frequency is 64MHz
+  TMR0L	     = 0x28;
+  GIE_bit	 = 1;
   TMR0IE_bit = 1;
-
-  //prescaler, 01 = 1:2 prescale
-  T1CKPS1_bit = 0;
-  T1CKPS0_bit = 1;
-
-  // clock source, 00 = use instruction clock (Fosc/4)
-  TMR1CS1_bit = 0;
-  TMR1CS0_bit = 0;
-  TMR1ON_bit = 0;
-  TMR1GE_bit = 0; // counts regardless of gate function
-  TMR1IF_bit = 0;
-  TMR1IE_bit = 1;
-*/
 }
 
 void setupOscillator(){
@@ -342,19 +329,14 @@ void setupOscillator(){
   // PLL enabled: disabled
   // Oscillator selection: internal oscillator
   // Frequency: 16MHz
-  /*
   INTSRC_bit = 1;
   IRCF2_bit = 1;
   IRCF1_bit = 1;
   IRCF0_bit = 1;
-  */
-}
 
-void setupInterrupts(){
-  //enable interrupts. NB: PEIE/GIE also affects timer0/1
-  PEIE_bit = 1;
-  GIE_bit = 1;
-  RCIE_bit = 1;            // enable USART RX interrupt
+  PLLEN_bit = 0; // PLL disabled, frequency 16MHz
+  //PLLEN_bit = 1; // 4 x PLL enabled, frequency 64MHz
+
 }
 
 void init(){
@@ -377,7 +359,6 @@ void main() {
   init();
   disableAnalogPins();
   setupIOPorts();
-  setupInterrupts();
   setupTimers();
   
   // back and forth, forever and ever.
