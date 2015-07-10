@@ -1,10 +1,12 @@
 //TODO:
-// korrekte verdider for commands
 // korrekte output pins
-// lage transfer-funksjon for calculate velociry
+// hindre sending av note hvis velocity timer > 70 (passe på at timer ikke
+// overflow'er.
 // reset CD4022 on init
 // lytte på carry fra CD4022? Er dette nødvendig?
 // sjekke om klokkepulsbredde til CD4022 er bred nok.
+// sjekk polaritet for KYINT og KYBD
+// korrigér velocity for offset på start, både her og i blogpost
 
 // turn on/off tests. remove for production code.
 #define RUNTESTS
@@ -43,28 +45,27 @@
 #define KEYS_START_ROW_TRIS trisc
 #define KEYS_END_ROW_TRIS trisd
 
-
+#include "PVSvelocityTable.h"
 #include "PVScontroller.h"
 #include "PVScontroller.test.h"
 
 //Lowest possible note, C0 = 0100100
-#define BASE_NOTE 24
+#define BASE_NOTE 36
 
-// commands to send to the master MCU
+// commands to send to the master MCU. note off is 0 so no need to use a command
 #define COMMAND_NOTE_ON 0b10000000
-#define COMMAND_NOTE_OFF 0b00000000
 
-unsigned short noteTimers[KEYCOUNT];
-unsigned short noteVelocity[KEYCOUNT];
+volatile unsigned short noteTimers[KEYCOUNT];
+volatile unsigned short noteVelocity[KEYCOUNT];
 
-unsigned short noteStartSwitchStates[COLUMNS];
-unsigned short noteEndSwitchStates[COLUMNS];
+volatile unsigned short noteStartSwitchStates[COLUMNS];
+volatile unsigned short noteEndSwitchStates[COLUMNS];
 
-unsigned short readyToSendOff[COLUMNS];
-unsigned short readyToSendOn[COLUMNS];
+volatile unsigned short readyToSendOff[COLUMNS];
+volatile unsigned short readyToSendOn[COLUMNS];
 
-unsigned short currentColumn;
-unsigned short cycleCounter;
+volatile unsigned short currentColumn;
+volatile unsigned short cycleCounter;
 
 // use different name for interrupt function in test mode to be able to
 // call it from a test.
@@ -195,6 +196,9 @@ void send(unsigned short value){
 }
 
 unsigned short calculateVelocity(unsigned short velocityTime){
+  if(velocityTime < 70){
+    return velocities[velocityTime];
+  }
   return 0;
 }
 
@@ -233,7 +237,8 @@ void sendNoteOns(){
 }
 
 void sendNoteOff(unsigned short noteIndex){
-  unsigned short noteToSend = COMMAND_NOTE_OFF | (BASE_NOTE + noteIndex);
+  // note off-command is 0 so no need for any special treatment.
+  unsigned short noteToSend = (BASE_NOTE + noteIndex);
   send(noteToSend);
   #ifdef RUNTESTS
     lastNoteSent = noteToSend;
@@ -306,6 +311,8 @@ void setupIOPorts(){
 }
 
 void setupTimers(){
+  // timer should trigger interrupt every 53uS for a total cycle length of 
+  // 474uS. Remember to extract time in interrupt routine from timer on restart.
 /*
   PSA_bit = 0;
   T0PS0_bit = 1;
@@ -372,5 +379,11 @@ void main() {
   setupIOPorts();
   setupInterrupts();
   setupTimers();
+  
+  // back and forth, forever and ever.
+  while(1){
+    sendNoteOns();
+    sendNoteOffs();
+  }
 }
 #endif

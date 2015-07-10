@@ -150,7 +150,7 @@ void testThatSendCopiesValueToOutputBus(){
 
 void testThatSendNoteOnSendsCorrectNote(){
     sendNoteOn(23, 10);
-    assertEquals(0b10101111, lastNoteSent, "wrong note on sent"); // 24 + 23 + MSB set
+    assertEquals(0b10111011, lastNoteSent, "wrong note on sent"); // 24 + 23 + MSB set
 }
 
 void testThatSendNoteOnSendsCorrectVelocity(){
@@ -168,7 +168,7 @@ void testThatSendNoteOnsClearsReadyToSend(){
 
 void testThatSendNoteOffSendsCorrectNote(){
     sendNoteOff(23);
-    assertEquals(0b00101111, lastNoteSent, "wrong note off sent"); // 24 + 23 + MSB not set
+    assertEquals(0b00111011, lastNoteSent, "wrong note off sent"); // 24 + 23 + MSB not set
 }
 
 void testThatColScanInterruptIncrementsCurrentColumn(){
