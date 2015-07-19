@@ -1,12 +1,13 @@
 <html>
   <head>
+    <script src="./jquery-2.1.4.min.js"></script>  
     <script src="./mpg200.js"></script>
-    <script src="./jquery-2.1.4.min.js"></script>
 	<script src="./FileSaver.min.js"></script>
+	<script src="./midi.js"></script>
 	<!--script src="./Blob.js"></script-->
   </head>
   <body>
-    <h1>MPG-200 sysex generator</h1>
+    <h1>MPG-200 settings sysex generator</h1>
     <h2>Switches</h2>
     <table>
       <tr>
@@ -83,7 +84,7 @@
       </tr>
     </table>
     
-	<h2>Other settings</h2>
+    <h2>Other settings</h2>
     <table>
       <tr>
         <td><input type="checkbox" pos="34"></td><td>Save settings to EE prom after every sysex update</td>
@@ -143,11 +144,28 @@
       <tr>
         <td colspan="2">Each interval is [0, boundary>, e.g. exclusive of upper boundary value.</td>
       </tr>	 	  
-	</table>
-	<p>
-		<button onclick="generateSettings()">Download settings as sysex</button> 
-		<button onclick="downloadClearSettings()">Download clear-settings sysex</button>
-	</p>
+    </table>
+
+    <hr>
+    
+    <div>
+      <h2>File output</h2>
+      <p>
+	<button onclick="downloadSettings()">Download settings as sysex</button> 
+	<button onclick="downloadClearSettings()">Download "clear settings" sysex</button>	
+      </p> 
+    </div>    
+    <div>
+      <h2>Midi output</h2>
+      <p>
+        Midi sysex output device: <select id="outputDropdown"></select>
+      </p>
+      <p>
+        <button onclick="sendSettingsAsSysex()">Send settings as MIDI sysex</button>
+	<button onclick="sendClearSettingsAsSysex()">Send "clear settings" as MIDI sysex</button>
+      </p>
+    </div>
+    
 	<script>
 	  populateFields(defaultsettings);	  
 	</script>

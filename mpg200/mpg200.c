@@ -104,7 +104,6 @@
 
 //TODO: 
 //- Reset counter to 0 if an unknown CC number is received
-//- Allow variable boundaries for switch midi input
 //- Check if we need to send not 2*midi value but 2*midi value +1 or something, to get proper tuning from centerable pots like osc2 tune.
 //- update map on sysex (write to flash memory)
 //- read map from flash on startup
@@ -731,6 +730,8 @@ void writeSettingsToEE(){
   for(i=0; i<SETTINGS_LENGTH; i++){
     EEPROM_Write(i, settings[i]);
   }
+  
+  flashStatus(4);
 }
 
 void readSettingsFromEE(){
@@ -746,6 +747,7 @@ void clearSettingsFromEE(){
   for(i=0; i<SETTINGS_LENGTH; i++){
     EEPROM_Write(i + 1, 0);
   }
+  flashStatus(2);
 }
 
 char getNewStateOne(char shift, char oldState){

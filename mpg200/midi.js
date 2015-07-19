@@ -1,23 +1,43 @@
+/*
+ important caveat when trying this with Web MIDI on Google Chrome: 
+ You need to request SysEx access, which requires elevated permissions. 
+ And by that I mean that your code won’t work from your local harddisk, 
+ or, when loaded over the web, from non-secure connections. What worked 
+ for me is loading it over a local web server using “localhost”.
+ */
+
 var midi = {
 
-	midi: null,  // global MIDIAccess object
+	midiAccess: null,  // global MIDIAccess object
 	output: null,
-
-    onMIDISuccess: function ( midiAccess ) {
+	self: null,
+	midiSuccessCallback: null,
+	midiFailureCallback: null,
+	
+	onMIDISuccess: function ( midiAccessParam ) {
 		console.log( "MIDI ready!" );
-		this.midi = midiAccess;  // store in the global (in real usage, would probably keep in an object instance)
+		self.midiAccess = midiAccessParam;  // store in the global (in real usage, would probably keep in an object instance)				
+		if(self.midiSuccessCallback){
+			self.midiSuccessCallback();
+		}
 	},
 
 	onMIDIFailure: function (msg) {
 		console.log( "Failed to get MIDI access - " + msg );
+		if(self.midiFailureCallback) {
+			self.midiFailureCallback();
+		}
 	},
 
-	init: function(){
-		navigator.requestMIDIAccess( { sysex: true } ).then( onMIDISuccess, onMIDIFailure );
+	init: function(midiSuccessCallback, midiFailureCallback){
+		self = this;
+		self.midiSuccessCallback = midiSuccessCallback;
+		self.midiFailureCallback = midiFailureCallback;
+		navigator.requestMIDIAccess( { sysex: true } ).then( self.onMIDISuccess, self.onMIDIFailure );
 	},
 
 	listInputs: function() {
-		for (var entry of this.midi.inputs) {
+		for (var entry of self.midiAccess.inputs) {
 		var input = entry[1];
 		console.log( "Input port [type:'" + input.type + "'] id:'" + input.id +
 			"' manufacturer:'" + input.manufacturer + "' name:'" + input.name +
@@ -26,7 +46,7 @@ var midi = {
 	},
 	
 	listOutputs: function() {
-		for (var entry of this.midi.outputs) {
+		for (var entry of self.midiAccess.outputs) {
 		var output = entry[1];
 		console.log( "Output port [type:'" + output.type + "'] id:'" + output.id +
 			"' manufacturer:'" + output.manufacturer + "' name:'" + output.name +
@@ -35,26 +55,27 @@ var midi = {
 	},
 
 	selectOutput: function(outputID){
-		this.output = this.midi.outputs.get(outputID);		
+		self.output = self.midiAccess.outputs.get(outputID);		
 	},
 
 	sendSysex: function(address, value) {
-		this.output.send([0x70]);
-		this.output.send(address);
-		this.output.send(value);
-		this.output.send([0x7f]);
+		// sysex messages have to be sent in one go, so concatenate arrays
+		var sysexBytes = 
+			[0xF0]
+			.concat(address)
+			.concat(value)
+			.concat([0xF7]);
+			
+		self.output.send(sysexBytes);
 	},
 	
 	sendNoteOnC: function(){	
 		var noteOnMessage = [0x90, 60, 0x7f];    // note on, middle C, full velocity  
-		this.output.send( noteOnMessage );  //omitting the timestamp means send immediately.
-	}
+		self.output.send( noteOnMessage );  //omitting the timestamp means send immediately.
+	},
+	
+	sendNoteOffC: function(){	
+		var noteOnMessage = [0x80, 60, 0x7f];    // note off, middle C
+		self.output.send( noteOnMessage );  //omitting the timestamp means send immediately.
+	}	
 };
-
-var sysexAddress = [0, 43, 105];
-var sysexData = [1,2,3,4,5,6];
-
-midi.init();
-midi.listOutputs();
-midi.selectOutput(1);
-midi.sendSysex(sysexAddress,sysexData);

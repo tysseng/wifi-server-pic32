@@ -95,31 +95,37 @@ function populateFields(settings){
 
 function generateSettings(){
 
-  var settings = new Array(defaultsettings.length);
+	var settings = new Array(defaultsettings.length);
 
-  // all input fields
-  $('input').each(function(){
-    var field = $(this);
-    if(field.attr('type') === 'checkbox'){
-	  if(field.prop("checked")){
-	    settings[field.attr('pos')] = 1;
-	  } else {
-	    settings[field.attr('pos')] = 0;
-	  }
-	} else {
-      settings[field.attr('pos')] = parseInt(field.val());
-	}
-  });
+	// all input fields
+	$('input').each(function(){
+		if($(this).attr('pos')){
+			var field = $(this);
+			if(field.attr('type') === 'checkbox'){
+				if(field.prop("checked")){
+					settings[field.attr('pos')] = 1;
+				} else {
+					settings[field.attr('pos')] = 0;
+				}
+			} else {
+				settings[field.attr('pos')] = parseInt(field.val());
+			}
+		}
+	});
   
-  // all dropdowns
-  $('select').each(function(){
-    settings[$(this).attr('pos')] = parseInt($(this).val());
-  });
-  downloadSettings(settings);
+	// all dropdowns
+	$('select').each(function(){
+		if($(this).attr('pos')){
+			console.log("select");
+			settings[$(this).attr('pos')] = parseInt($(this).val());
+		}
+	});
+	return settings;
 }
 
-function downloadSettings(settings) {
+function downloadSettings() {
 
+	var settings = generateSettings();
     var bufferSize = settings.length*2 + 6;
 
 	var buffer = new ArrayBuffer(bufferSize);
@@ -148,7 +154,7 @@ function downloadSettings(settings) {
 	saveAs(blob, "mpg200-settings.syx");
 }
 
-function downloadClearSettings(settings) {
+function downloadClearSettings() {
 
     var bufferSize = 6;
 
@@ -172,3 +178,38 @@ function downloadClearSettings(settings) {
 	var blob = new Blob([data], {type: 'application/octet-binary'})
 	saveAs(blob, "mpg200-clear-settings.syx");
 }
+
+function midiReadyCallback() {
+	var dropdown = $("#outputDropdown");
+	for (var entry of midi.midiAccess.outputs) {
+		var outputs = entry[1];
+		dropdown
+			.append($("<option></option>")
+			.attr("value",outputs.id)
+			.text(outputs.name)); 		
+	}        
+	dropdown.val(0);
+}
+          
+function sendSettingsAsSysex(){
+	var dropdown = $("#outputDropdown");
+	var deviceId = dropdown.val();
+	midi.selectOutput(deviceId);
+	var sysexData = [SYSEX_OP_CHANGE_SETTING].concat(generateSettings());
+	midi.sendSysex(sysexAddress,sysexData);
+}
+
+function sendClearSettingsAsSysex(){
+	var dropdown = $("#outputDropdown");
+	var deviceId = dropdown.val();
+	midi.selectOutput(deviceId);
+	var sysexData = [SYSEX_OP_CLEAR_SETTINGS_FROM_EE];
+	midi.sendSysex(sysexAddress,sysexData);
+}
+
+//kickstart everything on document load
+function initMidi(){
+	midi.init(midiReadyCallback);
+}
+
+$(initMidi);

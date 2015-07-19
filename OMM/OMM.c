@@ -124,17 +124,20 @@ void main() {
     TRISB = 0;
     while(1){
 
-        PORTB = iteration | 0b00010000;
+        if(iteration < 8){
+          PORTB = iteration | 0b00010000;
+        }
         delay_us(20);
         PORTB = iteration | 0b00000000;
 
         iteration++;
-        if(iteration > 7){
+        if(iteration > 31){
           iteration = 0;
           dacStep++;
         }
         PORTB = iteration | 0b00000000;
-        writeToDac(dacStep);
+        writeToDac(0xFF);
+//        writeToDac(dacStep);
         /*
         delay_ms(1);
         writeToDac(0);
