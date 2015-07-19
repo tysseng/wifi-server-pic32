@@ -116,7 +116,6 @@ function generateSettings(){
 	// all dropdowns
 	$('select').each(function(){
 		if($(this).attr('pos')){
-			console.log("select");
 			settings[$(this).attr('pos')] = parseInt($(this).val());
 		}
 	});
@@ -191,25 +190,60 @@ function midiReadyCallback() {
 	dropdown.val(0);
 }
           
-function sendSettingsAsSysex(){
+function setMidiDeviceFromDropdown(){
 	var dropdown = $("#outputDropdown");
 	var deviceId = dropdown.val();
 	midi.selectOutput(deviceId);
+}		  
+		  
+function sendSettingsAsSysex(){
+	setMidiDeviceFromDropdown();
 	var sysexData = [SYSEX_OP_CHANGE_SETTING].concat(generateSettings());
 	midi.sendSysex(sysexAddress,sysexData);
 }
 
 function sendClearSettingsAsSysex(){
-	var dropdown = $("#outputDropdown");
-	var deviceId = dropdown.val();
-	midi.selectOutput(deviceId);
+	setMidiDeviceFromDropdown();
 	var sysexData = [SYSEX_OP_CLEAR_SETTINGS_FROM_EE];
 	midi.sendSysex(sysexAddress,sysexData);
 }
 
+function sendDialValueAsCC(value, dial){
+	value = Math.round(value);
+	var pos = $(dial.i).attr("pos-link"); 
+	var cc = $("[pos='"+pos+"']").val();
+	
+	var channel = $("#midichannel").val();
+
+	setMidiDeviceFromDropdown();			
+	midi.sendCC(channel, cc, value);
+}
+
 //kickstart everything on document load
-function initMidi(){
+function init(){
+	populateFields(defaultsettings);	  
+	  
+	$(".dial127").knob({
+		'angleArc': 270,
+		'angleOffset': 225,
+		'min': 0,
+		'max': 127,
+		'step': 1,
+		"width": 50,
+		"height": 50,
+		"fgColor": "#ff0000",
+		"thickness": ".2",			
+		'change' : function (v) { 
+			sendDialValueAsCC(v, this);
+		},
+		'release' : function (v) { 
+			sendDialValueAsCC(v, this);
+		}
+		
+	});
+	$(".dial127").val(0);
+	
 	midi.init(midiReadyCallback);
 }
 
-$(initMidi);
+$(init);

@@ -69,6 +69,12 @@ var midi = {
 		self.output.send(sysexBytes);
 	},
 	
+	sendCC: function(channel, cc, value){	
+		var command = 0xB0 + parseInt(channel);
+		var ccMessage = [command, cc, value];
+		self.output.send( ccMessage );
+	},	
+	
 	sendNoteOnC: function(){	
 		var noteOnMessage = [0x90, 60, 0x7f];    // note on, middle C, full velocity  
 		self.output.send( noteOnMessage );  //omitting the timestamp means send immediately.

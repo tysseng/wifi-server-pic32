@@ -1,0 +1,24 @@
+body{
+  background-color:  #333;
+  color: #ddd;
+  font-family: 'Open Sans', sans-serif;
+}
+
+.digit{
+  width: 30px;
+  margin-right: 20px;
+}
+
+.dialcol{
+  width: 140px;
+}
+
+td{
+  padding-right: 10px;
+}
+
+th{
+  text-align: left;
+  padding-bottom: 5px;
+}
+
