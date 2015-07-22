@@ -22,7 +22,7 @@
       <tr>
         <td>DCO-1 Range</td><td><input type="text" pos="0" class="digit"></td>
 		<td>
-			<input pos-link="0" value="100" class="dial127">
+			<input pos-link="0" class="dial127">
 		</td>
         <td>DCO-2 Range</td><td><input type="text" pos="4" class="digit"></td>
 		<td>
@@ -211,7 +211,7 @@
       <tr>
         <td>MIDI Channel</td>
 		<td>
-			<select pos="35" id="midichannel">
+			<select pos="35">
 				<option value="0" selected>1</option>
 				<option value="1">2</option>
 				<option value="2">3</option>
@@ -273,7 +273,28 @@
     <div>
       <h2>Midi output</h2>
       <p>
-        Midi sysex output device: <select id="outputDropdown"></select>
+        Output device: <select id="outputDropdown" onchange="setMidiDeviceFromDropdown()"></select>
+      </p>
+      <p>
+	Channel: 
+	<select id="midichannel" onchange="setMidiChannelFromDropdown()">
+		<option value="0" selected>1</option>
+		<option value="1">2</option>
+		<option value="2">3</option>
+		<option value="3">4</option>
+		<option value="4">5</option>
+		<option value="5">6</option>
+		<option value="6">7</option>
+		<option value="7">8</option>
+		<option value="8">9</option>
+		<option value="9">10</option>
+		<option value="10">11</option>
+		<option value="11">12</option>
+		<option value="12">13</option>
+		<option value="13">14</option>
+		<option value="14">15</option>
+		<option value="15">16</option>
+	</select>
       </p>
       <p>
         <button onclick="sendSettingsAsSysex()">Send settings as MIDI sysex</button>

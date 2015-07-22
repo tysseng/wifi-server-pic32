@@ -10,6 +10,7 @@ var MIDI_SYSEX_START = 0xF0;
 var MIDI_SYSEX_END = 0xF7;
 
 var sysexAddress = [0, 43, 102];
+var midiChannel = 0;
 
 var defaultsettings = [
   //Default midi mapping
@@ -73,7 +74,7 @@ var defaultsettings = [
 function populateFields(settings){
 
   // all input fields
-  $('input').each(function(){
+  $('input[pos]').each(function(){
     var field = $(this);
     if(field.attr('type') === 'checkbox'){
 	  if(settings[field.attr('pos')] == 0){
@@ -87,7 +88,7 @@ function populateFields(settings){
   });
   
   // all dropdowns
-  $('select').each(function(){
+  $('select[pos]').each(function(){
     $(this).val(settings[$(this).attr('pos')]);
   });
   
@@ -188,22 +189,28 @@ function midiReadyCallback() {
 			.text(outputs.name)); 		
 	}        
 	dropdown.val(0);
+	setMidiDeviceFromDropdown();
+	setMidiChannelFromDropdown();
 }
           
 function setMidiDeviceFromDropdown(){
 	var dropdown = $("#outputDropdown");
 	var deviceId = dropdown.val();
+	console.log("set midi device to " + deviceId);
 	midi.selectOutput(deviceId);
 }		  
-		  
+	
+function setMidiChannelFromDropdown(){
+	midiChannel = $("#midichannel").val();
+	console.log("set midi channel to " + midiChannel);
+}		
+	
 function sendSettingsAsSysex(){
-	setMidiDeviceFromDropdown();
 	var sysexData = [SYSEX_OP_CHANGE_SETTING].concat(generateSettings());
 	midi.sendSysex(sysexAddress,sysexData);
 }
 
 function sendClearSettingsAsSysex(){
-	setMidiDeviceFromDropdown();
 	var sysexData = [SYSEX_OP_CLEAR_SETTINGS_FROM_EE];
 	midi.sendSysex(sysexAddress,sysexData);
 }
@@ -212,11 +219,8 @@ function sendDialValueAsCC(value, dial){
 	value = Math.round(value);
 	var pos = $(dial.i).attr("pos-link"); 
 	var cc = $("[pos='"+pos+"']").val();
-	
-	var channel = $("#midichannel").val();
 
-	setMidiDeviceFromDropdown();			
-	midi.sendCC(channel, cc, value);
+	midi.sendCC(midiChannel, cc, value);
 }
 
 //kickstart everything on document load

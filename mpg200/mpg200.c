@@ -580,7 +580,7 @@ void treatMidiByte(char midiByte){
   unsigned short isCorrectMidiChannel;
 
   if(midiByte.F7 == 1){ //status byte
-  
+
     isCorrectMidiChannel = (midiByte & MIDI_BITMASK_CHANNEL) == settings[POS_MIDI_CH];
   
     // to prevent switching between midi and pg-200 because of realtime events, 
@@ -594,6 +594,7 @@ void treatMidiByte(char midiByte){
       return;
     }
     
+            flashStatus(1);
     lastMidiStatus = (midiByte & MIDI_BITMASK_STATUS);
 
     //cc message designated for this device, these are not passed on as the jx-3p don't understand CCs anyway.
@@ -624,13 +625,14 @@ void treatMidiByte(char midiByte){
 
       // Treat sysex status messages.
       if(midiByte == MIDI_SYSEX_START){ //sysex start
+        flashStatus(1);
         sysexByteCounter = 0;
         sysexDataCounter = 0;
         inSysexMode = 1;
         sysexForThisDevice = 1; //will be set to false if address check fails later.
       } else if(midiByte == MIDI_SYSEX_END){ //sysex end
         if(settings[POS_SAVE_SETTINGS_AFTER_SYSEX]){
-          writeSettingsToEE();
+          //SYSEXFIX writeSettingsToEE();
         }
         inSysexMode = 0;
       } else {
@@ -639,7 +641,7 @@ void treatMidiByte(char midiByte){
       }
     }
   } else { // data byte
-    //if status byte was ignores, so must the data bytes.
+    //if status byte was ignored, so must the data bytes.
     if(midiRouting == MIDI_ROUTE_IGNORE){
       return;
     } else if(midiRouting == MIDI_ROUTE_TO_PG200){
@@ -712,9 +714,20 @@ void treatSysexByte(char midiByte){
     sysexDataCounter++;
   } else if(sysexDataCounter == 2){
     if(currentSysexOperation == SYSEX_OP_CHANGE_SETTING &&
-       currentSysexParam1 < SETTINGS_LENGTH){
+      currentSysexParam1 < SETTINGS_LENGTH ){
       // change settings value at position indicated by previous sysex parameter.
-      settings[currentSysexParam1] = midiByte;
+      // midi channel and output mode must be checked to prevent illegal values
+      if(currentSysexParam1 == POS_MIDI_CH){
+        if(midiByte < 16){
+          settings[currentSysexParam1] = midiByte;
+        }
+      } else if(currentSysexParam1 == POS_OUT_MODE){
+        if(midiByte < 3){
+          settings[currentSysexParam1] = midiByte;
+        }
+      } else {
+        settings[currentSysexParam1] = midiByte;
+      }
     }
     sysexDataCounter = 1; //reset to prepare for next sysex parameter.
   }
@@ -1004,38 +1017,6 @@ void flashStatus(char times){
   }
 }
 
-// read switch and change output mode.
-void readModeSwitch(){
-
-  if(SWITCH_PORT_BLOCK_MIDI == 1){
-    if(settings[POS_OUT_MODE] != OUTPUTMODE_BLOCK_MIDI){
-      delay_ms(500);
-      flashStatus(1);
-      settings[POS_OUT_MODE] = OUTPUTMODE_BLOCK_MIDI;
-      TXMODE_PORT = TXMODE_PG200;
-      delay_ms(500);
-    }
-  } else if(SWITCH_PORT_REVERT_TO_MIDI == 1){
-    if(settings[POS_OUT_MODE] != OUTPUTMODE_REVERT_TO_MIDI){
-      delay_ms(500);
-      flashStatus(2);
-      settings[POS_OUT_MODE] = OUTPUTMODE_REVERT_TO_MIDI;
-      TXMODE_PORT = TXMODE_MIDI;
-      clearToSendMidi = 1;
-      delay_ms(500);
-    }
-  } else if(SWITCH_PORT_INSTANT_SWITCH == 1){
-    if(settings[POS_OUT_MODE] != OUTPUTMODE_INSTANT_SWITCH){
-      delay_ms(500);
-      flashStatus(3);
-      settings[POS_OUT_MODE] = OUTPUTMODE_INSTANT_SWITCH;
-      TXMODE_PORT = TXMODE_MIDI;
-      delay_ms(500);
-    }
-  }
-}
-
-
 void setupTimers(){
   PSA_bit = 0;
   T0PS0_bit = 1;
@@ -1071,10 +1052,6 @@ void setupOscillator(){
 }
 
 void setupModeSwitch(){
-  //Set direction on switch lines to read
-  SWITCH_TRIS1=1;
-  SWITCH_TRIS2=1;
-  SWITCH_TRIS3=1;
 
   // Set default mode to something that is not a real state, to make leds
   // flash the first time the switch is read.
@@ -1161,13 +1138,16 @@ void main() {
   setupModeSwitch();
   
   // overwrite default settings with settings from EE.
-  //TODO: Make a 'clear EE' by checking if all switch inputs are 0.
   /*
   if(shouldDoFactoryReset()){
     clearSettingsFromEE();
-  } else if(hasSettingsInEE()){
+  } else 
+  */
+  /*
+  if(hasSettingsInEE()){
     readSettingsFromEE();
-  } */
+  }
+  */
   
   loadPg200maps();
   resetPg200SwitchStates();
