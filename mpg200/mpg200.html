@@ -202,7 +202,8 @@
     <h2>Other settings</h2>
 	<p>
 		<input type="checkbox" pos="34" id="savesettings"><label for="savesettings">Save settings to EE prom after every sysex update</label><br>
-		<input type="checkbox" pos="37" id="removemidi"><label for="removemidi">Remove realtime MIDI and MIDI not destined for the JX-3P</label>
+		<input type="checkbox" pos="37" id="removeotherchannel"><label for="removeotherchannel">Remove midi for other channels than the current JX-3P channel</label><br>
+		<input type="checkbox" pos="45" id="removerealtimemidi"><label for="removerealtimemidi">Remove realtime MIDI and MIDI not destined for the JX-3P</label>
 	</p>
     <table>
       <tr>
@@ -298,7 +299,7 @@
       </p>
       <p>
         <button onclick="sendSettingsAsSysex()">Send settings as MIDI sysex</button>
-	<button onclick="sendClearSettingsAsSysex()">Send "clear settings" as MIDI sysex</button>
+		<button onclick="sendClearSettingsAsSysex()">Send "clear settings" as MIDI sysex</button>
       </p>
     </div>	
   </body>

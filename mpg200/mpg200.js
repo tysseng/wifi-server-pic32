@@ -1,4 +1,5 @@
 var OUTPUTMODE_BLOCK_MIDI = 0;
+var OUTPUTMODE_BLOCK_MIDI = 0;
 var OUTPUTMODE_REVERT_TO_MIDI = 1;
 var OUTPUTMODE_INSTANT_SWITCH = 2;
 
@@ -55,7 +56,7 @@ var defaultsettings = [
   1, // Save settings to EE prom after sysex update.
   0, // default midi channel
   OUTPUTMODE_REVERT_TO_MIDI, //default output mode (but is overwritten by the switch detector)
-  1, // Remove realtime midi and midi not destined for the JX-3P
+  1, // Remove midi not destined for the JX-3P
   4, //DEFAULT_SWITCH_TO_MIDI_TIMER_OVERFLOWS - 20MHz: 4 timeouts approx 50ms delay after PG-200 before switching to midi (+ another 26ms before midi can be sent).
 
   //two pole switch boundary
@@ -68,7 +69,8 @@ var defaultsettings = [
   //four pole switch boundaries
   32,
   64,
-  96
+  96,
+  1 // Remove realtime midi
 ];
 
 function populateFields(settings){
@@ -119,7 +121,8 @@ function generateSettings(){
 		if($(this).attr('pos')){
 			settings[$(this).attr('pos')] = parseInt($(this).val());
 		}
-	});
+	});	
+	
 	return settings;
 }
 
@@ -206,7 +209,13 @@ function setMidiChannelFromDropdown(){
 }		
 	
 function sendSettingsAsSysex(){
-	var sysexData = [SYSEX_OP_CHANGE_SETTING].concat(generateSettings());
+
+	var settings = generateSettings();
+	var sysexData = [SYSEX_OP_CHANGE_SETTING];
+	for(i = 0; i<settings.length; i++){
+	  sysexData.push(i);
+	  sysexData.push(settings[i]);
+	}		
 	midi.sendSysex(sysexAddress,sysexData);
 }
 

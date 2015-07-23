@@ -182,7 +182,7 @@ char lastMidiParam1 = 0;
 // status of current sysex reception, what was the last operation and parameters
 // received.
 char currentSysexOperation = 0;
-char currentSysexParam1 = 0;
+char currentSysexConfigPos = 0;
 
 // are we currently receiving sysex data?
 bit inSysexMode;
@@ -204,7 +204,7 @@ char sysexAddress[] = {0, 43, 102}; //randomly chosen but must start with 0
 #define POS_SAVE_SETTINGS_AFTER_SYSEX 34
 #define POS_MIDI_CH 35
 #define POS_OUT_MODE 36
-#define POS_FILTER_MIDI 37
+#define POS_FILTER_MIDI_NOT_FOR_JX 37
 #define POS_SWITCH_TO_MIDI_TIMER_OVERFLOWS 38
 #define POS_2_POLE_SWITCH_BOUNDARY 39
 #define POS_3_POLE_SWITCH_BOUNDARY_1 40
@@ -212,6 +212,7 @@ char sysexAddress[] = {0, 43, 102}; //randomly chosen but must start with 0
 #define POS_4_POLE_SWITCH_BOUNDARY_1 42
 #define POS_4_POLE_SWITCH_BOUNDARY_2 43
 #define POS_4_POLE_SWITCH_BOUNDARY_3 44
+#define POS_FILTER_REALTIME_MIDI 45
 
 
 char settings[] = {
@@ -576,122 +577,141 @@ void readFromRxBuffer(){
 // Returns 0 if everything went fine (If the pg200 write buffer is full, we
 // will return 1 and try to read the byte again later).
 void treatMidiByte(char midiByte){
+  if(midiByte.F7 == 1){
+    treatStatusByte(midiByte);
+  } else {
+    treatDataByte(midiByte);
+  }
+}
 
+void treatStatusByte(char midiByte){
   unsigned short isCorrectMidiChannel;
-
-  if(midiByte.F7 == 1){ //status byte
-
-    isCorrectMidiChannel = (midiByte & MIDI_BITMASK_CHANNEL) == settings[POS_MIDI_CH];
   
-    // to prevent switching between midi and pg-200 because of realtime events, 
-    // these messages may be ignored.
-    // 248 to 255 are realtime events, 241 is MIDI Time Code Quarter Frame.
-    if(settings[POS_FILTER_MIDI] && (
-                                 isCorrectMidiChannel == 0 ||
-                                 midiByte > 247 || 
-                                 midiByte == 241)){
-      midiRouting = MIDI_ROUTE_IGNORE;
-      return;
+  isCorrectMidiChannel = (midiByte & MIDI_BITMASK_CHANNEL) == settings[POS_MIDI_CH];
+
+  // to prevent switching between midi and pg-200 because of realtime events and 
+  // messages not destined for the JX-3P, these may be ignored.
+  if(
+     // Remove midi messages that are not for the JX3P. Sysex and other special non-channel messages always pass.
+     settings[POS_FILTER_MIDI_NOT_FOR_JX] && midiByte < 0xF0 && isCorrectMidiChannel == 0 ||
+     
+     // Remove realtime midi messages. 248 to 255 are realtime events, 241 is MIDI Time Code Quarter Frame.
+     settings[POS_FILTER_REALTIME_MIDI] && (midiByte > 247 ||midiByte == 241)
+     ){
+    midiRouting = MIDI_ROUTE_IGNORE;
+    return;
+  }
+
+  // remove channel bits from midiByte to get midi status code.
+  lastMidiStatus = (midiByte & MIDI_BITMASK_STATUS);
+  
+  //cc message designated for this device, these are not passed on as the jx-3p don't understand CCs anyway.
+  if(lastMidiStatus == MIDI_MODE_CC && isCorrectMidiChannel){
+    midiRouting = MIDI_ROUTE_TO_PG200;
+    midiByteCounter = 1;
+  } else {
+    midiRouting = MIDI_ROUTE_TO_THRU;
+    if(settings[POS_OUT_MODE] == OUTPUTMODE_INSTANT_SWITCH || TXMODE_PORT == TXMODE_MIDI && clearToSendMidi == 1){
+      // We have switched to midi mode and waited the necessary time for the signal to settle.
+      // If message is destined for this device (and thus the jx-3p), we have to change the
+      // midi channel to 0. NB: Non musical commands like sysex messages are left untouched
+      // (all these start with 0xFx,  but the last four bits are stripped by the status mask so
+      // we only need to check for 0xF0).
+      if(lastMidiStatus != 0xF0 && isCorrectMidiChannel){
+        midiByte = lastMidiStatus; //strip address bits.
+      }
+      transmit(midiByte, TYPE_IGNORED, TXMODE_MIDI);
+
+      // when this is one, we know that the first midi byte has been sent and that we are ok to send more
+      // midi bytes. If we did not check this, it would be possible that the first midi byte was blocked
+      // while the second/third etc were not. This would lead to errors.
+      hasSentFirstMidiByte = 1;
+    } else {
+      //do not send midi, tell the world that the first byte was not sent in order to block subsequent bytes.
+      hasSentFirstMidiByte = 0;
     }
     
-            flashStatus(1);
-    lastMidiStatus = (midiByte & MIDI_BITMASK_STATUS);
+    treatSysexStatusByte(midiByte);
+  }
+}
 
-    //cc message designated for this device, these are not passed on as the jx-3p don't understand CCs anyway.
-    if(lastMidiStatus == MIDI_MODE_CC && isCorrectMidiChannel){
-      midiRouting = MIDI_ROUTE_TO_PG200;
-      midiByteCounter = 1;
-    } else {
-      midiRouting = MIDI_ROUTE_TO_THRU;
-      if(settings[POS_OUT_MODE] == OUTPUTMODE_INSTANT_SWITCH || TXMODE_PORT == TXMODE_MIDI && clearToSendMidi == 1){
-        // We have switched to midi mode and waited the necessary time for the signal to settle.
-        // If message is destined for this device (and thus the jx-3p), we have to change the
-        // midi channel to 0. NB: Non musical commands like sysex messages are left untouched 
-        // (all these start with 0xFx,  but the last four bits are stripped by the status mask so 
-        // we only need to check for 0xF0).
-        if(lastMidiStatus != 0xF0 && isCorrectMidiChannel){
-          midiByte = lastMidiStatus; //strip address bits.
-        }
-        transmit(midiByte, TYPE_IGNORED, TXMODE_MIDI);
-        
-        // when this is one, we know that the first midi byte has been sent and that we are ok to send more
-        // midi bytes. If we did not check this, it would be possible that the first midi byte was blocked
-        // while the second/third etc were not. This would lead to errors.
-        hasSentFirstMidiByte = 1;
-      } else {
-        //do not send midi, tell the world that the first byte was not sent in order to block subsequent bytes.
-        hasSentFirstMidiByte = 0;
-      }
+void treatSysexStatusByte(char midiByte){
+  // Treat sysex status messages.
+  if(midiByte == MIDI_SYSEX_START){ //sysex start
+    flashStatus(1);
+    sysexByteCounter = 0;
+    sysexDataCounter = 0;
+    inSysexMode = 1;
+    sysexForThisDevice = 1; //will be set to false if address check fails later.
+  } else if(midiByte == MIDI_SYSEX_END){ //sysex end
 
-      // Treat sysex status messages.
-      if(midiByte == MIDI_SYSEX_START){ //sysex start
-        flashStatus(1);
-        sysexByteCounter = 0;
-        sysexDataCounter = 0;
-        inSysexMode = 1;
-        sysexForThisDevice = 1; //will be set to false if address check fails later.
-      } else if(midiByte == MIDI_SYSEX_END){ //sysex end
-        if(settings[POS_SAVE_SETTINGS_AFTER_SYSEX]){
-          //SYSEXFIX writeSettingsToEE();
+    delay_ms(200);
+    flashStatus(2);
+
+    if(settings[POS_SAVE_SETTINGS_AFTER_SYSEX]){
+      //SYSEXFIX writeSettingsToEE();
+    }
+    inSysexMode = 0;
+  } else {
+    //sysex aborted if in sysex mode
+    inSysexMode = 0;
+  }
+}
+
+void treatDataByte(char midiByte){
+  //if status byte was ignored, so must the data bytes.
+  if(midiRouting == MIDI_ROUTE_IGNORE){
+    return;
+  } else if(midiRouting == MIDI_ROUTE_TO_PG200){
+    if(midiByteCounter == 1){ //convert CC number to pg200controller and store address, prepares for data transfer
+
+      //TODO: Reset counter to 0 if an unknown CC number is received
+      convertAndStoreAddress(midiByte);
+      midiByteCounter = 2;
+    } else if(midiByteCounter == 2){ //only one data byte should be used for CC messages
+      convertAndTransmitData(midiByte);
+      midiByteCounter = 1; //reset to 1 to allow for running status messages.
+    }
+  } else {
+    //normal midi message, pass through without altering
+    if(TXMODE_PORT == TXMODE_MIDI && hasSentFirstMidiByte == 1){ //block message unless first midi message has been sent.
+      transmit(midiByte, TYPE_IGNORED, TXMODE_MIDI);
+    } else { // midi is temporarily blocked. Record any note off-messages for replay once midi is on again.
+      if(midiByteCounter == 2){ // if this is the second parameter received
+        if(lastMidiStatus == MIDI_NOTE_OFF || lastMidiStatus == MIDI_NOTE_ON && midiByte == 0) { //if we are in note off mode or in note on and velocity is zero (=note off)
+          missingNoteOffs[lastMidiParam1] = 1;
+          hasMissingNoteOffs = 1;
         }
-        inSysexMode = 0;
-      } else {
-        //sysex aborted if in sysex mode
-        inSysexMode = 0;
       }
     }
-  } else { // data byte
-    //if status byte was ignored, so must the data bytes.
-    if(midiRouting == MIDI_ROUTE_IGNORE){
-      return;
-    } else if(midiRouting == MIDI_ROUTE_TO_PG200){
-      if(midiByteCounter == 1){ //convert CC number to pg200controller and store address, prepares for data transfer
-      
-        //TODO: Reset counter to 0 if an unknown CC number is received
-        convertAndStoreAddress(midiByte);
-        midiByteCounter = 2;
-      } else if(midiByteCounter == 2){ //only one data byte should be used for CC messages
-        convertAndTransmitData(midiByte);
-        midiByteCounter = 1; //reset to 1 to allow for running status messages.
-      }
-    } else {
-      //normal midi message, pass through without altering
-      if(TXMODE_PORT == TXMODE_MIDI && hasSentFirstMidiByte == 1){ //block message unless first midi message has been sent.
-        transmit(midiByte, TYPE_IGNORED, TXMODE_MIDI);
-      } else { // midi is temporarily blocked. Record any note off-messages for replay once midi is on again.
-        if(midiByteCounter == 2){ // if this is the second parameter received
-          if(lastMidiStatus == MIDI_NOTE_OFF || lastMidiStatus == MIDI_NOTE_ON && midiByte == 0) { //if we are in note off mode or in note on and velocity is zero (=note off)
-            missingNoteOffs[lastMidiParam1] = 1;
-            hasMissingNoteOffs = 1;
-          }
-        }
-      }
 
-      if(inSysexMode){
-        // check if sysex is meant for this device
-        
-        if(sysexByteCounter < 3){
-          if(midiByte != sysexAddress[sysexByteCounter]){
-            sysexForThisDevice = 0;
-          }
-        } else {
-          if(sysexForThisDevice){
-            treatSysexByte(midiByte);
-          }
-        }
-        //TODO: This will overflow, so maximum 256 bytes of sysex (-3 address bytes) can be sent.
-        sysexByteCounter++;
-      }
-      
-      //Store last received first-parameter. switch to 1 after second param to allow for running status
-      if(midiByteCounter == 1){ // first parameter received
-        lastMidiParam1 = midiByte;
-        midiByteCounter = 2;
-      } else if(midiByteCounter == 2){ // second parameter received
-        midiByteCounter = 1;
-      }
+    if(inSysexMode){
+      treatSysexDataByte(midiByte);
+    }
+
+    //Store last received first-parameter. switch to 1 after second param to allow for running status
+    if(midiByteCounter == 1){ // first parameter received
+      lastMidiParam1 = midiByte;
+      midiByteCounter = 2;
+    } else if(midiByteCounter == 2){ // second parameter received
+      midiByteCounter = 1;
     }
   }
+}
+
+void treatSysexDataByte(char midiByte){
+  if(sysexByteCounter < 3){
+    // check if sysex is meant for this device
+    if(midiByte != sysexAddress[sysexByteCounter]){
+      sysexForThisDevice = 0;
+    }
+  } else {
+    if(sysexForThisDevice){
+      treatSysexByte(midiByte);
+    }
+  }
+  //TODO: This will overflow, so maximum 256 bytes of sysex (-3 address bytes) can be sent.
+  sysexByteCounter++;
 }
 
 void treatSysexByte(char midiByte){
@@ -709,24 +729,24 @@ void treatSysexByte(char midiByte){
   } else if(sysexDataCounter == 1){
     if(currentSysexOperation == SYSEX_OP_CHANGE_SETTING){
       // read position in settings array to change
-      currentSysexParam1 = midiByte;
+      currentSysexConfigPos = midiByte;
     }
     sysexDataCounter++;
   } else if(sysexDataCounter == 2){
     if(currentSysexOperation == SYSEX_OP_CHANGE_SETTING &&
-      currentSysexParam1 < SETTINGS_LENGTH ){
+      currentSysexConfigPos < SETTINGS_LENGTH ){
       // change settings value at position indicated by previous sysex parameter.
       // midi channel and output mode must be checked to prevent illegal values
-      if(currentSysexParam1 == POS_MIDI_CH){
+      if(currentSysexConfigPos == POS_MIDI_CH){
         if(midiByte < 16){
-          settings[currentSysexParam1] = midiByte;
+          settings[currentSysexConfigPos] = midiByte;
         }
-      } else if(currentSysexParam1 == POS_OUT_MODE){
+      } else if(currentSysexConfigPos == POS_OUT_MODE){
         if(midiByte < 3){
-          settings[currentSysexParam1] = midiByte;
+          settings[currentSysexConfigPos] = midiByte;
         }
       } else {
-        settings[currentSysexParam1] = midiByte;
+        settings[currentSysexConfigPos] = midiByte;
       }
     }
     sysexDataCounter = 1; //reset to prepare for next sysex parameter.
