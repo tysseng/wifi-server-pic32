@@ -199,7 +199,7 @@ char sysexDataCounter = 0;
 char sysexAddress[] = {0, 43, 102}; //randomly chosen but must start with 0
 
 /**** SETTINGS  ****/
-#define SETTINGS_LENGTH 45
+#define SETTINGS_LENGTH 46
 #define POS_CONTROLLERS 0 //where in the settings array the controller mappings start
 #define POS_SAVE_SETTINGS_AFTER_SYSEX 34
 #define POS_MIDI_CH 35
@@ -258,8 +258,8 @@ char settings[] = {
   0, // Save settings to EE prom after sysex update.
   0, // default midi channel
   OUTPUTMODE_REVERT_TO_MIDI, //default output mode (but is overwritten by the switch detector)
-  1, // Remove realtime midi and midi not destined for the JX-3P
-  4, //DEFAULT_SWITCH_TO_MIDI_TIMER_OVERFLOWS - 20MHz: 4 timeouts approx 50ms delay after PG-200 before switching to midi (+ another 26ms before midi can be sent).
+  1, // Remove midi not destined for the JX-3P
+  4, // DEFAULT_SWITCH_TO_MIDI_TIMER_OVERFLOWS - 20MHz: 4 timeouts approx 50ms delay after PG-200 before switching to midi (+ another 26ms before midi can be sent).
 
   //two pole switch boundary
   64,
@@ -271,7 +271,8 @@ char settings[] = {
   //four pole switch boundaries
   32,
   64,
-  96
+  96,
+  1, // Remove realtime midi
 };
 
 /**** PROGRAM START ****/
@@ -289,20 +290,21 @@ void interrupt(){
     //we can get a long enough delay
     TMR0IF_bit = 0;
     if(timer0TimeoutCount < settings[POS_SWITCH_TO_MIDI_TIMER_OVERFLOWS] ){
-      //PORTC.F3 = 1;
       timer0TimeoutCount++;
       TMR0H = 0;
       TMR0L = 0;
     } else {
       timer0TimeoutCount = 0;
-      //PORTC.F3 = 0;
       switchToMidi();
       TMR0ON_bit = 0;
     }
   } else if (TMR1IF_bit){
     TMR1IF_bit = 0;
     TMR1ON_bit = 0;
-    clearToSendMissingNoteOffs = 1; // ready to send midi, indicate that we should send any missing notes off (which in turn should set clearToSend to 1 to commence midi processing
+    
+    // ready to send midi, indicate that we should send any missing notes off 
+    // (which in turn should set clearToSend to 1 to commence midi processing.
+    clearToSendMissingNoteOffs = 1;
   }
 }
 
@@ -329,13 +331,12 @@ void startSwitchToMidiTimer(){
     // timer0 has a max timeout of 13 ms at 20MHz, 16.4ms at 16MHz
     TMR0H = 0;
     TMR0L = 0;
-
     TMR0ON_bit = 1;
   }
 }
 
 void stopSwitchToMidiTimer(){
-    TMR0ON_bit = 0;
+  TMR0ON_bit = 0;
 }
 
 // send any note off messages that were lost while the mpg200 was in pg200 mode.
@@ -637,23 +638,27 @@ void treatStatusByte(char midiByte){
 
 void treatSysexStatusByte(char midiByte){
   // Treat sysex status messages.
-  if(midiByte == MIDI_SYSEX_START){ //sysex start
+  if(midiByte == MIDI_SYSEX_START){
+  
+    // tell the world that we received a start message
     flashStatus(1);
+    
     sysexByteCounter = 0;
     sysexDataCounter = 0;
     inSysexMode = 1;
     sysexForThisDevice = 1; //will be set to false if address check fails later.
-  } else if(midiByte == MIDI_SYSEX_END){ //sysex end
+  } else if(midiByte == MIDI_SYSEX_END){
 
+    // tell the world that we received an end message
     delay_ms(200);
     flashStatus(2);
 
-    if(settings[POS_SAVE_SETTINGS_AFTER_SYSEX]){
-      //SYSEXFIX writeSettingsToEE();
+    if(currentSysexOperation == SYSEX_OP_CHANGE_SETTING && settings[POS_SAVE_SETTINGS_AFTER_SYSEX]){
+      writeSettingsToEE();
     }
     inSysexMode = 0;
   } else {
-    //sysex aborted if in sysex mode
+    //sysex aborted if we were in sysex mode and received a non-sysex status
     inSysexMode = 0;
   }
 }
@@ -710,7 +715,8 @@ void treatSysexDataByte(char midiByte){
       treatSysexByte(midiByte);
     }
   }
-  //TODO: This will overflow, so maximum 256 bytes of sysex (-3 address bytes) can be sent.
+  // NB: This will overflow, so maximum 256 bytes of sysex (-3 address bytes)
+  // can be sent.
   sysexByteCounter++;
 }
 
@@ -718,11 +724,11 @@ void treatSysexByte(char midiByte){
   if(sysexDataCounter == 0){
     //first data byte, signals type of operation
     currentSysexOperation = midiByte;
-    if(midiByte == SYSEX_OP_WRITE_SETTINGS_TO_EE){
+    if(currentSysexOperation == SYSEX_OP_WRITE_SETTINGS_TO_EE){
       writeSettingsToEE();
-    } else if(midiByte == SYSEX_OP_CLEAR_SETTINGS_FROM_EE){
+    } else if(currentSysexOperation == SYSEX_OP_CLEAR_SETTINGS_FROM_EE){
       clearSettingsFromEE();
-    } else if(midiByte == SYSEX_OP_CHANGE_SETTING){
+    } else if(currentSysexOperation == SYSEX_OP_CHANGE_SETTING){
       //do nothing, need more data before we can change settings.
       sysexDataCounter++;
     }
@@ -761,9 +767,8 @@ void writeSettingsToEE(){
   char i;
   EEPROM_Write(0, 1); //indicate that ee has settings data.
   for(i=0; i<SETTINGS_LENGTH; i++){
-    EEPROM_Write(i, settings[i]);
+    EEPROM_Write(i+1, settings[i]);
   }
-  
   flashStatus(4);
 }
 
@@ -1157,18 +1162,8 @@ void main() {
   setupInterrupts();
   setupModeSwitch();
   
-  // overwrite default settings with settings from EE.
-  /*
-  if(shouldDoFactoryReset()){
-    clearSettingsFromEE();
-  } else 
-  */
-  /*
-  if(hasSettingsInEE()){
-    readSettingsFromEE();
-  }
-  */
-  
+
+
   loadPg200maps();
   resetPg200SwitchStates();
   
@@ -1178,6 +1173,17 @@ void main() {
   setupTimers();
   setupTxPort();
 
+  /*
+  if(shouldDoFactoryReset()){
+    clearSettingsFromEE();
+  } else
+  */
+  
+  // overwrite default settings with settings from EE.
+  if(hasSettingsInEE()){
+    readSettingsFromEE();
+  }
+  
   //Send 'ping' to JX-3P, telling it that the PG-200 is connected.
   sendPing();
 
@@ -1185,10 +1191,6 @@ void main() {
   flashStatus(3);
 
   while(1){
-    // check if mode switch has changed. Commented out for newer mpg-200 devices
-    // as it is set by sysex instead.
-    // readModeSwitch();
-    
     if(clearToSendMissingNoteOffs == 1){
       sendMissingNoteOffs();
     }
