@@ -2,15 +2,13 @@
 // korrekte output pins
 // hindre sending av note hvis velocity timer > 70 (passe på at timer ikke
 // overflow'er.
-// reset CD4022 on init
+// reset CD4022 on init?
 // lytte på carry fra CD4022? Er dette nødvendig?
 // sjekke om klokkepulsbredde til CD4022 er bred nok.
-// sjekk polaritet for KYINT og KYBD
-// korrigér velocity for offset på start, både her og i blogpost
 // vurdere om KYBD bør være koblet til interrupt for å sikre at vi ikke mister data.
 
 // turn on/off tests. remove for production code.
-#define RUNTESTS
+//#define RUNTESTS
 
 #ifdef RUNTESTS
   // debug output buffers, used in asserts in tests
@@ -20,31 +18,34 @@
   // Mock ports when in test mode
   #define OUTPUT_BUS mockedOutputBus
   #define DATA_BUS_DISABLED_PIN mockedDataBusDisabledPin.b0
-  #define OUTPUT_NOT_READY_PIN mockedOutputNotReadyPin.b0
+  #define OUTPUT_READY_PIN mockedOutputReadyPin.b0
   #define COL_SCAN_TIMER_INTERRUPT mockedColScanTimerInterrupt.b0
+  #define MCU_RECEIVING_DATA_INTERRUPT mockedMcuReceivingDataInterrupt.b0
   unsigned short mockedOutputBus;
   unsigned short mockedDataBusDisabledPin;
-  unsigned short mockedOutputNotReadyPin;
+  unsigned short mockedOutputReadyPin;
   unsigned short mockedColScanTimerInterrupt;
+  unsigned short mockedMcuReceivingDataInterrupt;
 #endif
 
 // Real ports when not in test mode
 #ifndef RUNTESTS
   #define OUTPUT_BUS latd
-  #define DATA_BUS_DISABLED_PIN porta.f3
-  #define OUTPUT_NOT_READY_PIN late.f2
+  #define DATA_BUS_DISABLED_PIN portb.f7
+  #define OUTPUT_READY_PIN late.f2
   #define COL_SCAN_TIMER_INTERRUPT TMR0IF_bit
+  #define MCU_RECEIVING_DATA_INTERRUPT RBIF_bit
 #endif
 
 #define OUTPUT_BUS_TRIS trisd
-#define DATA_BUS_DISABLED_PIN_TRIS trisa.f3
+#define DATA_BUS_DISABLED_PIN_TRIS trisb.f7
 #define OUTPUT_READY_PIN_TRIS trise.f2
-#define COLUMN_CLOCK_PIN lata.f6
-#define COLUMN_CLOCK_PIN_TRIS trisa.f6
+#define COLUMN_CLOCK_PIN late.f1
+#define COLUMN_CLOCK_PIN_TRIS trise.f1
 #define KEYS_START_ROW portc
 #define KEYS_START_ROW_TRIS trisc
-#define KEYS_END_ROW portb
-#define KEYS_END_ROW_TRIS trisb
+#define KEYS_END_ROW porta
+#define KEYS_END_ROW_TRIS trisa
 
 #include "PVSvelocityTable.h"
 #include "PVScontroller.h"
@@ -68,6 +69,8 @@ volatile unsigned short readyToSendOn[COLUMNS];
 volatile unsigned short currentColumn;
 volatile unsigned short cycleCounter;
 
+volatile unsigned short mainMcuReceivingData;
+
 // use different name for interrupt function in test mode to be able to
 // call it from a test.
 #ifndef RUNTESTS
@@ -77,7 +80,6 @@ void interrupt() {
 #endif
 
 void interruptBody(){
-  unsigned short column;
 
   // colScanTimer must run 8 times faster than the desired cycle counter speed
   // as we only update the cycleCounter once every key has been scanned.
@@ -95,13 +97,22 @@ void interruptBody(){
 
     // Send clock pulse to increment CD4022 counter (column selector)
     COLUMN_CLOCK_PIN = 1;
-    delay_us(1);
+    delay_us(2);
     COLUMN_CLOCK_PIN = 0;
 
     // Increment cycle counter before starting a new round.
     // Counter is only incremented once per round, not once per column
     if(currentColumn == 0){
       cycleCounter++;
+    }
+  } else if(MCU_RECEIVING_DATA_INTERRUPT){
+
+    // clear interrupt
+    MCU_RECEIVING_DATA_INTERRUPT = 0;
+    if(DATA_BUS_DISABLED_PIN == 0){
+      mainMcuReceivingData = 1;
+    } else {
+      mainMcuReceivingData = 0;
     }
   }
 }
@@ -181,7 +192,7 @@ void checkKeyBottomSwitches(unsigned short newState, unsigned short column){
 void send(unsigned short value){
 
   OUTPUT_BUS = value;
-  OUTPUT_NOT_READY_PIN = 0; //indicate to the main mcu that data is ready
+  OUTPUT_READY_PIN = 1; //indicate to the main mcu that data is ready
 
   // remove waiting code when in test mode to allow tests to pass
   #ifndef RUNTESTS
@@ -197,7 +208,7 @@ void send(unsigned short value){
     }
     OUTPUT_BUS = 0;
   #endif
-  OUTPUT_NOT_READY_PIN = 1;
+  OUTPUT_READY_PIN = 0;
 }
 
 unsigned short calculateVelocity(unsigned short velocityTime){
@@ -298,6 +309,7 @@ void disableAnalogPins(){
 
   //turn off analog inputs (set ports to digital)
   ANCON1  = 0;
+  ANCON0  = 0;
 
   // turn off A/D converter
   ADCON0 = 0;
@@ -317,17 +329,23 @@ void setupIOPorts(){
 void setupTimers(){
   // timer should trigger interrupt every 54uS for a total cycle length of
   // 432uS.
-  T0CON	     = 0xC8; // prescaler 1:1 if frequency is 16MHz
-  //T0CON	 = 0xC1; // prescaler 1:4 if frequency is 64MHz
-  TMR0L	     = 0x28;
-  GIE_bit	 = 1;
+  T0CON             = 0xC8; // prescaler 1:1 if frequency is 16MHz
+  //T0CON         = 0xC1; // prescaler 1:4 if frequency is 64MHz
+  TMR0L             = 0x28;
+  GIE_bit         = 1;
   TMR0IE_bit = 1;
+}
+
+void setupPortBInterrupt(){
+  RBIE_bit = 1; // turn on interrupt on portb changes.
 }
 
 void setupOscillator(){
   //Additional settings in project -> edit project
-  // PLL enabled: disabled
-  // Oscillator selection: internal oscillator
+  // LF-INTOSC Low-power = LF-INTOSC in High-Power mode during Sleep
+  // SOSC Power Selection and mode = Digital (SCLKI) mode (necessary for RC0 and RC1 to work properly)
+  // Oscillator = Internal RC oscillator
+  // PLL x4 = Disabled
   // Frequency: 16MHz
   INTSRC_bit = 1;
   IRCF2_bit = 1;
@@ -340,8 +358,10 @@ void setupOscillator(){
 }
 
 void init(){
+  mainMcuReceivingData = 0;
   initKeyScanner();
   initVelocityTiming();
+  setupPortBInterrupt();
 }
 
 #ifdef RUNTESTS
@@ -356,11 +376,12 @@ void main() {
 #ifndef RUNTESTS
 void main() {
   setupOscillator();
+  
   init();
   disableAnalogPins();
   setupIOPorts();
   setupTimers();
-  
+
   // back and forth, forever and ever.
   while(1){
     sendNoteOns();
