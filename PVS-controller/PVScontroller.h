@@ -21,7 +21,7 @@ extern unsigned short readyToSendOn[COLUMNS];
 extern void interruptBody();
 extern void checkKeyStartSwitches(unsigned short newState, unsigned short column);
 extern void checkKeyBottomSwitches(unsigned short newState, unsigned short column);
-extern void void send(unsigned short value);
+void send(unsigned short value, unsigned short resetAfter);
 extern unsigned short calculateVelocity(unsigned short velocityTime);
 extern void void sendNoteOn(unsigned short noteIndex, unsigned short velocityTime);
 extern void void sendNoteOns();

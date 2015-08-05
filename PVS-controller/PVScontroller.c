@@ -81,6 +81,8 @@ void interrupt() {
 
 void interruptBody(){
 
+  unsigned short bottomKeyState;
+
   // colScanTimer must run 8 times faster than the desired cycle counter speed
   // as we only update the cycleCounter once every key has been scanned.
   if(COL_SCAN_TIMER_INTERRUPT){
@@ -89,8 +91,11 @@ void interruptBody(){
     COL_SCAN_TIMER_INTERRUPT = 0;
     TMR0L = 0x28;
 
+    bottomKeyState = KEYS_END_ROW;
+    bottomKeyState.B4 = PORTB.B0;
+
     checkKeyStartSwitches(KEYS_START_ROW, currentColumn);
-    checkKeyBottomSwitches(KEYS_END_ROW, currentColumn);
+    checkKeyBottomSwitches(bottomKeyState, currentColumn);
 
     // Switch to next row - lets values settle untill next timeout.
     currentColumn = ++currentColumn % COLUMNS;
@@ -106,7 +111,6 @@ void interruptBody(){
       cycleCounter++;
     }
   } else if(MCU_RECEIVING_DATA_INTERRUPT){
-
     // clear interrupt
     MCU_RECEIVING_DATA_INTERRUPT = 0;
     if(DATA_BUS_DISABLED_PIN == 0){
@@ -164,6 +168,7 @@ void checkKeyBottomSwitches(unsigned short newState, unsigned short column){
     return;
   }
   
+
   for(row=0; row < ROWS; row++){
     if((changes & mask) && (newState & mask)){ // row has changed and is now turned on.
       // since we're using unsigned shorts, we will get a mod 256 effect,
@@ -189,7 +194,7 @@ void checkKeyBottomSwitches(unsigned short newState, unsigned short column){
 
 // blocking send, sets a data value on the output and waits until the receiver
 // indicates that the value has been read.
-void send(unsigned short value){
+void send(unsigned short value, unsigned short resetAfter){
 
   OUTPUT_BUS = value;
   OUTPUT_READY_PIN = 1; //indicate to the main mcu that data is ready
@@ -199,14 +204,16 @@ void send(unsigned short value){
     // wait until main mcu indicates that data bus is ready. Output is blocked
     // by the 74HC367 transparent latches until the data bus disabled line goes 
     // low, so data may be put on the output bus even before this flag is read.
-    while(DATA_BUS_DISABLED_PIN){
+    while(!mainMcuReceivingData){
       delay_us(1);
     }
     // keep output until main mcu disables the data bus.
-    while(DATA_BUS_DISABLED_PIN == 0){
+    while(mainMcuReceivingData){
       delay_us(1);
     }
-    OUTPUT_BUS = 0;
+    if(resetAfter){
+      OUTPUT_BUS = 0;
+    }
   #endif
   OUTPUT_READY_PIN = 0;
 }
@@ -227,8 +234,8 @@ void sendNoteOn(unsigned short noteIndex, unsigned short velocityTime){
     lastNoteSent = noteToSend;
     lastVelocitySent = velocity;
   #endif
-  send(noteToSend);
-  send(velocity);
+  send(noteToSend, 0);
+  send(velocity, 1);
 }
 
 void sendNoteOns(){
@@ -255,7 +262,7 @@ void sendNoteOns(){
 void sendNoteOff(unsigned short noteIndex){
   // note off-command is 0 so no need for any special treatment.
   unsigned short noteToSend = (BASE_NOTE + noteIndex);
-  send(noteToSend);
+  send(noteToSend, 1);
   #ifdef RUNTESTS
     lastNoteSent = noteToSend;
   #endif
@@ -271,7 +278,7 @@ void sendNoteOffs(){
     for(column=0; column < COLUMNS; column++){
       if(readyToSendOff[column] & mask){
         sendNoteOff(noteIndex);
-        
+
         // clear readyToSend. Only the current bit may be cleared, as new
         // ones may have been set through interrupts while we are in this loop
         readyToSendOff[column] &= ~mask;
@@ -319,11 +326,14 @@ void setupIOPorts(){
   // 0 = output
   // 1 = input
   OUTPUT_BUS_TRIS = 0;
+  OUTPUT_READY_PIN = 0;
   DATA_BUS_DISABLED_PIN_TRIS = 1;
   OUTPUT_READY_PIN_TRIS = 0;
   COLUMN_CLOCK_PIN_TRIS = 0;
   KEYS_START_ROW_TRIS = 0xFF;
   KEYS_END_ROW_TRIS = 0xFF;
+  OUTPUT_BUS = 0;
+  TRISB.F0 = 1; // bugfix pin, replaces missing pin on port a
 }
 
 void setupTimers(){
@@ -338,6 +348,7 @@ void setupTimers(){
 
 void setupPortBInterrupt(){
   RBIE_bit = 1; // turn on interrupt on portb changes.
+  IOCB7_bit = 1;
 }
 
 void setupOscillator(){

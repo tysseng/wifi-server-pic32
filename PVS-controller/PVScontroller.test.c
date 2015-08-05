@@ -144,7 +144,7 @@ void testThatNotesAbove60AreIgnoredInCalcVelocity(){
 void testThatSendCopiesValueToOutputBus(){
     mockedOutputBus = 0;
     
-    send(8);
+    send(8, 1);
     assertEquals(8, mockedOutputBus, "wrong value on output bus");
 }
 
