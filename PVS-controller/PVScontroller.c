@@ -1,11 +1,9 @@
 //TODO:
-// korrekte output pins
 // hindre sending av note hvis velocity timer > 70 (passe på at timer ikke
 // overflow'er.
 // reset CD4022 on init?
 // lytte på carry fra CD4022? Er dette nødvendig?
 // sjekke om klokkepulsbredde til CD4022 er bred nok.
-// vurdere om KYBD bør være koblet til interrupt for å sikre at vi ikke mister data.
 
 // turn on/off tests. remove for production code.
 //#define RUNTESTS
@@ -65,11 +63,12 @@ volatile unsigned short noteEndSwitchStates[COLUMNS];
 
 volatile unsigned short readyToSendOff[COLUMNS];
 volatile unsigned short readyToSendOn[COLUMNS];
+volatile unsigned short shouldSendOn[COLUMNS]; // is set when start switch is triggered but reset if end switch is not triggered within 70 cycles.
 
 volatile unsigned short currentColumn;
 volatile unsigned short cycleCounter;
 
-volatile unsigned short mainMcuReceivingData;
+volatile unsigned short mainMcuHasReadData;
 
 // use different name for interrupt function in test mode to be able to
 // call it from a test.
@@ -85,7 +84,9 @@ void interruptBody(){
 
   // colScanTimer must run 8 times faster than the desired cycle counter speed
   // as we only update the cycleCounter once every key has been scanned.
-  if(COL_SCAN_TIMER_INTERRUPT){
+  
+  //TEMPORARY REMOVED
+  /*if(COL_SCAN_TIMER_INTERRUPT){
   
     // clear interrupt and restart timer
     COL_SCAN_TIMER_INTERRUPT = 0;
@@ -110,13 +111,21 @@ void interruptBody(){
     if(currentColumn == 0){
       cycleCounter++;
     }
-  } else if(MCU_RECEIVING_DATA_INTERRUPT){
+  } else */
+  
+  if(RBIF_bit){
+    // read PORTB (to itself) to end mismatch condition.
+    // Trick from Microchip AN566.
+    asm {  
+      MOVF PORTB, 1
+    }
     // clear interrupt
-    MCU_RECEIVING_DATA_INTERRUPT = 0;
-    if(DATA_BUS_DISABLED_PIN == 0){
-      mainMcuReceivingData = 1;
-    } else {
-      mainMcuReceivingData = 0;
+    RBIF_bit = 0;
+    
+    // The main MCU reads data when the ~kybd line is low, so when this 
+    // line goes high the data transfer has finished.
+    if(DATA_BUS_DISABLED_PIN == 1){
+      mainMcuHasReadData = 1;
     }
   }
 }
@@ -144,7 +153,6 @@ void checkKeyStartSwitches(unsigned short newState, unsigned short column){
     
     //step to next note which is COLUMNS higher than the previous one.
     noteIndex += COLUMNS;
-    
     mask = mask << 1;
     
     // last row does not contain a full set of keys.
@@ -197,25 +205,23 @@ void checkKeyBottomSwitches(unsigned short newState, unsigned short column){
 void send(unsigned short value, unsigned short resetAfter){
 
   OUTPUT_BUS = value;
-  OUTPUT_READY_PIN = 1; //indicate to the main mcu that data is ready
+  mainMcuHasReadData = 0;
+  OUTPUT_READY_PIN = 0; //indicate to the main mcu that data is ready
+  
 
   // remove waiting code when in test mode to allow tests to pass
   #ifndef RUNTESTS
-    // wait until main mcu indicates that data bus is ready. Output is blocked
-    // by the 74HC367 transparent latches until the data bus disabled line goes 
-    // low, so data may be put on the output bus even before this flag is read.
-    while(!mainMcuReceivingData){
-      delay_us(1);
+    // wait until main mcu indicates that it has read the data. The
+    // data is read when the ~kybd line is low, so when this line goes
+    // high the data transfer has finished.
+    while(!mainMcuHasReadData){
     }
-    // keep output until main mcu disables the data bus.
-    while(mainMcuReceivingData){
-      delay_us(1);
-    }
+    
     if(resetAfter){
       OUTPUT_BUS = 0;
     }
   #endif
-  OUTPUT_READY_PIN = 0;
+
 }
 
 unsigned short calculateVelocity(unsigned short velocityTime){
@@ -227,7 +233,7 @@ unsigned short calculateVelocity(unsigned short velocityTime){
 
 void sendNoteOn(unsigned short noteIndex, unsigned short velocityTime){
   unsigned short velocity = calculateVelocity(velocityTime);
-  unsigned short noteToSend = COMMAND_NOTE_ON | (BASE_NOTE + noteIndex);
+  unsigned short noteToSend = (COMMAND_NOTE_ON | (BASE_NOTE + noteIndex));
   
   // store calculated results when in test mode to allow asserts on them
   #ifdef RUNTESTS
@@ -236,6 +242,8 @@ void sendNoteOn(unsigned short noteIndex, unsigned short velocityTime){
   #endif
   send(noteToSend, 0);
   send(velocity, 1);
+  
+  OUTPUT_READY_PIN = 1; // reset output ready since we have finished sending data
 }
 
 void sendNoteOns(){
@@ -243,6 +251,12 @@ void sendNoteOns(){
   unsigned short mask;
   unsigned short noteIndex = 0;
 
+  //TEMPORARY INCLUDED
+  sendNoteOn(0, 5);
+  delay_ms(50);
+  
+  //TEMPORARY REMOVED
+  /*
   for(row=0; row < ROWS; row++){
     mask = 1;
     for(column=0; column < COLUMNS; column++){
@@ -256,16 +270,18 @@ void sendNoteOns(){
       noteIndex++;
     }
     mask = mask << 1;
-  }
+  }*/
 }
 
 void sendNoteOff(unsigned short noteIndex){
   // note off-command is 0 so no need for any special treatment.
   unsigned short noteToSend = (BASE_NOTE + noteIndex);
+  
   send(noteToSend, 1);
   #ifdef RUNTESTS
     lastNoteSent = noteToSend;
   #endif
+  OUTPUT_READY_PIN = 1; // reset output ready since we have finished sending data
 }
 
 void sendNoteOffs(){
@@ -273,6 +289,12 @@ void sendNoteOffs(){
   unsigned short mask;
   unsigned short noteIndex = 0;
 
+  //TEMPORARY INCLUDED
+  sendNoteOff(0);
+  delay_ms(500);
+
+  //TEMPORARY REMOVED
+  /*
   for(row=0; row < ROWS; row++){
     mask = 1;
     for(column=0; column < COLUMNS; column++){
@@ -286,7 +308,7 @@ void sendNoteOffs(){
       noteIndex++;
     }
     mask = mask << 1;
-  }
+  } */
 }
 
 void initKeyScanner(){
@@ -296,6 +318,7 @@ void initKeyScanner(){
     noteEndSwitchStates[i]=0;
     readyToSendOff[i]=0;
     readyToSendOn[i]=0;
+    shouldSendOn[i]=0;
   }
   currentColumn = 0;
   // TODO: Make sure CD4022 counter is at 0 when we start, may read input
@@ -311,7 +334,6 @@ void initVelocityTiming(){
   cycleCounter = 0;
 }
 
-
 void disableAnalogPins(){
 
   //turn off analog inputs (set ports to digital)
@@ -326,8 +348,10 @@ void setupIOPorts(){
   // 0 = output
   // 1 = input
   OUTPUT_BUS_TRIS = 0;
-  OUTPUT_READY_PIN = 0;
-  DATA_BUS_DISABLED_PIN_TRIS = 1;
+  OUTPUT_READY_PIN = 1;
+  
+  //TEMPORARY REMOVED
+  //DATA_BUS_DISABLED_PIN_TRIS = 1;
   OUTPUT_READY_PIN_TRIS = 0;
   COLUMN_CLOCK_PIN_TRIS = 0;
   KEYS_START_ROW_TRIS = 0xFF;
@@ -343,12 +367,21 @@ void setupTimers(){
   //T0CON         = 0xC1; // prescaler 1:4 if frequency is 64MHz
   TMR0L             = 0x28;
   GIE_bit         = 1;
-  TMR0IE_bit = 1;
+  
+  //TEMPORARY REMOVED
+  //TMR0IE_bit = 1;
 }
 
 void setupPortBInterrupt(){
+
+  // TEMPORARY INCLUDED, should be set in setupIOPorts instead
+  TRISB = 0b10000000;
+  
   RBIE_bit = 1; // turn on interrupt on portb changes.
   IOCB7_bit = 1;
+  IOCB6_bit = 0;
+  IOCB5_bit = 0;
+  IOCB4_bit = 0;
 }
 
 void setupOscillator(){
@@ -369,7 +402,7 @@ void setupOscillator(){
 }
 
 void init(){
-  mainMcuReceivingData = 0;
+  mainMcuHasReadData = 0;
   initKeyScanner();
   initVelocityTiming();
   setupPortBInterrupt();
@@ -392,6 +425,9 @@ void main() {
   disableAnalogPins();
   setupIOPorts();
   setupTimers();
+
+  //TEMPORARY INCLUDED but may be permanent. Waits for the main mcu to be ready
+  delay_ms(2000);
 
   // back and forth, forever and ever.
   while(1){
