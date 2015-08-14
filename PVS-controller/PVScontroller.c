@@ -241,11 +241,12 @@ void sendNoteOns(){
   unsigned short noteIndex = 0;
 
   //TEMPORARY INCLUDED
+  /*
   sendNoteOn(0, 5);
   delay_ms(50);
+  */
   
   //TEMPORARY REMOVED
-  /*
   for(row=0; row < ROWS; row++){
     mask = 1;
     for(column=0; column < COLUMNS; column++){
@@ -259,7 +260,7 @@ void sendNoteOns(){
       noteIndex++;
     }
     mask = mask << 1;
-  }*/
+  }
 }
 
 void sendNoteOff(unsigned short noteIndex){
@@ -279,11 +280,12 @@ void sendNoteOffs(){
   unsigned short noteIndex = 0;
 
   //TEMPORARY INCLUDED
+  /*
   sendNoteOff(0);
   delay_ms(500);
+  */
 
   //TEMPORARY REMOVED
-  /*
   for(row=0; row < ROWS; row++){
     mask = 1;
     for(column=0; column < COLUMNS; column++){
@@ -297,7 +299,7 @@ void sendNoteOffs(){
       noteIndex++;
     }
     mask = mask << 1;
-  } */
+  }
 }
 
 void scanColumn(){
@@ -323,8 +325,8 @@ void scanColumn(){
   COLUMN_CLOCK_PIN = 0;
   
   // Now go process the data!
-  checkKeyStartSwitches(startKeyState, currentColumn, savedCycleCounter);
-  checkKeyEndSwitches(endKeyState, currentColumn, savedCycleCounter);
+  checkKeyStartSwitches(startKeyState, columnToCheck, savedCycleCounter);
+  checkKeyEndSwitches(endKeyState, columnToCheck, savedCycleCounter);
 
 
 }
@@ -396,15 +398,13 @@ void setupTimers(){
   //T0CON    = 0x41; // 8bit timer, prescaler 1:4 if frequency is 64MHz
   TMR0L    = 0x28;
 
-
   // clear any initial interrupt
   COL_SCAN_TIMER_INTERRUPT = 0;
-  
 
   //TEMPORARY REMOVED
   GIEL_bit   = 1; // enable low priority interrupts
-  TMR0IP_bit = 0;  // timer 0 interrupt has low priority
-  //TMR0IE_bit = 1; // turn on intterrupt for timer 0
+  TMR0IP_bit = 0; // timer 0 interrupt has low priority
+  TMR0IE_bit = 1; // turn on intterrupt for timer 0
 
 }
 
@@ -503,7 +503,7 @@ void main() {
   
   // back and forth, forever and ever.
   while(1){
-    //scanColumn();
+    scanColumn();
     
     //TODO: Move these into scanning algorithm
     sendNoteOns();
