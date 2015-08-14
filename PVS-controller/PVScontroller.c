@@ -40,6 +40,8 @@
 #define OUTPUT_READY_PIN_TRIS trise.f2
 #define COLUMN_CLOCK_PIN late.f1
 #define COLUMN_CLOCK_PIN_TRIS trise.f1
+#define COLUMN_CARRY_PIN PORTE.f0
+#define COLUMN_CARRY_PIN_TRIS trise.f0
 #define KEYS_START_ROW portc
 #define KEYS_START_ROW_TRIS trisc
 #define KEYS_END_ROW porta
@@ -67,62 +69,20 @@ volatile unsigned short shouldSendOn[COLUMNS]; // is set when start switch is tr
 
 volatile unsigned short currentColumn;
 volatile unsigned short cycleCounter;
-
+volatile unsigned short cycleSubCounter; //TODO: decrease timer speed instead.
 volatile unsigned short mainMcuHasReadData;
 
-// use different name for interrupt function in test mode to be able to
-// call it from a test.
-#ifndef RUNTESTS
 void interrupt() {
-  interruptBody();
-}
-#endif
-
-void interruptBody(){
-
-  unsigned short bottomKeyState;
-
-  // colScanTimer must run 8 times faster than the desired cycle counter speed
-  // as we only update the cycleCounter once every key has been scanned.
-  
-  //TEMPORARY REMOVED
-  /*if(COL_SCAN_TIMER_INTERRUPT){
-  
-    // clear interrupt and restart timer
-    COL_SCAN_TIMER_INTERRUPT = 0;
-    TMR0L = 0x28;
-
-    bottomKeyState = KEYS_END_ROW;
-    bottomKeyState.B4 = PORTB.B0;
-
-    checkKeyStartSwitches(KEYS_START_ROW, currentColumn);
-    checkKeyBottomSwitches(bottomKeyState, currentColumn);
-
-    // Switch to next row - lets values settle untill next timeout.
-    currentColumn = ++currentColumn % COLUMNS;
-
-    // Send clock pulse to increment CD4022 counter (column selector)
-    COLUMN_CLOCK_PIN = 1;
-    delay_us(2);
-    COLUMN_CLOCK_PIN = 0;
-
-    // Increment cycle counter before starting a new round.
-    // Counter is only incremented once per round, not once per column
-    if(currentColumn == 0){
-      cycleCounter++;
-    }
-  } else */
-  
-  if(RBIF_bit){
+  if(MCU_RECEIVING_DATA_INTERRUPT){
     // read PORTB (to itself) to end mismatch condition.
     // Trick from Microchip AN566.
-    asm {  
+    asm {
       MOVF PORTB, 1
     }
     // clear interrupt
     RBIF_bit = 0;
-    
-    // The main MCU reads data when the ~kybd line is low, so when this 
+
+    // The main MCU reads data when the ~kybd line is low, so when this
     // line goes high the data transfer has finished.
     if(DATA_BUS_DISABLED_PIN == 1){
       mainMcuHasReadData = 1;
@@ -130,7 +90,36 @@ void interruptBody(){
   }
 }
 
-void checkKeyStartSwitches(unsigned short newState, unsigned short column){
+// use different name for interrupt function in test mode to be able to
+// call it from a test.
+#ifndef RUNTESTS
+void interrupt_low() {
+  interruptBody();
+}
+#endif
+
+void interruptBody(){
+
+  // colScanTimer must run 8 times faster than the desired cycle counter speed
+  // as we only update the cycleCounter once every key has been scanned.
+  
+  if(COL_SCAN_TIMER_INTERRUPT){
+  
+    // clear interrupt and restart timer
+    COL_SCAN_TIMER_INTERRUPT = 0;
+    TMR0L = 0x28;
+
+    // Increment cycle counter before starting a new round.
+    // Counter is only incremented once per round, not once per column
+    // TODO: slow down clock by a factor of 8.
+    cycleSubCounter = ++cycleSubCounter % COLUMNS;
+    if(cycleSubCounter == 0){
+      cycleCounter++;
+    }
+  }
+}
+
+void checkKeyStartSwitches(unsigned short newState, unsigned short column, unsigned short savedCycleCounter){
 
   unsigned short row = 0;
   unsigned short mask = 0b00000001;
@@ -145,7 +134,7 @@ void checkKeyStartSwitches(unsigned short newState, unsigned short column){
   for(row=0; row < ROWS; row++){
     if(changes & mask){ // row has changed
       if(newState & mask){ // row has been turned on, store start time
-        noteTimers[noteIndex] = cycleCounter;
+        noteTimers[noteIndex] = savedCycleCounter;
       } else { // row has been turned off
         readyToSendOff[column] = readyToSendOff[column] | mask; // set bit at row position
       }
@@ -164,7 +153,7 @@ void checkKeyStartSwitches(unsigned short newState, unsigned short column){
   noteStartSwitchStates[column] = newState;
 }
 
-void checkKeyBottomSwitches(unsigned short newState, unsigned short column){
+void checkKeyEndSwitches(unsigned short newState, unsigned short column, unsigned short savedCycleCounter){
 
   unsigned short row = 0;
   unsigned short mask = 0b00000001;
@@ -182,7 +171,7 @@ void checkKeyBottomSwitches(unsigned short newState, unsigned short column){
       // since we're using unsigned shorts, we will get a mod 256 effect,
       // so the calculation will be correct even if cycleCounter is less
       // than noteTimer
-      noteVelocity[noteIndex] = cycleCounter - noteTimers[noteIndex];
+      noteVelocity[noteIndex] = savedCycleCounter - noteTimers[noteIndex];
       readyToSendOn[column] = readyToSendOn[column] | mask; // set bit at row position
     }
 
@@ -311,6 +300,35 @@ void sendNoteOffs(){
   } */
 }
 
+void scanColumn(){
+  unsigned short startKeyState;
+  unsigned short endKeyState;
+  unsigned short columnToCheck;
+  unsigned short savedCycleCounter;
+
+  // temporary store values, lets the rest of the system continue its job
+  // while we process the data.
+  startKeyState = KEYS_START_ROW;
+  endKeyState = KEYS_END_ROW;
+  endKeyState.B4 = PORTB.B0; // bugfix for missing pin on real port.
+  columnToCheck = currentColumn;
+  savedCycleCounter = cycleCounter;
+
+  // Switch to next row - lets values settle while we work on the current values
+  currentColumn = ++currentColumn % COLUMNS;
+  
+  // Send clock pulse to increment CD4022 counter (column selector)
+  COLUMN_CLOCK_PIN = 1;
+  delay_us(2);
+  COLUMN_CLOCK_PIN = 0;
+  
+  // Now go process the data!
+  checkKeyStartSwitches(startKeyState, currentColumn, savedCycleCounter);
+  checkKeyEndSwitches(endKeyState, currentColumn, savedCycleCounter);
+
+
+}
+
 void initKeyScanner(){
   unsigned short i;
   for(i=0; i<COLUMNS; i++){
@@ -320,9 +338,8 @@ void initKeyScanner(){
     readyToSendOn[i]=0;
     shouldSendOn[i]=0;
   }
-  currentColumn = 0;
-  // TODO: Make sure CD4022 counter is at 0 when we start, may read input
-  // from counter.
+  
+  // column counter is calibrated later, just before scanning starts.
 }
 
 void initVelocityTiming(){
@@ -332,6 +349,7 @@ void initVelocityTiming(){
     noteVelocity[i]=0;
   }
   cycleCounter = 0;
+  cycleSubCounter = 0;
 }
 
 void disableAnalogPins(){
@@ -347,41 +365,67 @@ void disableAnalogPins(){
 void setupIOPorts(){
   // 0 = output
   // 1 = input
+  
+  // outputs
   OUTPUT_BUS_TRIS = 0;
+  OUTPUT_BUS = 0;
+  
+  OUTPUT_READY_PIN_TRIS = 0;
   OUTPUT_READY_PIN = 1;
   
-  //TEMPORARY REMOVED
-  //DATA_BUS_DISABLED_PIN_TRIS = 1;
-  OUTPUT_READY_PIN_TRIS = 0;
   COLUMN_CLOCK_PIN_TRIS = 0;
+  COLUMN_CLOCK_PIN = 0;
+
+  // inputs
+  COLUMN_CARRY_PIN_TRIS = 1;
+  DATA_BUS_DISABLED_PIN_TRIS = 1;
   KEYS_START_ROW_TRIS = 0xFF;
   KEYS_END_ROW_TRIS = 0xFF;
-  OUTPUT_BUS = 0;
   TRISB.F0 = 1; // bugfix pin, replaces missing pin on port a
 }
 
 void setupTimers(){
   // timer should trigger interrupt every 54uS for a total cycle length of
   // 432uS.
-  T0CON             = 0xC8; // prescaler 1:1 if frequency is 16MHz
-  //T0CON         = 0xC1; // prescaler 1:4 if frequency is 64MHz
-  TMR0L             = 0x28;
-  GIE_bit         = 1;
+
+  // enable interrupt priorities
+  IPEN_bit = 1;
+
+  // clock is initially stopped.
+  T0CON    = 0x48; // 8bit timer, prescaler 1:1 if frequency is 16MHz
+  //T0CON    = 0x41; // 8bit timer, prescaler 1:4 if frequency is 64MHz
+  TMR0L    = 0x28;
+
+
+  // clear any initial interrupt
+  COL_SCAN_TIMER_INTERRUPT = 0;
   
+
   //TEMPORARY REMOVED
-  //TMR0IE_bit = 1;
+  GIEL_bit   = 1; // enable low priority interrupts
+  TMR0IP_bit = 0;  // timer 0 interrupt has low priority
+  //TMR0IE_bit = 1; // turn on intterrupt for timer 0
+
+}
+
+void startColumnClock(){
+  TMR0ON_bit = 1;
 }
 
 void setupPortBInterrupt(){
 
-  // TEMPORARY INCLUDED, should be set in setupIOPorts instead
-  TRISB = 0b10000000;
-  
-  RBIE_bit = 1; // turn on interrupt on portb changes.
+  // only pin 7 should generate interrupts
   IOCB7_bit = 1;
   IOCB6_bit = 0;
   IOCB5_bit = 0;
   IOCB4_bit = 0;
+  
+  // clear any initial interrupt
+  MCU_RECEIVING_DATA_INTERRUPT = 0;
+
+  GIEH_bit  = 1; // enable high priority interrupts
+  RBIP_bit  = 1; // portb interrupts have high priority
+  RBIE_bit  = 1; // turn on interrupt on portb changes.
 }
 
 void setupOscillator(){
@@ -399,6 +443,29 @@ void setupOscillator(){
   PLLEN_bit = 0; // PLL disabled, frequency 16MHz
   //PLLEN_bit = 1; // 4 x PLL enabled, frequency 64MHz
 
+}
+
+// makes sure that the currently selected column is 0
+void calibrateColumnClock(){
+
+  while(COLUMN_CARRY_PIN == 1){
+    COLUMN_CLOCK_PIN = 1;
+    delay_us(2);
+    COLUMN_CLOCK_PIN = 0;
+    delay_us(20);
+  }
+
+  while(COLUMN_CARRY_PIN == 0){
+    COLUMN_CLOCK_PIN = 1;
+    delay_us(2);
+    COLUMN_CLOCK_PIN = 0;
+    delay_us(20);
+  }
+  
+  // when the carry line goes high after having been low, we know that
+  // the 0 output line of the CD4022 is high (See timing diagram on page
+  // two of http://www.ti.com/lit/ds/symlink/cd4017b.pdf)
+  currentColumn = 0;
 }
 
 void init(){
@@ -426,13 +493,22 @@ void main() {
   setupIOPorts();
   setupTimers();
 
-  //TEMPORARY INCLUDED but may be permanent. Waits for the main mcu to be ready
+  //Wait for the main mcu to get ready
   delay_ms(2000);
+  
+  calibrateColumnClock();
 
+  // let the fun begin!
+  startColumnClock();
+  
   // back and forth, forever and ever.
   while(1){
+    //scanColumn();
+    
+    //TODO: Move these into scanning algorithm
     sendNoteOns();
     sendNoteOffs();
   }
 }
+
 #endif
