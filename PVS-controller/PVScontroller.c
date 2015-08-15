@@ -136,7 +136,8 @@ void checkKeyStartSwitches(unsigned short newState, unsigned short column, unsig
       if(newState & mask){ // row has been turned on, store start time
         noteTimers[noteIndex] = savedCycleCounter;
       } else { // row has been turned off
-        readyToSendOff[column] = readyToSendOff[column] | mask; // set bit at row position
+        sendNoteOff(noteIndex);
+        //readyToSendOff[column] = readyToSendOff[column] | mask; // set bit at row position
       }
     }
     
@@ -164,7 +165,6 @@ void checkKeyEndSwitches(unsigned short newState, unsigned short column, unsigne
   if(changes == 0){
     return;
   }
-  
 
   for(row=0; row < ROWS; row++){
     if((changes & mask) && (newState & mask)){ // row has changed and is now turned on.
@@ -172,12 +172,13 @@ void checkKeyEndSwitches(unsigned short newState, unsigned short column, unsigne
       // so the calculation will be correct even if cycleCounter is less
       // than noteTimer
       noteVelocity[noteIndex] = savedCycleCounter - noteTimers[noteIndex];
-      readyToSendOn[column] = readyToSendOn[column] | mask; // set bit at row position
+      sendNoteOn(noteIndex, noteVelocity[noteIndex]);
+      //readyToSendOn[column] = readyToSendOn[column] | mask; // set bit at row position
     }
 
     //step to next note which is COLUMNS higher than the previous one.
     noteIndex += COLUMNS;
-
+    
     mask = mask << 1;
 
     // last row does not contain a full set of keys.
@@ -205,12 +206,13 @@ void send(unsigned short value, unsigned short resetAfter){
     // high the data transfer has finished.
     while(!mainMcuHasReadData){
     }
-    
+
     if(resetAfter){
       OUTPUT_BUS = 0;
     }
   #endif
-
+  // NB: OUTPUT_READY_PIN must be set to 1 by the calling
+  // function when all bytes have been sent.
 }
 
 unsigned short calculateVelocity(unsigned short velocityTime){
@@ -230,7 +232,8 @@ void sendNoteOn(unsigned short noteIndex, unsigned short velocityTime){
     lastVelocitySent = velocity;
   #endif
   send(noteToSend, 0);
-  send(velocity, 1);
+//  send(velocity, 1);
+  send(0b01101111, 1);
   
   OUTPUT_READY_PIN = 1; // reset output ready since we have finished sending data
 }
@@ -240,13 +243,6 @@ void sendNoteOns(){
   unsigned short mask;
   unsigned short noteIndex = 0;
 
-  //TEMPORARY INCLUDED
-  /*
-  sendNoteOn(0, 5);
-  delay_ms(50);
-  */
-  
-  //TEMPORARY REMOVED
   for(row=0; row < ROWS; row++){
     mask = 1;
     for(column=0; column < COLUMNS; column++){
@@ -258,8 +254,8 @@ void sendNoteOns(){
         readyToSendOn[column] &= ~mask;
       }
       noteIndex++;
+      mask = mask << 1;
     }
-    mask = mask << 1;
   }
 }
 
@@ -279,13 +275,6 @@ void sendNoteOffs(){
   unsigned short mask;
   unsigned short noteIndex = 0;
 
-  //TEMPORARY INCLUDED
-  /*
-  sendNoteOff(0);
-  delay_ms(500);
-  */
-
-  //TEMPORARY REMOVED
   for(row=0; row < ROWS; row++){
     mask = 1;
     for(column=0; column < COLUMNS; column++){
@@ -297,8 +286,8 @@ void sendNoteOffs(){
         readyToSendOff[column] &= ~mask;
       }
       noteIndex++;
+      mask = mask << 1;
     }
-    mask = mask << 1;
   }
 }
 
@@ -504,10 +493,10 @@ void main() {
   // back and forth, forever and ever.
   while(1){
     scanColumn();
-    
+    delay_us(60);
     //TODO: Move these into scanning algorithm
-    sendNoteOns();
-    sendNoteOffs();
+    //sendNoteOns();
+    //sendNoteOffs();
   }
 }
 
