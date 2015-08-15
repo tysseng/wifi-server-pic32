@@ -30,6 +30,7 @@
 #ifndef RUNTESTS
   #define OUTPUT_BUS latd
   #define DATA_BUS_DISABLED_PIN portb.f7
+  #define DATA_BUS_DISABLED_PORT portb
   #define OUTPUT_READY_PIN late.f2
   #define COL_SCAN_TIMER_INTERRUPT TMR0IF_bit
   #define MCU_RECEIVING_DATA_INTERRUPT RBIF_bit
@@ -69,24 +70,24 @@ volatile unsigned short shouldSendOn[COLUMNS]; // is set when start switch is tr
 
 volatile unsigned short currentColumn;
 volatile unsigned short cycleCounter;
-volatile unsigned short cycleSubCounter; //TODO: decrease timer speed instead.
 volatile unsigned short mainMcuHasReadData;
 
 void interrupt() {
+  unsigned short DATA_BUS_DISABLED_VALUE;
+  
   if(MCU_RECEIVING_DATA_INTERRUPT){
-    // read PORTB (to itself) to end mismatch condition.
+    // read PORTB to end mismatch condition.
     // Trick from Microchip AN566.
-    asm {
-      MOVF PORTB, 1
-    }
-    // clear interrupt
-    RBIF_bit = 0;
-
+    DATA_BUS_DISABLED_VALUE = DATA_BUS_DISABLED_PORT;
+    
     // The main MCU reads data when the ~kybd line is low, so when this
     // line goes high the data transfer has finished.
-    if(DATA_BUS_DISABLED_PIN == 1){
+    if(DATA_BUS_DISABLED_VALUE.B7 == 1){
       mainMcuHasReadData = 1;
     }
+    
+    // clear interrupt
+    RBIF_bit = 0;
   }
 }
 
@@ -94,30 +95,16 @@ void interrupt() {
 // call it from a test.
 #ifndef RUNTESTS
 void interrupt_low() {
-  interruptBody();
-}
-#endif
-
-void interruptBody(){
-
-  // colScanTimer must run 8 times faster than the desired cycle counter speed
-  // as we only update the cycleCounter once every key has been scanned.
-  
   if(COL_SCAN_TIMER_INTERRUPT){
-  
+
     // clear interrupt and restart timer
     COL_SCAN_TIMER_INTERRUPT = 0;
     TMR0L = 0x28;
 
-    // Increment cycle counter before starting a new round.
-    // Counter is only incremented once per round, not once per column
-    // TODO: slow down clock by a factor of 8.
-    cycleSubCounter = ++cycleSubCounter % COLUMNS;
-    if(cycleSubCounter == 0){
-      cycleCounter++;
-    }
+    cycleCounter++;
   }
 }
+#endif
 
 void checkKeyStartSwitches(unsigned short newState, unsigned short column, unsigned short savedCycleCounter){
 
@@ -340,7 +327,6 @@ void initVelocityTiming(){
     noteVelocity[i]=0;
   }
   cycleCounter = 0;
-  cycleSubCounter = 0;
 }
 
 void disableAnalogPins(){
@@ -376,15 +362,14 @@ void setupIOPorts(){
 }
 
 void setupTimers(){
-  // timer should trigger interrupt every 54uS for a total cycle length of
-  // 432uS.
+  // timer should trigger interrupt every 432uS (the scan clock period of the
+  // original 68b01
 
   // enable interrupt priorities
   IPEN_bit = 1;
 
   // clock is initially stopped.
-  T0CON    = 0x48; // 8bit timer, prescaler 1:1 if frequency is 16MHz
-  //T0CON    = 0x41; // 8bit timer, prescaler 1:4 if frequency is 64MHz
+  T0CON    = 0x42; // 8bit timer, prescaler 1:8 if frequency is 16MHz
   TMR0L    = 0x28;
 
   // clear any initial interrupt
@@ -493,10 +478,6 @@ void main() {
   // back and forth, forever and ever.
   while(1){
     scanColumn();
-    delay_us(60);
-    //TODO: Move these into scanning algorithm
-    //sendNoteOns();
-    //sendNoteOffs();
   }
 }
 
