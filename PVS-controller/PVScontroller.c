@@ -15,23 +15,23 @@
 
   // Mock ports when in test mode
   #define OUTPUT_BUS mockedOutputBus
-  #define DATA_BUS_DISABLED_PIN mockedDataBusDisabledPin.b0
+  #define DATA_BUS_DISABLED_PORT mockedDataBusDisabledPort
   #define OUTPUT_READY_PIN mockedOutputReadyPin.b0
   #define COL_SCAN_TIMER_INTERRUPT mockedColScanTimerInterrupt.b0
   #define MCU_RECEIVING_DATA_INTERRUPT mockedMcuReceivingDataInterrupt.b0
   unsigned short mockedOutputBus;
-  unsigned short mockedDataBusDisabledPin;
+  unsigned short mockedDataBusDisabledPort;
   unsigned short mockedOutputReadyPin;
   unsigned short mockedColScanTimerInterrupt;
   unsigned short mockedMcuReceivingDataInterrupt;
+  unsigned short bytesSent;
 #endif
 
 // Real ports when not in test mode
 #ifndef RUNTESTS
   #define OUTPUT_BUS latd
-  #define DATA_BUS_DISABLED_PIN portb.f7
   #define DATA_BUS_DISABLED_PORT portb
-  #define OUTPUT_READY_PIN late.f2
+  #define OUTPUT_READY_PIN late.f2 //NB: OUTPUT_READY is (correctly) inverted, 1 means no data is ready
   #define COL_SCAN_TIMER_INTERRUPT TMR0IF_bit
   #define MCU_RECEIVING_DATA_INTERRUPT RBIF_bit
 #endif
@@ -45,6 +45,7 @@
 #define COLUMN_CARRY_PIN_TRIS trise.f0
 #define KEYS_START_ROW portc
 #define KEYS_START_ROW_TRIS trisc
+#define KEYS_END_ROW_MISSING_BIT portb.B0 // bugfix for missing pin on port a
 #define KEYS_END_ROW porta
 #define KEYS_END_ROW_TRIS trisa
 
@@ -52,23 +53,17 @@
 #include "PVScontroller.h"
 #include "PVScontroller.test.h"
 
-// Lowest possible note, C0 = 0100100
-#define BASE_NOTE 36
+unsigned short noteTimers[KEYCOUNT];
+unsigned short noteVelocity[KEYCOUNT];
 
-// Commands to send to the master MCU. note off is 0 so no need to use a command
-#define COMMAND_NOTE_ON 0b10000000
+unsigned short noteStartSwitchStates[COLUMNS];
+unsigned short noteEndSwitchStates[COLUMNS];
 
-volatile unsigned short noteTimers[KEYCOUNT];
-volatile unsigned short noteVelocity[KEYCOUNT];
+// Is reset when start switch is triggered and set if end switch is triggered
+// or end switch is not triggered within 70 cycles.
+unsigned short hasSentOn[COLUMNS];
 
-volatile unsigned short noteStartSwitchStates[COLUMNS];
-volatile unsigned short noteEndSwitchStates[COLUMNS];
-
-volatile unsigned short readyToSendOff[COLUMNS];
-volatile unsigned short readyToSendOn[COLUMNS];
-volatile unsigned short shouldSendOn[COLUMNS]; // is set when start switch is triggered but reset if end switch is not triggered within 70 cycles.
-
-volatile unsigned short currentColumn;
+unsigned short currentColumn;
 volatile unsigned short cycleCounter;
 volatile unsigned short mainMcuHasReadData;
 
@@ -122,9 +117,12 @@ void checkKeyStartSwitches(unsigned short newState, unsigned short column, unsig
     if(changes & mask){ // row has changed
       if(newState & mask){ // row has been turned on, store start time
         noteTimers[noteIndex] = savedCycleCounter;
+        hasSentOn[column] &= (~mask); // on has not been sent.
       } else { // row has been turned off
-        sendNoteOff(noteIndex);
-        //readyToSendOff[column] = readyToSendOff[column] | mask; // set bit at row position
+        //TODO: prevent key bouncing? holder det å sette note on not sent?
+        if(hasSentOn[column] & mask){
+          sendNoteOff(noteIndex);
+        }
       }
     }
     
@@ -141,6 +139,7 @@ void checkKeyStartSwitches(unsigned short newState, unsigned short column, unsig
   noteStartSwitchStates[column] = newState;
 }
 
+
 void checkKeyEndSwitches(unsigned short newState, unsigned short column, unsigned short savedCycleCounter){
 
   unsigned short row = 0;
@@ -149,21 +148,37 @@ void checkKeyEndSwitches(unsigned short newState, unsigned short column, unsigne
   unsigned short changes = noteEndSwitchStates[column] ^ newState;
 
   // most times nothing has changed, so return without further checking.
-  if(changes == 0){
+  if(hasSentOn[column] == 0b11111111 /*changes == 0*/){ //TODO: bug here -   -- men løser ikke alt.
     return;
   }
 
   for(row=0; row < ROWS; row++){
-    if((changes & mask) && (newState & mask)){ // row has changed and is now turned on.
-      // since we're using unsigned shorts, we will get a mod 256 effect,
-      // so the calculation will be correct even if cycleCounter is less
-      // than noteTimer
-      noteVelocity[noteIndex] = savedCycleCounter - noteTimers[noteIndex];
-      sendNoteOn(noteIndex, noteVelocity[noteIndex]);
-      //readyToSendOn[column] = readyToSendOn[column] | mask; // set bit at row position
+    // Check to see if note on has already been sent. This prevents double sends
+    // if key has only been released slightly or max time between start and end 
+    // has been reached. It also prevents unecessary checking of keys that have
+    // not been pressed as hasSentOn is only reset when a key press start is
+    // detected.
+    if(!(hasSentOn[column] & mask)){
+      if((changes & mask) && (newState & mask)){
+        // Row has changed and is now turned on.
+
+        // Since we're using unsigned shorts, we will get a mod 256 effect,
+        // so the calculation will be correct even if cycleCounter is less
+        // than noteTimer
+        noteVelocity[noteIndex] = savedCycleCounter - noteTimers[noteIndex];
+        sendNoteOn(noteIndex, noteVelocity[noteIndex]);
+        hasSentOn[column] |= mask;
+      } else {
+        // Check if the maximum allowed delay between key press start and end
+        // has been reached.
+        if(savedCycleCounter - noteTimers[noteIndex] >= MAX_VELOCITY_TIME){
+          sendNoteOn(noteIndex, MAX_VELOCITY_TIME);
+          hasSentOn[column] |= mask;
+        }
+      }
     }
 
-    //step to next note which is COLUMNS higher than the previous one.
+    // step to next note which is COLUMNS higher than the previous one.
     noteIndex += COLUMNS;
     
     mask = mask << 1;
@@ -184,8 +199,12 @@ void send(unsigned short value, unsigned short resetAfter){
   OUTPUT_BUS = value;
   mainMcuHasReadData = 0;
   OUTPUT_READY_PIN = 0; //indicate to the main mcu that data is ready
-  
 
+  #ifdef RUNTESTS
+    // for testing, measures the number of bytes sent in total.
+    bytesSent++;
+  #endif
+  
   // remove waiting code when in test mode to allow tests to pass
   #ifndef RUNTESTS
     // wait until main mcu indicates that it has read the data. The
@@ -203,7 +222,7 @@ void send(unsigned short value, unsigned short resetAfter){
 }
 
 unsigned short calculateVelocity(unsigned short velocityTime){
-  if(velocityTime < 70){
+  if(velocityTime < MAX_VELOCITY_TIME){
     return velocities[velocityTime];
   }
   return 0;
@@ -225,27 +244,6 @@ void sendNoteOn(unsigned short noteIndex, unsigned short velocityTime){
   OUTPUT_READY_PIN = 1; // reset output ready since we have finished sending data
 }
 
-void sendNoteOns(){
-  unsigned short column, row;
-  unsigned short mask;
-  unsigned short noteIndex = 0;
-
-  for(row=0; row < ROWS; row++){
-    mask = 1;
-    for(column=0; column < COLUMNS; column++){
-      if(readyToSendOn[column] & mask){
-        sendNoteOn(noteIndex, noteVelocity[noteIndex]);
-        
-        // clear readyToSend. Only the current bit may be cleared, as new
-        // ones may have been set through interrupts while we are in this loop
-        readyToSendOn[column] &= ~mask;
-      }
-      noteIndex++;
-      mask = mask << 1;
-    }
-  }
-}
-
 void sendNoteOff(unsigned short noteIndex){
   // note off-command is 0 so no need for any special treatment.
   unsigned short noteToSend = (BASE_NOTE + noteIndex);
@@ -255,27 +253,6 @@ void sendNoteOff(unsigned short noteIndex){
     lastNoteSent = noteToSend;
   #endif
   OUTPUT_READY_PIN = 1; // reset output ready since we have finished sending data
-}
-
-void sendNoteOffs(){
-  unsigned short column, row;
-  unsigned short mask;
-  unsigned short noteIndex = 0;
-
-  for(row=0; row < ROWS; row++){
-    mask = 1;
-    for(column=0; column < COLUMNS; column++){
-      if(readyToSendOff[column] & mask){
-        sendNoteOff(noteIndex);
-
-        // clear readyToSend. Only the current bit may be cleared, as new
-        // ones may have been set through interrupts while we are in this loop
-        readyToSendOff[column] &= ~mask;
-      }
-      noteIndex++;
-      mask = mask << 1;
-    }
-  }
 }
 
 void scanColumn(){
@@ -288,7 +265,8 @@ void scanColumn(){
   // while we process the data.
   startKeyState = KEYS_START_ROW;
   endKeyState = KEYS_END_ROW;
-  endKeyState.B4 = PORTB.B0; // bugfix for missing pin on real port.
+  // workaround for missing pin on real port.
+  endKeyState.B4 = KEYS_END_ROW_MISSING_BIT;
   columnToCheck = currentColumn;
   savedCycleCounter = cycleCounter;
 
@@ -303,8 +281,6 @@ void scanColumn(){
   // Now go process the data!
   checkKeyStartSwitches(startKeyState, columnToCheck, savedCycleCounter);
   checkKeyEndSwitches(endKeyState, columnToCheck, savedCycleCounter);
-
-
 }
 
 void initKeyScanner(){
@@ -312,9 +288,7 @@ void initKeyScanner(){
   for(i=0; i<COLUMNS; i++){
     noteStartSwitchStates[i]=0;
     noteEndSwitchStates[i]=0;
-    readyToSendOff[i]=0;
-    readyToSendOn[i]=0;
-    shouldSendOn[i]=0;
+    hasSentOn[i]=0xFF;
   }
   
   // column counter is calibrated later, just before scanning starts.
@@ -449,11 +423,16 @@ void init(){
   setupPortBInterrupt();
 }
 
-#ifdef RUNTESTS
-void main() {
+void initTests(){
   init();
   lastNoteSent = 0;
   lastVelocitySent = 0;
+  bytesSent = 0;
+}
+
+#ifdef RUNTESTS
+void main() {
+  initTests();
   runTests();
 }
 #endif
