@@ -1,3 +1,6 @@
+//TODO: finn bedre måte å hindre sendOn på bounce
+// - legg inn beskyttelse mot hanging notes (send off hvis start er off og hasSentOn er 1).
+
 // turn on/off tests. remove for production code.
 //#define RUNTESTS
 
@@ -47,8 +50,6 @@
 #include "PVScontroller.test.h"
 
 unsigned short noteTimers[KEYCOUNT];
-unsigned short noteVelocity[KEYCOUNT]; //TODO: Slette denne?
-
 unsigned short noteStartSwitchStates[COLUMNS];
 unsigned short noteEndSwitchStates[COLUMNS];
 
@@ -133,13 +134,13 @@ void checkKeyStartSwitches(unsigned short newState, unsigned short column, unsig
 }
 
 
-void checkKeyEndSwitches(unsigned short newState, unsigned short column, unsigned short savedCycleCounter){
+void checkKeyEndSwitches(unsigned short newState, unsigned short startKeyState, unsigned short column, unsigned short savedCycleCounter){
 
   unsigned short row = 0;
   unsigned short mask = 0b00000001;
   unsigned short noteIndex = column;
   unsigned short changes = noteEndSwitchStates[column] ^ newState;
-
+  unsigned short velocity;
   // most times nothing has changed, so return without further checking.
   if(hasSentOn[column] == 0b11111111 /*changes == 0*/){ //TODO: bug here -   -- men løser ikke alt.
     return;
@@ -158,13 +159,16 @@ void checkKeyEndSwitches(unsigned short newState, unsigned short column, unsigne
         // Since we're using unsigned shorts, we will get a mod 256 effect,
         // so the calculation will be correct even if cycleCounter is less
         // than noteTimer
-        noteVelocity[noteIndex] = savedCycleCounter - noteTimers[noteIndex];
-        sendNoteOn(noteIndex, noteVelocity[noteIndex]);
+        velocity = savedCycleCounter - noteTimers[noteIndex];
+        sendNoteOn(noteIndex, velocity);
         hasSentOn[column] |= mask;
       } else {
         // Check if the maximum allowed delay between key press start and end
-        // has been reached.
-        if(savedCycleCounter - noteTimers[noteIndex] >= MAX_VELOCITY_TIME){
+        // has been reached. NB: This should only be done if the start key is
+        // still on. If it is off, the start key has bounced and retriggered, 
+        // but will never send an off!
+        // TODO: This check will continue to run untill note is pressed again! Find a way to prevent this.
+        if(startKeyState & mask && savedCycleCounter - noteTimers[noteIndex] >= MAX_VELOCITY_TIME){
           sendNoteOn(noteIndex, MAX_VELOCITY_TIME);
           hasSentOn[column] |= mask;
         }
@@ -272,7 +276,7 @@ void scanColumn(){
   
   // Now go process the data!
   checkKeyStartSwitches(startKeyState, columnToCheck, savedCycleCounter);
-  checkKeyEndSwitches(endKeyState, columnToCheck, savedCycleCounter);
+  checkKeyEndSwitches(endKeyState, startKeyState, columnToCheck, savedCycleCounter);
 }
 
 void initKeyScanner(){
@@ -290,7 +294,6 @@ void initVelocityTiming(){
   unsigned short i;
   for(i=0; i<KEYCOUNT; i++){
     noteTimers[i]=0;
-    noteVelocity[i]=0;
   }
   cycleCounter = 0;
 }
