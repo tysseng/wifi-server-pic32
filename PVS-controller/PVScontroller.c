@@ -1,10 +1,3 @@
-//TODO:
-// hindre sending av note hvis velocity timer > 70 (passe på at timer ikke
-// overflow'er.
-// reset CD4022 on init?
-// lytte på carry fra CD4022? Er dette nødvendig?
-// sjekke om klokkepulsbredde til CD4022 er bred nok.
-
 // turn on/off tests. remove for production code.
 //#define RUNTESTS
 
@@ -54,7 +47,7 @@
 #include "PVScontroller.test.h"
 
 unsigned short noteTimers[KEYCOUNT];
-unsigned short noteVelocity[KEYCOUNT];
+unsigned short noteVelocity[KEYCOUNT]; //TODO: Slette denne?
 
 unsigned short noteStartSwitchStates[COLUMNS];
 unsigned short noteEndSwitchStates[COLUMNS];
@@ -225,7 +218,7 @@ unsigned short calculateVelocity(unsigned short velocityTime){
   if(velocityTime < MAX_VELOCITY_TIME){
     return velocities[velocityTime];
   }
-  return 0;
+  return 1;
 }
 
 void sendNoteOn(unsigned short noteIndex, unsigned short velocityTime){
@@ -238,9 +231,8 @@ void sendNoteOn(unsigned short noteIndex, unsigned short velocityTime){
     lastVelocitySent = velocity;
   #endif
   send(noteToSend, 0);
-//  send(velocity, 1);
-  send(0b01101111, 1);
-  
+  send(velocity, 1);
+
   OUTPUT_READY_PIN = 1; // reset output ready since we have finished sending data
 }
 
@@ -341,9 +333,11 @@ void setupTimers(){
 
   // enable interrupt priorities
   IPEN_bit = 1;
+  
 
   // clock is initially stopped.
   T0CON    = 0x42; // 8bit timer, prescaler 1:8 if frequency is 16MHz
+  T0CON    = 0x44; // 8bit timer, prescaler 1:32 if frequency is 64MHz
   TMR0L    = 0x28;
 
   // clear any initial interrupt
@@ -388,8 +382,8 @@ void setupOscillator(){
   IRCF1_bit = 1;
   IRCF0_bit = 1;
 
-  PLLEN_bit = 0; // PLL disabled, frequency 16MHz
-  //PLLEN_bit = 1; // 4 x PLL enabled, frequency 64MHz
+  //PLLEN_bit = 0; // PLL disabled, frequency 16MHz
+  PLLEN_bit = 1; // 4 x PLL enabled, frequency 64MHz
 
 }
 
