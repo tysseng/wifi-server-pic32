@@ -1,5 +1,36 @@
-//TODO: finn bedre måte å hindre sendOn på bounce
-// - legg inn beskyttelse mot hanging notes (send off hvis start er off og hasSentOn er 1).
+//TODO: legg inn beskyttelse mot hanging notes (send off hvis start er off og hasSentOn er 1).
+
+// Concepts:
+// start key/start switch: The first switch that is closed when a key is pressed
+// end key/end switch: The second switch that is closed when a key is pressed
+//
+// Velocity time is calculated as the time (in counter cycles of 432uS) between
+// start and end switches are closed. The velocity is  mapped to a faux
+// logarithmic output using a constant map. Only 70 cycles are allowed, if a
+// key is still pressed but has not reached bottom after 70 cycles, a note
+// on with velocity 1 is sent.
+//
+// Maximum velocity is 127, minimum is 1.
+//
+// Note on is sent as two bytes, the first has MSB=1 and is the note, the second
+// is the velocity.
+//
+// Note off is sent as a single byte with MSB=0. The rest of the bits are the
+// same as for the corresponding note on.
+//
+// C0 (the lowest C on the keyboard) is sent as 36 + 0b10000000 (on) or 36 (off)
+// other notes follows sequentially.
+//
+// Once data is ready to be sent, the controller buts the data on the output bus
+// and pulls its output ready pin _low_ (it is normally high). The main MCU
+// detects this and sends a very short _low_ pulse on the data_bus_disabled_pin.
+// This pulse simultaneously turns on the output buffers (separate chip) and
+// puts the output data on the prophet VS common data bus. Once the pulse goes
+// high again it is safe to remove the data.
+//
+// If the main MCU sees a 0 on the data bus, it interprets this as no more data
+// and stops reading. This is the reason why minimum velocity is 1, not 0.
+
 
 // turn on/off tests. remove for production code.
 //#define RUNTESTS
@@ -49,16 +80,35 @@
 #include "PVScontroller.h"
 #include "PVScontroller.test.h"
 
+
+// One byte per key, stores the timer value at the time the start switch of a
+// key is closed and is used when calculating the velocity
 unsigned short noteTimers[KEYCOUNT];
+
+// Stores the last state of the start/end switches to be able to detect changes.
+// They map to pin 13-20 (start) and 37-30 (end and in that order) of the
+// circuit (not the MCU, mind you).
 unsigned short noteStartSwitchStates[COLUMNS];
 unsigned short noteEndSwitchStates[COLUMNS];
 
-// Is reset when start switch is triggered and set if end switch is triggered
-// or end switch is not triggered within 70 cycles.
+// This variable is doing some magic. It is a bitwise variable, one bit maps
+// to one key. If the bit is 0, a new on-command can be sent if the key reaches
+// bottom or the velocity timer for that key times out. Once the on-command is
+// sent it is set to 1, indicating that a note-off must be sent when the key
+// reaches top again. The variable is also set to 1 if the key reaches top and
+// its value is 0 (meaning that no on-command has been sent). This prevents
+// timeouts if the key has been released before timeout occurs.
 unsigned short hasSentOn[COLUMNS];
 
+// The column in the key matrix that is currently being read.
 unsigned short currentColumn;
+
+// A 256 bit counter used for calculating velocity. Incremented by a timer 
+// interrupt every 432uS.
 volatile unsigned short cycleCounter;
+
+// Set to true by the interrupt that detects a transition from 0 to 1 on the
+// DATA_BUS_DISABLED_PIN and reset when a new byte is put on the output bus.
 volatile unsigned short mainMcuHasReadData;
 
 void interrupt() {
@@ -80,9 +130,6 @@ void interrupt() {
   }
 }
 
-// use different name for interrupt function in test mode to be able to
-// call it from a test.
-#ifndef RUNTESTS
 void interrupt_low() {
   if(COL_SCAN_TIMER_INTERRUPT){
 
@@ -93,7 +140,6 @@ void interrupt_low() {
     cycleCounter++;
   }
 }
-#endif
 
 void checkKeyStartSwitches(unsigned short newState, unsigned short column, unsigned short savedCycleCounter){
 
@@ -102,7 +148,7 @@ void checkKeyStartSwitches(unsigned short newState, unsigned short column, unsig
   unsigned short noteIndex = column;
   unsigned short changes = noteStartSwitchStates[column] ^ newState;
 
-  // most times nothing has changed, so return without further checking.
+  // most times nothing has changed so return without further checking.
   if(changes == 0){
     return;
   }
@@ -116,6 +162,12 @@ void checkKeyStartSwitches(unsigned short newState, unsigned short column, unsig
         //TODO: prevent key bouncing? holder det å sette note on not sent?
         if(hasSentOn[column] & mask){
           sendNoteOff(noteIndex);
+        } else {
+          // switch was turned off without having sent any on. Revert to
+          // initial state by setting hasSentOn to true. This prevents
+          // timeout from sending a note on if the start key is no longer
+          // pressed
+          hasSentOn[column] |= mask;
         }
       }
     }
@@ -134,15 +186,16 @@ void checkKeyStartSwitches(unsigned short newState, unsigned short column, unsig
 }
 
 
-void checkKeyEndSwitches(unsigned short newState, unsigned short startKeyState, unsigned short column, unsigned short savedCycleCounter){
+void checkKeyEndSwitches(unsigned short newState, unsigned short column, unsigned short savedCycleCounter){
 
   unsigned short row = 0;
   unsigned short mask = 0b00000001;
   unsigned short noteIndex = column;
   unsigned short changes = noteEndSwitchStates[column] ^ newState;
   unsigned short velocity;
+  
   // most times nothing has changed, so return without further checking.
-  if(hasSentOn[column] == 0b11111111 /*changes == 0*/){ //TODO: bug here -   -- men løser ikke alt.
+  if(hasSentOn[column] == 0b11111111){
     return;
   }
 
@@ -150,8 +203,9 @@ void checkKeyEndSwitches(unsigned short newState, unsigned short startKeyState, 
     // Check to see if note on has already been sent. This prevents double sends
     // if key has only been released slightly or max time between start and end 
     // has been reached. It also prevents unecessary checking of keys that have
-    // not been pressed as hasSentOn is only reset when a key press start is
-    // detected.
+    // not been pressed as hasSentOn is only 0 when a key press start is
+    // detected (and is reset to 1 if the key is released before reaching
+    // bottom).
     if(!(hasSentOn[column] & mask)){
       if((changes & mask) && (newState & mask)){
         // Row has changed and is now turned on.
@@ -164,11 +218,8 @@ void checkKeyEndSwitches(unsigned short newState, unsigned short startKeyState, 
         hasSentOn[column] |= mask;
       } else {
         // Check if the maximum allowed delay between key press start and end
-        // has been reached. NB: This should only be done if the start key is
-        // still on. If it is off, the start key has bounced and retriggered, 
-        // but will never send an off!
-        // TODO: This check will continue to run untill note is pressed again! Find a way to prevent this.
-        if(startKeyState & mask && savedCycleCounter - noteTimers[noteIndex] >= MAX_VELOCITY_TIME){
+        // has been reached.
+        if(savedCycleCounter - noteTimers[noteIndex] >= MAX_VELOCITY_TIME){
           sendNoteOn(noteIndex, MAX_VELOCITY_TIME);
           hasSentOn[column] |= mask;
         }
@@ -237,7 +288,8 @@ void sendNoteOn(unsigned short noteIndex, unsigned short velocityTime){
   send(noteToSend, 0);
   send(velocity, 1);
 
-  OUTPUT_READY_PIN = 1; // reset output ready since we have finished sending data
+  // reset output ready since we have finished sending data
+  OUTPUT_READY_PIN = 1;
 }
 
 void sendNoteOff(unsigned short noteIndex){
@@ -248,7 +300,9 @@ void sendNoteOff(unsigned short noteIndex){
   #ifdef RUNTESTS
     lastNoteSent = noteToSend;
   #endif
-  OUTPUT_READY_PIN = 1; // reset output ready since we have finished sending data
+  
+  // reset output ready since we have finished sending data
+  OUTPUT_READY_PIN = 1;
 }
 
 void scanColumn(){
@@ -276,7 +330,7 @@ void scanColumn(){
   
   // Now go process the data!
   checkKeyStartSwitches(startKeyState, columnToCheck, savedCycleCounter);
-  checkKeyEndSwitches(endKeyState, startKeyState, columnToCheck, savedCycleCounter);
+  checkKeyEndSwitches(endKeyState, columnToCheck, savedCycleCounter);
 }
 
 void initKeyScanner(){
@@ -337,7 +391,6 @@ void setupTimers(){
   // enable interrupt priorities
   IPEN_bit = 1;
   
-
   // clock is initially stopped.
   T0CON    = 0x42; // 8bit timer, prescaler 1:8 if frequency is 16MHz
   T0CON    = 0x44; // 8bit timer, prescaler 1:32 if frequency is 64MHz
@@ -346,11 +399,9 @@ void setupTimers(){
   // clear any initial interrupt
   COL_SCAN_TIMER_INTERRUPT = 0;
 
-  //TEMPORARY REMOVED
   GIEL_bit   = 1; // enable low priority interrupts
   TMR0IP_bit = 0; // timer 0 interrupt has low priority
-  TMR0IE_bit = 1; // turn on intterrupt for timer 0
-
+  TMR0IE_bit = 1; // turn on interrupt for timer 0
 }
 
 void startColumnClock(){
@@ -374,20 +425,21 @@ void setupPortBInterrupt(){
 }
 
 void setupOscillator(){
-  //Additional settings in project -> edit project
+  //Additional settings in project -> edit project:
   // LF-INTOSC Low-power = LF-INTOSC in High-Power mode during Sleep
   // SOSC Power Selection and mode = Digital (SCLKI) mode (necessary for RC0 and RC1 to work properly)
   // Oscillator = Internal RC oscillator
-  // PLL x4 = Disabled
-  // Frequency: 16MHz
+  
+  //TODO: Untested, these were left unchanged (disabled/16MHz) when changing
+  // PLL in code and freq in other settings.
+  // PLL x4 = Enabled
+  // Frequency: 64MHz
   INTSRC_bit = 1;
   IRCF2_bit = 1;
   IRCF1_bit = 1;
   IRCF0_bit = 1;
 
-  //PLLEN_bit = 0; // PLL disabled, frequency 16MHz
   PLLEN_bit = 1; // 4 x PLL enabled, frequency 64MHz
-
 }
 
 // makes sure that the currently selected column is 0

@@ -112,7 +112,7 @@ void testVelocityCalculationNormal(){
     
     // simulate that key hits bottom after 2 ticks
     storedCycleCounter = 2;
-    checkKeyEndSwitches(0b00000001, 0, 0, storedCycleCounter);
+    checkKeyEndSwitches(0b00000001, 0, storedCycleCounter);
 
     assertEquals(2, noteVelocity[0], "Normal velocity is wrong");
 }
@@ -127,22 +127,22 @@ void testVelocityCalculationInverse(){
     // simulate that key hits bottom after 254 ticks
     // (counter has overflowed and restarted).
     storedCycleCounter = 2;
-    checkKeyEndSwitches(0b00000001, 0, 0, storedCycleCounter);
+    checkKeyEndSwitches(0b00000001, 0, storedCycleCounter);
 
     assertEquals(254, noteVelocity[0], "Inverse velocity is wrong");
 }
 
 void testThatKeyEndSetsHasSentOnToTrue(){
     hasSentOn[2] = 0;
-    checkKeyEndSwitches(0b00000001, 0, 2, 0); // simulate key strike end
+    checkKeyEndSwitches(0b00000001, 2, 0); // simulate key strike end
     
     assertEquals(0b00000001, hasSentOn[2], "has sent on set");
 }
 
 void testThatHasSentOnsAreMergedOnKeyEnd(){
     hasSentOn[2] = 0;
-    checkKeyEndSwitches(0b00000001, 0, 2, 0); // simulate key strike end 1
-    checkKeyEndSwitches(0b10000000, 0, 2, 0); // simulate key strike end 2
+    checkKeyEndSwitches(0b00000001, 2, 0); // simulate key strike end 1
+    checkKeyEndSwitches(0b10000000, 2, 0); // simulate key strike end 2
 
     assertEquals(0b10000001, hasSentOn[2], "ready to sends shoud have been merged");
 }
@@ -153,13 +153,13 @@ void testThatNoteOnIsSentOnKeyEndOn(){
 void testThatNoteOnIsOnlySentOnceOnKeyEndOn(){
     // Key has reached bottom
     hasSentOn[0] = 0b11111110;
-    checkKeyEndSwitches(0b0000001, 0, 0, 0);
+    checkKeyEndSwitches(0b0000001, 0, 0);
 
     // Key is released slightly
-    checkKeyEndSwitches(0b0000000, 0, 0, 0);
+    checkKeyEndSwitches(0b0000000, 0, 0);
 
     // Key is fully pressed again witout reaching top first
-    checkKeyEndSwitches(0b0000001, 0, 0, 0);
+    checkKeyEndSwitches(0b0000001, 0, 0);
     
     assertEquals(2, bytesSent, "Wrong number of notes sent");
 }
@@ -170,13 +170,13 @@ void testThatNotesAbove60AreIgnoredByKeyEnd(){
     hasSentOn[6] = 0;
     hasSentOn[7] = 0;
     
-    checkKeyEndSwitches(0b11111111, 0, 5, 0);
+    checkKeyEndSwitches(0b11111111, 5, 0);
     assertEquals(0b01111111, hasSentOn[5], "Note 61 should not be read");
 
-    checkKeyEndSwitches(0b11111111, 0, 6, 0);
+    checkKeyEndSwitches(0b11111111, 6, 0);
     assertEquals(0b01111111, hasSentOn[6], "Note 62 should not be read");
 
-    checkKeyEndSwitches(0b11111111, 0, 7, 0);
+    checkKeyEndSwitches(0b11111111, 7, 0);
     assertEquals(0b01111111, hasSentOn[7], "Note 63 should not be read");
 }
 
@@ -191,7 +191,7 @@ void testThatKeyEndTimesOutAndSendsNoteOn(){
     storedCycleCounter = MAX_VELOCITY_TIME;
 
     // no key ends reached but time is more that max
-    checkKeyEndSwitches(0, 0b00000001, 0, storedCycleCounter);
+    checkKeyEndSwitches(0, 0, storedCycleCounter);
 
     assertEquals(bytesSent, 2, "Wrong number of notes sent");
 }
@@ -207,8 +207,8 @@ void testThatNoteOnIsOnlySentOnceOnKeyEndTimeOut(){
     storedCycleCounter = MAX_VELOCITY_TIME;
 
     // no key ends reached but time is more that max
-    checkKeyEndSwitches(0, 0b00000001, 0, storedCycleCounter);
-    checkKeyEndSwitches(0, 0b00000001, 0, storedCycleCounter);
+    checkKeyEndSwitches(0, 0, storedCycleCounter);
+    checkKeyEndSwitches(0, 0, storedCycleCounter);
 
     assertEquals(bytesSent, 2, "Wrong number of notes sent");
 }
@@ -226,7 +226,7 @@ void testThatKeyEndTimeoutSetsHasSentOnsToTrue(){
     storedCycleCounter = MAX_VELOCITY_TIME;
 
     // no key ends reached but time is more that max
-    checkKeyEndSwitches(0, 0b00000011, 0, storedCycleCounter);
+    checkKeyEndSwitches(0, 0, storedCycleCounter);
     
     assertEquals(0b11111111, hasSentOn[0], "has sent on set");
 }

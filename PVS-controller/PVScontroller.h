@@ -27,7 +27,7 @@ extern unsigned short noteEndSwitchStates[COLUMNS];
 extern unsigned short hasSentOn[COLUMNS];
       
 void checkKeyStartSwitches(unsigned short newState, unsigned short column, unsigned short savedCycleCounter);
-void checkKeyEndSwitches(unsigned short newState, unsigned short startKeyState, unsigned short column, unsigned short savedCycleCounter);
+void checkKeyEndSwitches(unsigned short newState, unsigned short column, unsigned short savedCycleCounter);
 
 unsigned short calculateVelocity(unsigned short velocityTime);
 
