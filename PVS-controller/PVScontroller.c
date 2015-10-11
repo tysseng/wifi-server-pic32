@@ -60,7 +60,7 @@
   #define DATA_BUS_DISABLED_PORT portb
   #define OUTPUT_READY_PIN late.f2 //NB: OUTPUT_READY is (correctly) inverted, 1 means no data is ready
   #define COL_SCAN_TIMER_INTERRUPT TMR0IF_bit
-  #define MCU_RECEIVING_DATA_INTERRUPT RBIF_bit
+  #define MCU_RECEIVING_DATA_INTERRUPT INT3IF_bit
 #endif
 
 #define OUTPUT_BUS_TRIS trisd
@@ -119,18 +119,12 @@ void interrupt() {
   unsigned short DATA_BUS_DISABLED_VALUE;
   
   if(MCU_RECEIVING_DATA_INTERRUPT){
-    // read PORTB to end mismatch condition.
-    // Trick from Microchip AN566.
-    DATA_BUS_DISABLED_VALUE = DATA_BUS_DISABLED_PORT;
-    
     // The main MCU reads data when the ~kybd line is low, so when this
     // line goes high the data transfer has finished.
-    if(DATA_BUS_DISABLED_VALUE.B4 == 1){
-      mainMcuHasReadData = 1;
-    }
-    
+    mainMcuHasReadData = 1;
+
     // clear interrupt
-    RBIF_bit = 0;
+    MCU_RECEIVING_DATA_INTERRUPT = 0;
   }
 }
 
@@ -416,18 +410,15 @@ void startColumnClock(){
 
 void setupPortBInterrupt(){
 
-  // only pin 4 should generate interrupts
-  IOCB7_bit = 0;
-  IOCB6_bit = 0;
-  IOCB5_bit = 0;
-  IOCB4_bit = 1;
+  INT3IE_bit = 1; // enable external interrupts on portb.f3
+  INTEDG3_bit = 1; // trigger on rising edge (i.e. read is complete)
+  INT3IP_bit = 1; // external interrupt 3 has high priority
   
   // clear any initial interrupt
   MCU_RECEIVING_DATA_INTERRUPT = 0;
 
   GIEH_bit  = 1; // enable high priority interrupts
-  RBIP_bit  = 1; // portb interrupts have high priority
-  RBIE_bit  = 1; // turn on interrupt on portb changes.
+  RBIE_bit  = 0; // turn off interrupt on portb changes.
 }
 
 void setupOscillator(){
