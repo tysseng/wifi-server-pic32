@@ -64,7 +64,10 @@
 #endif
 
 #define OUTPUT_BUS_TRIS trisd
-#define DATA_BUS_DISABLED_PIN_TRIS trisb.f7
+
+//NB: Remember to change IOCBx_bit when changing input pin on PORTB!
+#define DATA_BUS_DISABLED_PIN_TRIS_1 trisb.f4
+#define DATA_BUS_DISABLED_PIN_TRIS_2 trisb.f3
 #define OUTPUT_READY_PIN_TRIS trise.f2
 #define COLUMN_CLOCK_PIN late.f1
 #define COLUMN_CLOCK_PIN_TRIS trise.f1
@@ -72,7 +75,8 @@
 #define COLUMN_CARRY_PIN_TRIS trise.f0
 #define KEYS_START_ROW portc
 #define KEYS_START_ROW_TRIS trisc
-#define KEYS_END_ROW_MISSING_BIT portb.B0 // bugfix for missing pin on port a
+#define KEYS_END_ROW_MISSING_BIT portb.f0 // bugfix for missing pin on port a
+#define KEYS_END_ROW_MISSING_BIT_TRIS trisb.f0
 #define KEYS_END_ROW porta
 #define KEYS_END_ROW_TRIS trisa
 
@@ -121,7 +125,7 @@ void interrupt() {
     
     // The main MCU reads data when the ~kybd line is low, so when this
     // line goes high the data transfer has finished.
-    if(DATA_BUS_DISABLED_VALUE.B7 == 1){
+    if(DATA_BUS_DISABLED_VALUE.B4 == 1){
       mainMcuHasReadData = 1;
     }
     
@@ -317,6 +321,7 @@ void scanColumn(){
   endKeyState = KEYS_END_ROW;
   // workaround for missing pin on real port.
   endKeyState.B4 = KEYS_END_ROW_MISSING_BIT;
+  
   columnToCheck = currentColumn;
   savedCycleCounter = cycleCounter;
 
@@ -378,10 +383,11 @@ void setupIOPorts(){
 
   // inputs
   COLUMN_CARRY_PIN_TRIS = 1;
-  DATA_BUS_DISABLED_PIN_TRIS = 1;
+  DATA_BUS_DISABLED_PIN_TRIS_1 = 1;
+  DATA_BUS_DISABLED_PIN_TRIS_2 = 1;
   KEYS_START_ROW_TRIS = 0xFF;
   KEYS_END_ROW_TRIS = 0xFF;
-  TRISB.F0 = 1; // bugfix pin, replaces missing pin on port a
+  KEYS_END_ROW_MISSING_BIT_TRIS = 1; // bugfix pin, replaces missing pin on port a
 }
 
 void setupTimers(){
@@ -410,11 +416,11 @@ void startColumnClock(){
 
 void setupPortBInterrupt(){
 
-  // only pin 7 should generate interrupts
-  IOCB7_bit = 1;
+  // only pin 4 should generate interrupts
+  IOCB7_bit = 0;
   IOCB6_bit = 0;
   IOCB5_bit = 0;
-  IOCB4_bit = 0;
+  IOCB4_bit = 1;
   
   // clear any initial interrupt
   MCU_RECEIVING_DATA_INTERRUPT = 0;
@@ -489,7 +495,7 @@ void main() {
 #ifndef RUNTESTS
 void main() {
   setupOscillator();
-  
+
   init();
   disableAnalogPins();
   setupIOPorts();
