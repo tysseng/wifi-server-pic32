@@ -15943,22 +15943,6 @@ BF959 corrected 2008.03.06&lt;br&gt;</description>
 <description>&lt;b&gt;Molex Connectors&lt;/b&gt;&lt;p&gt;
 &lt;author&gt;Created by librarian@cadsoft.de&lt;/author&gt;</description>
 <packages>
-<package name="22-23-2041">
-<description>.100" (2.54mm) Center Header - 4 Pin</description>
-<wire x1="-5.08" y1="3.175" x2="5.08" y2="3.175" width="0.254" layer="21"/>
-<wire x1="5.08" y1="3.175" x2="5.08" y2="1.27" width="0.254" layer="21"/>
-<wire x1="5.08" y1="1.27" x2="5.08" y2="-3.175" width="0.254" layer="21"/>
-<wire x1="5.08" y1="-3.175" x2="-5.08" y2="-3.175" width="0.254" layer="21"/>
-<wire x1="-5.08" y1="-3.175" x2="-5.08" y2="1.27" width="0.254" layer="21"/>
-<wire x1="-5.08" y1="1.27" x2="-5.08" y2="3.175" width="0.254" layer="21"/>
-<wire x1="-5.08" y1="1.27" x2="5.08" y2="1.27" width="0.254" layer="21"/>
-<pad name="1" x="-3.81" y="0" drill="1" shape="long" rot="R90"/>
-<pad name="2" x="-1.27" y="0" drill="1" shape="long" rot="R90"/>
-<pad name="3" x="1.27" y="0" drill="1" shape="long" rot="R90"/>
-<pad name="4" x="3.81" y="0" drill="1" shape="long" rot="R90"/>
-<text x="-5.08" y="3.81" size="1.016" layer="25" ratio="10">&gt;NAME</text>
-<text x="-5.08" y="-5.08" size="1.016" layer="27" ratio="10">&gt;VALUE</text>
-</package>
 <package name="KK-156-3">
 <description>&lt;b&gt;KK 156 HEADER&lt;/b&gt;&lt;p&gt;
 Source: http://www.molex.com/pdm_docs/sd/026604100_sd.pdf</description>
@@ -15977,6 +15961,24 @@ Source: http://www.molex.com/pdm_docs/sd/026604100_sd.pdf</description>
 <text x="-6.46" y="-4.445" size="1.27" layer="25" rot="R90">&gt;NAME</text>
 <text x="7.73" y="-4.445" size="1.27" layer="27" rot="R90">&gt;VALUE</text>
 </package>
+<package name="22-23-2061">
+<description>.100" (2.54mm) Center Header - 6 Pin</description>
+<wire x1="-7.62" y1="3.175" x2="7.62" y2="3.175" width="0.254" layer="21"/>
+<wire x1="7.62" y1="3.175" x2="7.62" y2="1.27" width="0.254" layer="21"/>
+<wire x1="7.62" y1="1.27" x2="7.62" y2="-3.175" width="0.254" layer="21"/>
+<wire x1="7.62" y1="-3.175" x2="-7.62" y2="-3.175" width="0.254" layer="21"/>
+<wire x1="-7.62" y1="-3.175" x2="-7.62" y2="1.27" width="0.254" layer="21"/>
+<wire x1="-7.62" y1="1.27" x2="-7.62" y2="3.175" width="0.254" layer="21"/>
+<wire x1="-7.62" y1="1.27" x2="7.62" y2="1.27" width="0.254" layer="21"/>
+<pad name="1" x="-6.35" y="0" drill="1" shape="long" rot="R90"/>
+<pad name="2" x="-3.81" y="0" drill="1" shape="long" rot="R90"/>
+<pad name="3" x="-1.27" y="0" drill="1" shape="long" rot="R90"/>
+<pad name="4" x="1.27" y="0" drill="1" shape="long" rot="R90"/>
+<pad name="5" x="3.81" y="0" drill="1" shape="long" rot="R90"/>
+<pad name="6" x="6.35" y="0" drill="1" shape="long" rot="R90"/>
+<text x="-7.62" y="3.81" size="1.016" layer="25" ratio="10">&gt;NAME</text>
+<text x="-7.62" y="-5.08" size="1.016" layer="27" ratio="10">&gt;VALUE</text>
+</package>
 </packages>
 <symbols>
 <symbol name="MV">
@@ -15992,33 +15994,6 @@ Source: http://www.molex.com/pdm_docs/sd/026604100_sd.pdf</description>
 </symbol>
 </symbols>
 <devicesets>
-<deviceset name="22-23-2041" prefix="X">
-<description>.100" (2.54mm) Center Header - 4 Pin</description>
-<gates>
-<gate name="-1" symbol="MV" x="0" y="2.54" addlevel="always" swaplevel="1"/>
-<gate name="-2" symbol="M" x="0" y="0" addlevel="always" swaplevel="1"/>
-<gate name="-3" symbol="M" x="0" y="-2.54" addlevel="always" swaplevel="1"/>
-<gate name="-4" symbol="M" x="0" y="-5.08" addlevel="always" swaplevel="1"/>
-</gates>
-<devices>
-<device name="" package="22-23-2041">
-<connects>
-<connect gate="-1" pin="S" pad="1"/>
-<connect gate="-2" pin="S" pad="2"/>
-<connect gate="-3" pin="S" pad="3"/>
-<connect gate="-4" pin="S" pad="4"/>
-</connects>
-<technologies>
-<technology name="">
-<attribute name="MF" value="MOLEX" constant="no"/>
-<attribute name="MPN" value="22-23-2041" constant="no"/>
-<attribute name="OC_FARNELL" value="1462920" constant="no"/>
-<attribute name="OC_NEWARK" value="38C0355" constant="no"/>
-</technology>
-</technologies>
-</device>
-</devices>
-</deviceset>
 <deviceset name="KK-156-3" prefix="X" uservalue="yes">
 <description>&lt;b&gt;KK 156 HEADER&lt;/b&gt;&lt;p&gt;
 Source: http://www.molex.com/pdm_docs/sd/026604100_sd.pdf</description>
@@ -16040,6 +16015,37 @@ Source: http://www.molex.com/pdm_docs/sd/026604100_sd.pdf</description>
 <attribute name="MPN" value="" constant="no"/>
 <attribute name="OC_FARNELL" value="unknown" constant="no"/>
 <attribute name="OC_NEWARK" value="unknown" constant="no"/>
+</technology>
+</technologies>
+</device>
+</devices>
+</deviceset>
+<deviceset name="22-23-2061" prefix="X" uservalue="yes">
+<description>.100" (2.54mm) Center Header - 6 Pin</description>
+<gates>
+<gate name="-1" symbol="MV" x="0" y="5.08" addlevel="always" swaplevel="1"/>
+<gate name="-2" symbol="M" x="0" y="2.54" addlevel="always" swaplevel="1"/>
+<gate name="-3" symbol="M" x="0" y="0" addlevel="always" swaplevel="1"/>
+<gate name="-4" symbol="M" x="0" y="-2.54" addlevel="always" swaplevel="1"/>
+<gate name="-5" symbol="M" x="0" y="-5.08" addlevel="always" swaplevel="1"/>
+<gate name="-6" symbol="M" x="0" y="-7.62" addlevel="always" swaplevel="1"/>
+</gates>
+<devices>
+<device name="" package="22-23-2061">
+<connects>
+<connect gate="-1" pin="S" pad="1"/>
+<connect gate="-2" pin="S" pad="2"/>
+<connect gate="-3" pin="S" pad="3"/>
+<connect gate="-4" pin="S" pad="4"/>
+<connect gate="-5" pin="S" pad="5"/>
+<connect gate="-6" pin="S" pad="6"/>
+</connects>
+<technologies>
+<technology name="">
+<attribute name="MF" value="MOLEX" constant="no"/>
+<attribute name="MPN" value="22-23-2061" constant="no"/>
+<attribute name="OC_FARNELL" value="1462922" constant="no"/>
+<attribute name="OC_NEWARK" value="27C1933" constant="no"/>
 </technology>
 </technologies>
 </device>
@@ -16081,7 +16087,7 @@ Source: http://www.molex.com/pdm_docs/sd/026604100_sd.pdf</description>
 <part name="GND3" library="supply1" deviceset="GND" device=""/>
 <part name="C1" library="resistor" deviceset="C-EU" device="050-025X075" value="100n"/>
 <part name="RV5" library="joakim" deviceset="POT16_W_BRACKET" device="&quot;&quot;" value="10k"/>
-<part name="R9" library="pot" deviceset="TRIM_EU-" device="CA9V"/>
+<part name="PR4" library="pot" deviceset="TRIM_EU-" device="CA9V" value="2k2"/>
 <part name="P+1" library="supply1" deviceset="+12V" device=""/>
 <part name="P+2" library="supply1" deviceset="+12V" device=""/>
 <part name="P-1" library="supply1" deviceset="-12V" device=""/>
@@ -16091,7 +16097,7 @@ Source: http://www.molex.com/pdm_docs/sd/026604100_sd.pdf</description>
 <part name="P-3" library="supply1" deviceset="-12V" device=""/>
 <part name="GND4" library="supply1" deviceset="GND" device=""/>
 <part name="C2" library="resistor" deviceset="C-EU" device="025-025X050" value="100n"/>
-<part name="RV2" library="joakim" deviceset="POT16_W_BRACKET" device="&quot;&quot;" value="10k"/>
+<part name="RV2" library="joakim" deviceset="POT16_W_BRACKET" device="&quot;&quot;" value="10k log"/>
 <part name="GND5" library="supply1" deviceset="GND" device=""/>
 <part name="GND6" library="supply1" deviceset="GND" device=""/>
 <part name="GND7" library="supply1" deviceset="GND" device=""/>
@@ -16135,22 +16141,25 @@ Source: http://www.molex.com/pdm_docs/sd/026604100_sd.pdf</description>
 <part name="GND11" library="supply1" deviceset="GND" device=""/>
 <part name="VDD7" library="supply1" deviceset="VDD" device=""/>
 <part name="C3" library="resistor" deviceset="CPOL-EU" device="E2.5-5"/>
-<part name="T1" library="transistor" deviceset="*-NPN-" device="TO92-ECB"/>
+<part name="Q1" library="transistor" deviceset="*-NPN-" device="TO92-ECB" value="BC182L"/>
 <part name="GND12" library="supply1" deviceset="GND" device=""/>
-<part name="X1" library="con-molex" deviceset="22-23-2041" device=""/>
 <part name="GND13" library="supply1" deviceset="GND" device=""/>
 <part name="POWER" library="con-molex" deviceset="KK-156-3" device=""/>
 <part name="P+8" library="supply1" deviceset="+12V" device=""/>
 <part name="P-5" library="supply1" deviceset="-12V" device=""/>
+<part name="CARD2" library="con-molex" deviceset="22-23-2061" device=""/>
+<part name="VDD8" library="supply1" deviceset="VDD" device=""/>
+<part name="VSS4" library="supply1" deviceset="VSS" device=""/>
 </parts>
 <sheets>
 <sheet>
 <plain>
-<text x="40.64" y="0" size="1.778" layer="97">Kan kanskje slå sammen ic2 og ic3</text>
+<text x="40.64" y="0" size="1.778" layer="97">Kan kanskje slå sammen ic3 og ic4</text>
 <text x="33.02" y="152.4" size="1.778" layer="97">NB: IC5 and IC6 are mixed up in the original datasheet</text>
 <text x="33.02" y="154.94" size="2.54" layer="97">NB! Vdd and Vcc are mixed in the original datasheet (just names)</text>
 <text x="109.22" y="53.34" size="1.778" layer="97">x = switch control</text>
 <text x="81.28" y="50.8" size="1.778" layer="97">EXT and OSC2</text>
+<text x="66.04" y="-20.32" size="6.4516" layer="91">Sjekk retning på pots!</text>
 </plain>
 <instances>
 <instance part="IC1" gate="A" x="12.7" y="33.02" smashed="yes">
@@ -16198,7 +16207,7 @@ Source: http://www.molex.com/pdm_docs/sd/026604100_sd.pdf</description>
 <instance part="RV5" gate="G$1" x="58.42" y="25.4" smashed="yes" rot="R90">
 <attribute name="NAME" x="61.976" y="21.336" size="1.778" layer="95"/>
 </instance>
-<instance part="R9" gate="1" x="58.42" y="55.88" rot="R270"/>
+<instance part="PR4" gate="1" x="58.42" y="55.88" rot="R270"/>
 <instance part="P+1" gate="1" x="40.64" y="58.42"/>
 <instance part="P+2" gate="1" x="71.12" y="40.64"/>
 <instance part="P-1" gate="1" x="71.12" y="20.32"/>
@@ -16274,18 +16283,25 @@ Source: http://www.molex.com/pdm_docs/sd/026604100_sd.pdf</description>
 <instance part="GND11" gate="1" x="142.24" y="73.66"/>
 <instance part="VDD7" gate="G$1" x="152.4" y="86.36"/>
 <instance part="C3" gate="G$1" x="142.24" y="81.28"/>
-<instance part="T1" gate="G$1" x="71.12" y="129.54" rot="MR0"/>
+<instance part="Q1" gate="G$1" x="71.12" y="129.54" smashed="yes" rot="MR0">
+<attribute name="NAME" x="68.58" y="129.54" size="1.778" layer="95" rot="MR0"/>
+<attribute name="VALUE" x="73.66" y="129.54" size="1.778" layer="96" rot="MR270"/>
+</instance>
 <instance part="GND12" gate="1" x="68.58" y="121.92"/>
-<instance part="X1" gate="-1" x="187.96" y="124.46"/>
-<instance part="X1" gate="-2" x="187.96" y="121.92"/>
-<instance part="X1" gate="-3" x="187.96" y="119.38"/>
-<instance part="X1" gate="-4" x="187.96" y="116.84"/>
 <instance part="GND13" gate="1" x="172.72" y="137.16"/>
 <instance part="POWER" gate="-1" x="190.5" y="142.24"/>
 <instance part="POWER" gate="-2" x="190.5" y="139.7"/>
 <instance part="POWER" gate="-3" x="190.5" y="137.16"/>
 <instance part="P+8" gate="1" x="187.96" y="144.78"/>
 <instance part="P-5" gate="1" x="187.96" y="134.62"/>
+<instance part="CARD2" gate="-1" x="187.96" y="124.46"/>
+<instance part="CARD2" gate="-2" x="187.96" y="121.92"/>
+<instance part="CARD2" gate="-3" x="187.96" y="119.38"/>
+<instance part="CARD2" gate="-4" x="187.96" y="116.84"/>
+<instance part="CARD2" gate="-5" x="187.96" y="114.3"/>
+<instance part="CARD2" gate="-6" x="187.96" y="111.76"/>
+<instance part="VDD8" gate="G$1" x="157.48" y="116.84"/>
+<instance part="VSS4" gate="G$1" x="157.48" y="109.22"/>
 </instances>
 <busses>
 </busses>
@@ -16393,7 +16409,7 @@ Source: http://www.molex.com/pdm_docs/sd/026604100_sd.pdf</description>
 <pinref part="C3" gate="G$1" pin="-"/>
 </segment>
 <segment>
-<pinref part="T1" gate="G$1" pin="E"/>
+<pinref part="Q1" gate="G$1" pin="E"/>
 <pinref part="GND12" gate="1" pin="GND"/>
 </segment>
 <segment>
@@ -16426,17 +16442,17 @@ Source: http://www.molex.com/pdm_docs/sd/026604100_sd.pdf</description>
 </net>
 <net name="N$8" class="0">
 <segment>
-<pinref part="R9" gate="1" pin="A"/>
+<pinref part="PR4" gate="1" pin="A"/>
 <pinref part="R5" gate="G$1" pin="2"/>
 </segment>
 </net>
 <net name="N$9" class="0">
 <segment>
 <pinref part="RV5" gate="G$1" pin="1E"/>
-<pinref part="R9" gate="1" pin="S"/>
+<pinref part="PR4" gate="1" pin="S"/>
 <wire x1="58.42" y1="30.48" x2="58.42" y2="50.8" width="0.1524" layer="91"/>
 <wire x1="58.42" y1="50.8" x2="63.5" y2="50.8" width="0.1524" layer="91"/>
-<pinref part="R9" gate="1" pin="E"/>
+<pinref part="PR4" gate="1" pin="E"/>
 <wire x1="63.5" y1="50.8" x2="63.5" y2="55.88" width="0.1524" layer="91"/>
 </segment>
 </net>
@@ -16554,9 +16570,9 @@ Source: http://www.molex.com/pdm_docs/sd/026604100_sd.pdf</description>
 <label x="81.28" y="48.26" size="1.778" layer="95"/>
 </segment>
 <segment>
-<pinref part="X1" gate="-4" pin="S"/>
 <wire x1="185.42" y1="116.84" x2="162.56" y2="116.84" width="0.1524" layer="91"/>
 <label x="162.56" y="116.84" size="1.778" layer="95"/>
+<pinref part="CARD2" gate="-4" pin="S"/>
 </segment>
 </net>
 <net name="X" class="0">
@@ -16574,7 +16590,7 @@ Source: http://www.molex.com/pdm_docs/sd/026604100_sd.pdf</description>
 <segment>
 <wire x1="185.42" y1="119.38" x2="162.56" y2="119.38" width="0.1524" layer="91"/>
 <label x="162.56" y="119.38" size="1.778" layer="95"/>
-<pinref part="X1" gate="-3" pin="S"/>
+<pinref part="CARD2" gate="-3" pin="S"/>
 </segment>
 </net>
 <net name="N$16" class="0">
@@ -16660,7 +16676,7 @@ Source: http://www.molex.com/pdm_docs/sd/026604100_sd.pdf</description>
 <segment>
 <wire x1="185.42" y1="121.92" x2="162.56" y2="121.92" width="0.1524" layer="91"/>
 <label x="162.56" y="121.92" size="1.778" layer="95"/>
-<pinref part="X1" gate="-2" pin="S"/>
+<pinref part="CARD2" gate="-2" pin="S"/>
 </segment>
 </net>
 <net name="VCA_SIGNAL" class="0">
@@ -16679,7 +16695,7 @@ Source: http://www.molex.com/pdm_docs/sd/026604100_sd.pdf</description>
 <segment>
 <wire x1="185.42" y1="124.46" x2="162.56" y2="124.46" width="0.1524" layer="91"/>
 <label x="162.56" y="124.46" size="1.778" layer="95"/>
-<pinref part="X1" gate="-1" pin="S"/>
+<pinref part="CARD2" gate="-1" pin="S"/>
 </segment>
 </net>
 <net name="N$25" class="0">
@@ -16705,7 +16721,7 @@ Source: http://www.molex.com/pdm_docs/sd/026604100_sd.pdf</description>
 <pinref part="IC6" gate="C" pin="I1"/>
 <pinref part="R20" gate="G$1" pin="1"/>
 <wire x1="68.58" y1="134.62" x2="58.42" y2="134.62" width="0.1524" layer="91"/>
-<pinref part="T1" gate="G$1" pin="C"/>
+<pinref part="Q1" gate="G$1" pin="C"/>
 <junction x="68.58" y="134.62"/>
 </segment>
 </net>
@@ -16845,6 +16861,11 @@ Source: http://www.molex.com/pdm_docs/sd/026604100_sd.pdf</description>
 <pinref part="C3" gate="G$1" pin="+"/>
 <junction x="142.24" y="83.82"/>
 </segment>
+<segment>
+<pinref part="CARD2" gate="-5" pin="S"/>
+<wire x1="185.42" y1="114.3" x2="157.48" y2="114.3" width="0.1524" layer="91"/>
+<pinref part="VDD8" gate="G$1" pin="VDD"/>
+</segment>
 </net>
 <net name="VSS" class="0">
 <segment>
@@ -16863,11 +16884,16 @@ Source: http://www.molex.com/pdm_docs/sd/026604100_sd.pdf</description>
 <wire x1="170.18" y1="73.66" x2="162.56" y2="73.66" width="0.1524" layer="91"/>
 <junction x="170.18" y="73.66"/>
 </segment>
+<segment>
+<pinref part="CARD2" gate="-6" pin="S"/>
+<wire x1="185.42" y1="111.76" x2="157.48" y2="111.76" width="0.1524" layer="91"/>
+<pinref part="VSS4" gate="G$1" pin="VSS"/>
+</segment>
 </net>
 <net name="N$33" class="0">
 <segment>
 <pinref part="R21" gate="G$1" pin="2"/>
-<pinref part="T1" gate="G$1" pin="B"/>
+<pinref part="Q1" gate="G$1" pin="B"/>
 </segment>
 </net>
 </nets>
