@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE eagle SYSTEM "eagle.dtd">
-<eagle version="7.2.0">
+<eagle version="6.2">
 <drawing>
 <settings>
 <setting alwaysvectorfont="no"/>
@@ -9636,8 +9636,11 @@ Source: http://www.molex.com/pdm_docs/sd/026604100_sd.pdf</description>
 <sheets>
 <sheet>
 <plain>
-<text x="203.2" y="10.16" size="1.778" layer="97">Use jumper if no fx module used</text>
-<text x="154.94" y="139.7" size="1.778" layer="91">Sjekk retning på pots</text>
+<text x="205.74" y="30.48" size="1.778" layer="97">Use jumper between mix and return if no fx module used</text>
+<text x="154.94" y="139.7" size="1.778" layer="91">Har sjekket retning på pots</text>
+<text x="205.74" y="7.62" size="1.778" layer="97">FX return here is output.</text>
+<text x="205.74" y="27.94" size="1.778" layer="97">or use mix as output</text>
+<text x="154.94" y="134.62" size="1.778" layer="91">Har sjekket footprint caps</text>
 </plain>
 <instances>
 <instance part="RV1" gate="G$1" x="175.26" y="93.98" smashed="yes" rot="R90">
@@ -9978,7 +9981,7 @@ Source: http://www.molex.com/pdm_docs/sd/026604100_sd.pdf</description>
 <label x="129.54" y="109.22" size="1.778" layer="95"/>
 </segment>
 </net>
-<net name="RETURN" class="0">
+<net name="FX_RETURN" class="0">
 <segment>
 <wire x1="226.06" y1="25.4" x2="205.74" y2="25.4" width="0.1524" layer="91"/>
 <label x="205.74" y="25.4" size="1.778" layer="95"/>

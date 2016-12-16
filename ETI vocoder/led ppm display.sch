@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE eagle SYSTEM "eagle.dtd">
-<eagle version="7.2.0">
+<eagle version="6.2">
 <drawing>
 <settings>
 <setting alwaysvectorfont="no"/>
@@ -8055,6 +8055,7 @@ are 6" or longer (according to the datasheet)</text>
 <wire x1="185.42" y1="33.02" x2="185.42" y2="22.86" width="0.1524" layer="97"/>
 <text x="187.96" y="25.4" size="1.778" layer="97" rot="R90">Red</text>
 <text x="187.96" y="50.8" size="1.778" layer="97" rot="R90">Green</text>
+<text x="43.18" y="78.74" size="1.778" layer="91">Sjekket caps ok</text>
 </plain>
 <instances>
 <instance part="IC1" gate="A" x="71.12" y="33.02" smashed="yes" rot="MR180">
@@ -8489,10 +8490,4 @@ are 6" or longer (according to the datasheet)</text>
 </sheets>
 </schematic>
 </drawing>
-<compatibility>
-<note version="6.3" minversion="6.2.2" severity="warning">
-Since Version 6.2.2 text objects can contain more than one line,
-which will not be processed correctly with this version.
-</note>
-</compatibility>
 </eagle>
