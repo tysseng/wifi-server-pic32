@@ -8004,10 +8004,10 @@ high speed (Philips)</description>
 </classes>
 <parts>
 <part name="IC1" library="linear" deviceset="TL082" device="P"/>
-<part name="D1" library="joakim" deviceset="1N4148" device="DOJ35-5" value="1N4148DOJ35-5"/>
 <part name="D2" library="joakim" deviceset="1N4148" device="DOJ35-5" value="1N4148DOJ35-5"/>
-<part name="D3" library="joakim" deviceset="1N4148" device="DOJ35-5" value="1N4148DOJ35-5"/>
+<part name="D1" library="joakim" deviceset="1N4148" device="DOJ35-5" value="1N4148DOJ35-5"/>
 <part name="D4" library="joakim" deviceset="1N4148" device="DOJ35-5" value="1N4148DOJ35-5"/>
+<part name="D3" library="joakim" deviceset="1N4148" device="DOJ35-5" value="1N4148DOJ35-5"/>
 <part name="R1" library="resistor" deviceset="R-EU_" device="0207/7" value="100k"/>
 <part name="R2" library="resistor" deviceset="R-EU_" device="0207/7" value="100k"/>
 <part name="R3" library="resistor" deviceset="R-EU_" device="0207/7" value="100k"/>
@@ -8055,7 +8055,7 @@ are 6" or longer (according to the datasheet)</text>
 <wire x1="185.42" y1="33.02" x2="185.42" y2="22.86" width="0.1524" layer="97"/>
 <text x="187.96" y="25.4" size="1.778" layer="97" rot="R90">Red</text>
 <text x="187.96" y="50.8" size="1.778" layer="97" rot="R90">Green</text>
-<text x="43.18" y="78.74" size="1.778" layer="91">Sjekket caps ok</text>
+<text x="106.68" y="81.28" size="1.778" layer="97">R7 is misplaced in the schematics in the original article</text>
 </plain>
 <instances>
 <instance part="IC1" gate="A" x="71.12" y="33.02" smashed="yes" rot="MR180">
@@ -8067,16 +8067,16 @@ are 6" or longer (according to the datasheet)</text>
 <attribute name="VALUE" x="96.52" y="48.26" size="1.778" layer="96" rot="MR180"/>
 </instance>
 <instance part="IC1" gate="P" x="83.82" y="0"/>
-<instance part="D1" gate="G$1" x="76.2" y="43.18" smashed="yes" rot="R180">
+<instance part="D2" gate="G$1" x="76.2" y="43.18" smashed="yes" rot="R180">
 <attribute name="NAME" x="73.66" y="42.6974" size="1.778" layer="95" rot="R180"/>
 </instance>
-<instance part="D2" gate="G$1" x="76.2" y="48.26" smashed="yes">
+<instance part="D1" gate="G$1" x="76.2" y="48.26" smashed="yes">
 <attribute name="NAME" x="78.74" y="48.7426" size="1.778" layer="95"/>
 </instance>
-<instance part="D3" gate="G$1" x="101.6" y="63.5" smashed="yes">
+<instance part="D4" gate="G$1" x="101.6" y="63.5" smashed="yes">
 <attribute name="NAME" x="104.14" y="63.9826" size="1.778" layer="95"/>
 </instance>
-<instance part="D4" gate="G$1" x="101.6" y="68.58" smashed="yes" rot="R180">
+<instance part="D3" gate="G$1" x="101.6" y="68.58" smashed="yes" rot="R180">
 <attribute name="NAME" x="104.14" y="69.0626" size="1.778" layer="95"/>
 </instance>
 <instance part="R1" gate="G$1" x="60.96" y="53.34" smashed="yes" rot="R90">
@@ -8103,7 +8103,7 @@ are 6" or longer (according to the datasheet)</text>
 <attribute name="NAME" x="113.2586" y="67.31" size="1.778" layer="95" rot="R270"/>
 <attribute name="VALUE" x="116.078" y="67.31" size="1.778" layer="96" rot="R270"/>
 </instance>
-<instance part="R7" gate="G$1" x="134.62" y="50.8"/>
+<instance part="R7" gate="G$1" x="121.92" y="55.88" rot="R90"/>
 <instance part="R8" gate="G$1" x="121.92" y="45.72" rot="R90"/>
 <instance part="GND1" gate="1" x="88.9" y="43.18"/>
 <instance part="GND2" gate="1" x="60.96" y="27.94"/>
@@ -8184,7 +8184,7 @@ are 6" or longer (according to the datasheet)</text>
 <net name="N$1" class="0">
 <segment>
 <pinref part="R2" gate="G$1" pin="1"/>
-<pinref part="D2" gate="G$1" pin="A"/>
+<pinref part="D1" gate="G$1" pin="A"/>
 <wire x1="71.12" y1="48.26" x2="73.66" y2="48.26" width="0.1524" layer="91"/>
 <wire x1="73.66" y1="48.26" x2="73.66" y2="55.88" width="0.1524" layer="91"/>
 <pinref part="R3" gate="G$1" pin="2"/>
@@ -8194,7 +8194,7 @@ are 6" or longer (according to the datasheet)</text>
 </net>
 <net name="N$2" class="0">
 <segment>
-<pinref part="D1" gate="G$1" pin="C"/>
+<pinref part="D2" gate="G$1" pin="C"/>
 <wire x1="73.66" y1="43.18" x2="60.96" y2="43.18" width="0.1524" layer="91"/>
 <wire x1="60.96" y1="43.18" x2="60.96" y2="35.56" width="0.1524" layer="91"/>
 <pinref part="IC1" gate="A" pin="-IN"/>
@@ -8208,13 +8208,13 @@ are 6" or longer (according to the datasheet)</text>
 </net>
 <net name="N$3" class="0">
 <segment>
-<pinref part="D2" gate="G$1" pin="C"/>
+<pinref part="D1" gate="G$1" pin="C"/>
 <wire x1="78.74" y1="48.26" x2="81.28" y2="48.26" width="0.1524" layer="91"/>
 <wire x1="81.28" y1="48.26" x2="81.28" y2="43.18" width="0.1524" layer="91"/>
 <pinref part="IC1" gate="A" pin="OUT"/>
 <wire x1="81.28" y1="43.18" x2="81.28" y2="33.02" width="0.1524" layer="91"/>
 <wire x1="81.28" y1="33.02" x2="78.74" y2="33.02" width="0.1524" layer="91"/>
-<pinref part="D1" gate="G$1" pin="A"/>
+<pinref part="D2" gate="G$1" pin="A"/>
 <wire x1="78.74" y1="43.18" x2="81.28" y2="43.18" width="0.1524" layer="91"/>
 <junction x="81.28" y="43.18"/>
 </segment>
@@ -8226,7 +8226,7 @@ are 6" or longer (according to the datasheet)</text>
 <wire x1="86.36" y1="55.88" x2="88.9" y2="55.88" width="0.1524" layer="91"/>
 <pinref part="R5" gate="G$1" pin="2"/>
 <wire x1="88.9" y1="55.88" x2="88.9" y2="63.5" width="0.1524" layer="91"/>
-<pinref part="D3" gate="G$1" pin="A"/>
+<pinref part="D4" gate="G$1" pin="A"/>
 <wire x1="88.9" y1="63.5" x2="88.9" y2="68.58" width="0.1524" layer="91"/>
 <wire x1="99.06" y1="63.5" x2="88.9" y2="63.5" width="0.1524" layer="91"/>
 <pinref part="R4" gate="G$1" pin="1"/>
@@ -8237,7 +8237,7 @@ are 6" or longer (according to the datasheet)</text>
 </net>
 <net name="N$5" class="0">
 <segment>
-<pinref part="D4" gate="G$1" pin="C"/>
+<pinref part="D3" gate="G$1" pin="C"/>
 <pinref part="R5" gate="G$1" pin="1"/>
 <wire x1="99.06" y1="68.58" x2="99.06" y2="73.66" width="0.1524" layer="91"/>
 <pinref part="R6" gate="G$1" pin="1"/>
@@ -8261,8 +8261,8 @@ are 6" or longer (according to the datasheet)</text>
 </net>
 <net name="N$7" class="0">
 <segment>
-<pinref part="D4" gate="G$1" pin="A"/>
-<pinref part="D3" gate="G$1" pin="C"/>
+<pinref part="D3" gate="G$1" pin="A"/>
+<pinref part="D4" gate="G$1" pin="C"/>
 <wire x1="104.14" y1="68.58" x2="104.14" y2="63.5" width="0.1524" layer="91"/>
 <pinref part="IC1" gate="B" pin="OUT"/>
 <wire x1="104.14" y1="63.5" x2="104.14" y2="53.34" width="0.1524" layer="91"/>
@@ -8324,17 +8324,7 @@ are 6" or longer (according to the datasheet)</text>
 <pinref part="IC2" gate="G$1" pin="REFOUT"/>
 <wire x1="137.16" y1="55.88" x2="139.7" y2="55.88" width="0.1524" layer="91"/>
 <wire x1="137.16" y1="60.96" x2="121.92" y2="60.96" width="0.1524" layer="91"/>
-<pinref part="R7" gate="G$1" pin="1"/>
-<pinref part="R8" gate="G$1" pin="2"/>
-<wire x1="121.92" y1="60.96" x2="121.92" y2="50.8" width="0.1524" layer="91"/>
-<junction x="121.92" y="50.8"/>
 <junction x="137.16" y="60.96"/>
-<wire x1="121.92" y1="50.8" x2="129.54" y2="50.8" width="0.1524" layer="91"/>
-</segment>
-</net>
-<net name="N$10" class="0">
-<segment>
-<pinref part="IC2" gate="G$1" pin="REFADJ"/>
 <pinref part="R7" gate="G$1" pin="2"/>
 </segment>
 </net>
@@ -8483,6 +8473,15 @@ are 6" or longer (according to the datasheet)</text>
 <pinref part="IN" gate="-1" pin="S"/>
 <wire x1="43.18" y1="63.5" x2="43.18" y2="60.96" width="0.1524" layer="91"/>
 <junction x="43.18" y="63.5"/>
+</segment>
+</net>
+<net name="N$21" class="0">
+<segment>
+<pinref part="R7" gate="G$1" pin="1"/>
+<pinref part="R8" gate="G$1" pin="2"/>
+<pinref part="IC2" gate="G$1" pin="REFADJ"/>
+<wire x1="121.92" y1="50.8" x2="139.7" y2="50.8" width="0.1524" layer="91"/>
+<junction x="121.92" y="50.8"/>
 </segment>
 </net>
 </nets>

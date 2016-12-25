@@ -87,13 +87,9 @@ single carbon potentiometer, 16 mm</description>
 <wire x1="-3.5" y1="-10" x2="-3" y2="-10.5" width="0.2032" layer="21"/>
 <wire x1="3" y1="-10.5" x2="3.5" y2="-10" width="0.2032" layer="21"/>
 <wire x1="-8.9" y1="-4.3" x2="8.9" y2="-4.3" width="0.2032" layer="21"/>
-<wire x1="10" y1="15.5" x2="10" y2="17.1" width="0.2032" layer="51"/>
-<wire x1="-10" y1="15.5" x2="-10" y2="17.1" width="0.2032" layer="51"/>
 <wire x1="-8.9" y1="-4.3" x2="-8.9" y2="-0.9" width="0.2032" layer="21"/>
 <wire x1="-8.9" y1="0.9" x2="-8.9" y2="6.5" width="0.2032" layer="21"/>
-<wire x1="-10" y1="5.6" x2="-10" y2="7.4" width="0.2032" layer="51"/>
 <wire x1="8.9" y1="0.9" x2="8.9" y2="6.5" width="0.2032" layer="21"/>
-<wire x1="10" y1="5.6" x2="10" y2="7.4" width="0.2032" layer="51"/>
 <wire x1="8.9" y1="-4.3" x2="8.9" y2="-0.9" width="0.2032" layer="21"/>
 <pad name="1A" x="-5" y="0" drill="1.2" shape="long" rot="R90"/>
 <pad name="1S" x="0" y="0" drill="1.2" shape="long" rot="R90"/>
@@ -108,24 +104,21 @@ single carbon potentiometer, 16 mm</description>
 </packages>
 <symbols>
 <symbol name="POT-J">
-<wire x1="-4.318" y1="-1.524" x2="-4.318" y2="-0.508" width="0.254" layer="94"/>
-<wire x1="-4.318" y1="-0.508" x2="-4.318" y2="0.508" width="0.254" layer="94"/>
-<wire x1="-4.318" y1="0.508" x2="4.318" y2="0.508" width="0.254" layer="94"/>
-<wire x1="4.318" y1="0.508" x2="4.318" y2="-0.508" width="0.254" layer="94"/>
-<wire x1="4.318" y1="-0.508" x2="4.318" y2="-1.524" width="0.254" layer="94"/>
-<wire x1="4.318" y1="-1.524" x2="-4.318" y2="-1.524" width="0.254" layer="94"/>
-<wire x1="-5.08" y1="-2.54" x2="-5.08" y2="-0.508" width="0.1524" layer="94"/>
-<wire x1="-5.08" y1="-0.508" x2="-4.318" y2="-0.508" width="0.1524" layer="94"/>
-<wire x1="5.08" y1="-2.54" x2="5.08" y2="-0.508" width="0.1524" layer="94"/>
-<wire x1="5.08" y1="-0.508" x2="4.318" y2="-0.508" width="0.1524" layer="94"/>
-<wire x1="0" y1="-2.54" x2="-3.81" y2="1.778" width="0.1524" layer="94"/>
-<wire x1="-4.318" y1="1.27" x2="-3.81" y2="1.778" width="0.1524" layer="94"/>
-<wire x1="-3.81" y1="1.778" x2="-3.302" y2="2.286" width="0.1524" layer="94"/>
+<wire x1="-2.413" y1="-0.9525" x2="-2.413" y2="0.9525" width="0.254" layer="94"/>
+<wire x1="-2.413" y1="0.9525" x2="2.413" y2="0.9525" width="0.254" layer="94"/>
+<wire x1="2.413" y1="0.9525" x2="2.413" y2="-0.9525" width="0.254" layer="94"/>
+<wire x1="2.413" y1="-0.9525" x2="0" y2="-0.9525" width="0.254" layer="94"/>
+<wire x1="0" y1="-0.9525" x2="-2.413" y2="-0.9525" width="0.254" layer="94"/>
 <text x="-4.064" y="3.556" size="1.778" layer="95">&gt;NAME</text>
 <text x="-2.286" y="1.27" size="1.778" layer="96">&gt;VALUE</text>
-<pin name="1A" x="-5.08" y="-5.08" visible="pad" length="short" direction="pas" rot="R90"/>
+<pin name="1A" x="-5.08" y="0" visible="pad" length="short" direction="pas"/>
 <pin name="1S" x="0" y="-5.08" visible="pad" length="short" direction="pas" rot="R90"/>
-<pin name="1E" x="5.08" y="-5.08" visible="pad" length="short" direction="pas" rot="R90"/>
+<pin name="1E" x="5.08" y="0" visible="pad" length="short" direction="pas" rot="R180"/>
+<wire x1="-0.635" y1="-2.54" x2="0" y2="-0.9525" width="0.254" layer="94"/>
+<wire x1="0" y1="-0.9525" x2="0.635" y2="-2.54" width="0.254" layer="94"/>
+<wire x1="0.635" y1="-2.54" x2="-0.635" y2="-2.54" width="0.254" layer="94"/>
+<text x="-1.905" y="-0.635" size="1.27" layer="94">L</text>
+<text x="0.635" y="-0.635" size="1.27" layer="94">R</text>
 </symbol>
 <symbol name="POT16-BRACKET-J">
 <text x="0" y="5.08" size="1.778" layer="95">&gt;NAME</text>
@@ -9643,11 +9636,11 @@ Source: http://www.molex.com/pdm_docs/sd/026604100_sd.pdf</description>
 <text x="154.94" y="134.62" size="1.778" layer="91">Har sjekket footprint caps</text>
 </plain>
 <instances>
-<instance part="RV1" gate="G$1" x="175.26" y="93.98" smashed="yes" rot="R90">
-<attribute name="NAME" x="171.704" y="89.916" size="1.778" layer="95" rot="R90"/>
+<instance part="RV1" gate="G$1" x="180.34" y="93.98" smashed="yes" rot="R90">
+<attribute name="NAME" x="176.784" y="89.916" size="1.778" layer="95" rot="R90"/>
 </instance>
-<instance part="RV3" gate="G$1" x="185.42" y="71.12" smashed="yes" rot="R90">
-<attribute name="NAME" x="181.864" y="67.056" size="1.778" layer="95" rot="R90"/>
+<instance part="RV3" gate="G$1" x="190.5" y="71.12" smashed="yes" rot="R90">
+<attribute name="NAME" x="186.944" y="67.056" size="1.778" layer="95" rot="R90"/>
 </instance>
 <instance part="RV2" gate="G$1" x="187.96" y="132.08" smashed="yes" rot="R90">
 <attribute name="NAME" x="184.404" y="128.016" size="1.778" layer="95" rot="R90"/>
@@ -9658,7 +9651,7 @@ Source: http://www.molex.com/pdm_docs/sd/026604100_sd.pdf</description>
 <instance part="R1" gate="G$1" x="134.62" y="99.06"/>
 <instance part="R2" gate="G$1" x="149.86" y="104.14" rot="R90"/>
 <instance part="R3" gate="G$1" x="165.1" y="119.38"/>
-<instance part="R4" gate="G$1" x="187.96" y="93.98"/>
+<instance part="R4" gate="G$1" x="190.5" y="93.98"/>
 <instance part="R5" gate="G$1" x="200.66" y="127" rot="R90"/>
 <instance part="R6" gate="G$1" x="215.9" y="119.38"/>
 <instance part="R7" gate="G$1" x="200.66" y="86.36" rot="R90"/>
@@ -9706,7 +9699,6 @@ Source: http://www.molex.com/pdm_docs/sd/026604100_sd.pdf</description>
 <segment>
 <pinref part="RV1" gate="G$1" pin="1S"/>
 <pinref part="R4" gate="G$1" pin="1"/>
-<wire x1="182.88" y1="93.98" x2="180.34" y2="93.98" width="0.1524" layer="91"/>
 </segment>
 </net>
 <net name="N$3" class="0">
@@ -9743,7 +9735,7 @@ Source: http://www.molex.com/pdm_docs/sd/026604100_sd.pdf</description>
 <segment>
 <pinref part="RV2" gate="G$1" pin="1A"/>
 <pinref part="GND5" gate="1" pin="GND"/>
-<wire x1="193.04" y1="127" x2="193.04" y2="124.46" width="0.1524" layer="91"/>
+<wire x1="187.96" y1="127" x2="193.04" y2="124.46" width="0.1524" layer="91"/>
 </segment>
 <segment>
 <pinref part="IC2" gate="A" pin="+IN"/>
@@ -9837,13 +9829,13 @@ Source: http://www.molex.com/pdm_docs/sd/026604100_sd.pdf</description>
 <pinref part="R7" gate="G$1" pin="1"/>
 <wire x1="200.66" y1="81.28" x2="200.66" y2="71.12" width="0.1524" layer="91"/>
 <pinref part="RV3" gate="G$1" pin="1S"/>
-<wire x1="200.66" y1="71.12" x2="190.5" y2="71.12" width="0.1524" layer="91"/>
+<wire x1="200.66" y1="71.12" x2="195.58" y2="71.12" width="0.1524" layer="91"/>
 </segment>
 </net>
 <net name="N$8" class="0">
 <segment>
 <pinref part="R4" gate="G$1" pin="2"/>
-<wire x1="193.04" y1="93.98" x2="200.66" y2="93.98" width="0.1524" layer="91"/>
+<wire x1="195.58" y1="93.98" x2="200.66" y2="93.98" width="0.1524" layer="91"/>
 <pinref part="R7" gate="G$1" pin="2"/>
 <wire x1="200.66" y1="93.98" x2="200.66" y2="91.44" width="0.1524" layer="91"/>
 <pinref part="IC2" gate="A" pin="-IN"/>
@@ -9930,7 +9922,7 @@ Source: http://www.molex.com/pdm_docs/sd/026604100_sd.pdf</description>
 </segment>
 <segment>
 <pinref part="RV2" gate="G$1" pin="1E"/>
-<wire x1="193.04" y1="137.16" x2="210.82" y2="137.16" width="0.1524" layer="91"/>
+<wire x1="187.96" y1="137.16" x2="210.82" y2="137.16" width="0.1524" layer="91"/>
 <label x="198.12" y="137.16" size="1.778" layer="95"/>
 </segment>
 </net>
