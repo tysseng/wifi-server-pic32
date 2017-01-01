@@ -6,7 +6,7 @@
 <setting alwaysvectorfont="no"/>
 <setting verticaltext="up"/>
 </settings>
-<grid distance="0.05" unitdist="mm" unit="mm" style="dots" multiple="1" display="yes" altdistance="0.025" altunitdist="inch" altunit="inch"/>
+<grid distance="0.5" unitdist="mm" unit="mm" style="dots" multiple="1" display="yes" altdistance="0.025" altunitdist="inch" altunit="inch"/>
 <layers>
 <layer number="1" name="Top" color="4" fill="1" visible="yes" active="yes"/>
 <layer number="2" name="Route2" color="1" fill="3" visible="no" active="no"/>
@@ -737,8 +737,8 @@
 <text x="28.581" y="56.856" size="1.016" layer="26" font="vector" rot="MR0">GND</text>
 <text x="28.581" y="59.396" size="1.016" layer="26" font="vector" rot="MR0">SW</text>
 <text x="28.581" y="61.936" size="1.016" layer="26" font="vector" rot="MR0">Out</text>
-<text x="31.756" y="82.5735" size="1.016" layer="25" font="vector" rot="R270">ETI Vocoder</text>
-<text x="30.1685" y="82.5735" size="1.016" layer="25" font="vector" rot="R270">Slew rate v1.0</text>
+<text x="30.256" y="82.5735" size="1.016" layer="25" font="vector" rot="R270">ETI Vocoder</text>
+<text x="31.6685" y="82.5735" size="1.016" layer="25" font="vector" rot="R270">Slew rate v1.0</text>
 <rectangle x1="11.563" y1="47.966" x2="13.341" y2="48.093" layer="26" rot="R270"/>
 <rectangle x1="11.309" y1="47.966" x2="13.849" y2="48.093" layer="26" rot="R270"/>
 <rectangle x1="12.6425" y1="75.2075" x2="12.7695" y2="75.3345" layer="26" rot="R270"/>
@@ -1359,8 +1359,8 @@
 <text x="77.9525" y="78.04" size="1.016" layer="25" font="vector" rot="R180">GND</text>
 <text x="77.9525" y="85.9775" size="1.016" layer="25" font="vector" rot="R180">+5V</text>
 <text x="79.2225" y="88.2" size="1.016" layer="25" font="vector" rot="R90">Input</text>
-<text x="48.3527625" y="54.365890625" size="1.016" layer="26" font="vector" rot="MR90">ETI Vocoder</text>
-<text x="46.35560625" y="54.28123125" size="1.016" layer="26" font="vector" rot="MR90">LED PPM v1.0</text>
+<text x="46.3527625" y="54.365890625" size="1.016" layer="26" font="vector" rot="MR90">ETI Vocoder</text>
+<text x="47.85560625" y="54.28123125" size="1.016" layer="26" font="vector" rot="MR90">LED PPM v1.0</text>
 <rectangle x1="70.246903125" y1="88.0103625" x2="71.433084375" y2="88.09494375" layer="25"/>
 <rectangle x1="69.992903125" y1="87.92578125" x2="71.687084375" y2="88.0103625" layer="25"/>
 <rectangle x1="52.637084375" y1="87.84094375" x2="52.720903125" y2="87.92578125" layer="25"/>
@@ -2006,9 +2006,9 @@
 <text x="59.4125" y="66.759" size="1.016" layer="26" font="vector" rot="MR180">Lim</text>
 <text x="59.4125" y="65.616" size="1.016" layer="26" font="vector" rot="MR180">ret</text>
 <text x="55.6025" y="60.663" size="1.016" layer="26" font="vector" rot="MR270">Out</text>
-<text x="77.8275" y="65.87" size="1.016" layer="25" font="vector" rot="R180">Input amp</text>
-<text x="77.8275" y="64.6" size="1.016" layer="25" font="vector" rot="R180">ETI Vocoder</text>
-<text x="77.8275" y="67.14" size="1.016" layer="25" font="vector" rot="R180">v1.0</text>
+<text x="78.3275" y="65.87" size="1.016" layer="25" font="vector" rot="R180">Input amp</text>
+<text x="78.3275" y="67.1" size="1.016" layer="25" font="vector" rot="R180">ETI Vocoder</text>
+<text x="72.3275" y="64.14" size="1.016" layer="25" font="vector" rot="R180">v1.0</text>
 <rectangle x1="78.9705" y1="58.3135" x2="80.7485" y2="58.4405" layer="26" rot="R90"/>
 <rectangle x1="78.4625" y1="58.3135" x2="81.0025" y2="58.4405" layer="26" rot="R90"/>
 <rectangle x1="79.542" y1="31.072" x2="79.669" y2="31.199" layer="26" rot="R90"/>
