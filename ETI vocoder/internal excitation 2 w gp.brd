@@ -1308,6 +1308,7 @@
 <rectangle x1="76.7715" y1="37.7825" x2="81.3435" y2="37.9095" layer="26"/>
 <rectangle x1="77.1525" y1="37.9095" x2="80.9625" y2="38.0365" layer="26"/>
 <rectangle x1="77.7875" y1="38.0365" x2="80.3275" y2="38.1635" layer="26"/>
+<text x="70.1675" y="35.2425" size="1.016" layer="25" font="vector">+</text>
 </plain>
 <libraries>
 <library name="linear">

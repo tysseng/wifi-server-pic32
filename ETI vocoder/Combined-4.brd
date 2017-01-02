@@ -89,8 +89,8 @@
 <text x="18.755" y="40.91" size="1.016" layer="25" font="vector" rot="R270">GND</text>
 <text x="10.8175" y="40.91" size="1.016" layer="25" font="vector" rot="R270">+5V</text>
 <text x="8.595" y="42.18" size="1.016" layer="25" font="vector" rot="R180">Input</text>
-<text x="43" y="10.4422375" size="1.016" layer="26" font="vector" rot="MR0">ETI Vocoder</text>
-<text x="43" y="8.43939375" size="1.016" layer="26" font="vector" rot="MR0">LED PPM v1.0</text>
+<text x="43" y="11.4422375" size="1.016" layer="26" font="vector" rot="MR0">ETI Vocoder</text>
+<text x="43" y="9.43939375" size="1.016" layer="26" font="vector" rot="MR0">LED PPM v1.0</text>
 <rectangle x1="8.14925625" y1="33.755203125" x2="9.3354375" y2="33.839784375" layer="25" rot="R90"/>
 <rectangle x1="7.9798375" y1="33.755203125" x2="9.67401875" y2="33.839784375" layer="25" rot="R90"/>
 <rectangle x1="8.869728125" y1="15.594075" x2="8.953546875" y2="15.6789125" layer="25" rot="R90"/>
@@ -698,8 +698,8 @@
 <rectangle x1="13.22925625" y1="33.755203125" x2="14.9234375" y2="33.839784375" layer="25" rot="R90"/>
 <rectangle x1="13.5678375" y1="33.755203125" x2="14.75401875" y2="33.839784375" layer="25" rot="R90"/>
 <text x="49.970840625" y="-0.026365625" size="1.27" layer="26" font="vector" rot="MR90">+</text>
-<text x="41.674334375" y="5.64573125" size="1.27" layer="26" font="vector" rot="MR180">Red</text>
-<wire x1="45.425" y1="5.0325" x2="50.505" y2="5.0325" width="0.254" layer="26"/>
+<text x="41.674334375" y="6.14573125" size="1.27" layer="26" font="vector" rot="MR180">Red</text>
+<wire x1="45.925" y1="5.0325" x2="50.505" y2="5.0325" width="0.254" layer="26"/>
 <wire x1="50.505" y1="5.0325" x2="50.505" y2="4.3975" width="0.254" layer="26"/>
 <wire x1="40.98" y1="5.0325" x2="35.9" y2="5.0325" width="0.254" layer="26"/>
 <wire x1="35.9" y1="5.0325" x2="35.9" y2="4.3975" width="0.254" layer="26"/>
@@ -738,12 +738,12 @@
 <text x="28.5675" y="75.085" size="1.016" layer="26" font="vector" rot="MR0">+12V</text>
 <text x="28.5675" y="70.005" size="1.016" layer="26" font="vector" rot="MR0">GND</text>
 <text x="31.7425" y="52.86" size="1.016" layer="26" font="vector" rot="MR0">Tone out</text>
-<text x="31.7425" y="49.431" size="1.016" layer="26" font="vector" rot="MR0">Lim</text>
-<text x="31.7425" y="50.574" size="1.016" layer="26" font="vector" rot="MR0">ret</text>
+<text x="31.7425" y="49.431" size="1.016" layer="26" font="vector" rot="MR0">ret</text>
+<text x="31.7425" y="50.574" size="1.016" layer="26" font="vector" rot="MR0">Lim</text>
 <text x="35.5525" y="55.527" size="1.016" layer="26" font="vector" rot="MR90">Out</text>
 <text x="13.3275" y="50.32" size="1.016" layer="25" font="vector">Input amp</text>
 <text x="13.3275" y="51.59" size="1.016" layer="25" font="vector">ETI Vocoder</text>
-<text x="13.3275" y="49.05" size="1.016" layer="25" font="vector">v1.0</text>
+<text x="13.3275" y="49.05" size="1.016" layer="25" font="vector">v1.0 2.1.17</text>
 <rectangle x1="10.4065" y1="57.7495" x2="12.1845" y2="57.8765" layer="26" rot="R270"/>
 <rectangle x1="10.1525" y1="57.7495" x2="12.6925" y2="57.8765" layer="26" rot="R270"/>
 <rectangle x1="11.486" y1="84.991" x2="11.613" y2="85.118" layer="26" rot="R270"/>
@@ -1378,16 +1378,16 @@
 <text x="84.945" y="89.0475" size="1.016" layer="26" font="vector" rot="MR0">-12V</text>
 <text x="84.945" y="92.8575" size="1.016" layer="26" font="vector" rot="MR0">GND</text>
 <text x="84.945" y="96.6675" size="1.016" layer="26" font="vector" rot="MR0">+12V</text>
-<text x="86.85" y="47.7725" size="1.016" layer="26" font="vector" rot="MR0">+7C</text>
+<text x="86.85" y="47.7725" size="1.016" layer="26" font="vector" rot="MR0">+7V</text>
 <text x="86.85" y="50.3125" size="1.016" layer="26" font="vector" rot="MR0">-7V</text>
 <text x="86.85" y="12.2125" size="1.016" layer="26" font="vector" rot="MR0">MIX</text>
 <text x="86.85" y="15.3875" size="1.016" layer="26" font="vector" rot="MR0">VCA sig</text>
 <text x="86.85" y="17.9275" size="1.016" layer="26" font="vector" rot="MR0">VCA ctrl</text>
 <text x="86.85" y="19.8325" size="1.016" layer="26" font="vector" rot="MR0">X</text>
 <text x="54.3875" y="12.505" size="1.016" layer="25" font="vector" rot="R270">4V&amp;B</text>
-<text x="85.39" y="42.0575" size="1.016" layer="25" font="vector" rot="R270">ETI Vocoder</text>
-<text x="87.485" y="42.0575" size="1.016" layer="25" font="vector" rot="R270">Internal Excitation</text>
-<text x="89.58" y="42.0575" size="1.016" layer="25" font="vector" rot="R270">Lower board v1.0</text>
+<text x="85" y="42" size="1.016" layer="25" font="vector" rot="R270">ETI Vocoder</text>
+<text x="87" y="42" size="1.016" layer="25" font="vector" rot="R270">Internal Excitation</text>
+<text x="89" y="42" size="1.016" layer="25" font="vector" rot="R270">Lower board v1.0</text>
 <hole x="69.07" y="83.3325" drill="3.2"/>
 <circle x="69.07" y="83.3325" radius="3" width="0.254" layer="25"/>
 <hole x="69.07" y="27.4525" drill="3.2"/>
@@ -2611,7 +2611,8 @@
 <hole x="38.5" y="91" drill="2"/>
 <wire x1="39.5" y1="98" x2="37.5" y2="98" width="0" layer="20" curve="-180"/>
 <wire x1="37.5" y1="87.5" x2="39.5" y2="87.5" width="0" layer="20" curve="-180"/>
-<text x="43" y="6.55" size="1.016" layer="26" font="vector" rot="MR0">v1.0</text>
+<text x="43" y="7.55" size="1.016" layer="26" font="vector" rot="MR0">v1.0 - 01.02.17</text>
+<text x="91" y="42" size="1.016" layer="27" font="vector" rot="R270">02.01.17</text>
 </plain>
 <libraries>
 <library name="resistor">
@@ -4592,7 +4593,7 @@ Please make sure your boards conform to these design rules.</description>
 <attribute name="VALUE" x="37.0765" y="64.544" size="1.27" layer="27" ratio="10" rot="R180"/>
 </element>
 <element name="C11" library="resistor" package="E2,5-5" value="1u" x="25.3925" y="50.955" smashed="yes">
-<attribute name="NAME" x="28.5675" y="51.717" size="1.27" layer="25" ratio="10" rot="R270"/>
+<attribute name="NAME" x="28.5675" y="53.217" size="1.27" layer="25" ratio="10" rot="R270"/>
 <attribute name="VALUE" x="27.8055" y="48.542" size="1.27" layer="27" ratio="10"/>
 </element>
 <element name="C12" library="resistor" package="E2,5-5" value="22u/25V" x="23.4875" y="80.165" smashed="yes" rot="R180">
@@ -4754,7 +4755,7 @@ Please make sure your boards conform to these design rules.</description>
 <attribute name="VALUE" x="48.75" y="64.9175" size="1.27" layer="27" rot="R270"/>
 </element>
 <element name="PR5" library="pot" package="CA9V" value="2k2" x="46.21" y="42.6925" smashed="yes" rot="R90">
-<attribute name="NAME" x="39.606" y="40.1525" size="1.27" layer="25" ratio="10" rot="R270"/>
+<attribute name="NAME" x="41.8475" y="38.106" size="1.27" layer="25" ratio="10"/>
 <attribute name="VALUE" x="51.29" y="49.4235" size="1.27" layer="27" ratio="10" rot="R180"/>
 </element>
 <element name="C14" library="resistor" package="C025-025X050" value="10n" x="54.465" y="34.4375" smashed="yes" rot="R90">
@@ -4893,7 +4894,7 @@ Please make sure your boards conform to these design rules.</description>
 <attribute name="VALUE" x="71.737" y="31.8975" size="1.27" layer="27" ratio="10" rot="R90"/>
 </element>
 <element name="PR1" library="pot" package="CA9V" value="100k" x="60.815" y="47.1375" smashed="yes" rot="R180">
-<attribute name="NAME" x="57.894" y="42.0575" size="1.27" layer="25" ratio="10" rot="R90"/>
+<attribute name="NAME" x="57.894" y="42.5575" size="1.27" layer="25" ratio="10" rot="R90"/>
 <attribute name="VALUE" x="54.084" y="52.2175" size="1.27" layer="27" ratio="10" rot="R270"/>
 </element>
 <element name="PR3" library="pot" package="CA9V" value="220k" x="77.325" y="62.3775" smashed="yes">
