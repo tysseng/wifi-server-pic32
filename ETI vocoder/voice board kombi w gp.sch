@@ -17856,7 +17856,6 @@ grid 5.08 mm</description>
 <part name="GND16" library="supply1" deviceset="GND" device=""/>
 <part name="IC3" library="linear" deviceset="TL081" device="P"/>
 <part name="IC4" library="linear" deviceset="TL081" device="P"/>
-<part name="CE1" library="joakim" deviceset="C-EU" device="050_075-025X100"/>
 <part name="RE2" library="resistor" deviceset="R-US_" device="0207/7"/>
 <part name="GND17" library="supply1" deviceset="GND" device=""/>
 <part name="P3" library="joakim" deviceset="C-OR-R" device="050_075-025X100"/>
@@ -17985,7 +17984,6 @@ grid 5.08 mm</description>
 <part name="GND38" library="supply1" deviceset="GND" device=""/>
 <part name="IC3." library="linear" deviceset="TL081" device="P"/>
 <part name="IC4." library="linear" deviceset="TL081" device="P"/>
-<part name="CE1." library="joakim" deviceset="C-EU" device="050_075-025X100"/>
 <part name="RE2." library="resistor" deviceset="R-US_" device="0207/7"/>
 <part name="GND39" library="supply1" deviceset="GND" device=""/>
 <part name="P3." library="joakim" deviceset="C-OR-R" device="050_075-025X100"/>
@@ -18013,6 +18011,8 @@ grid 5.08 mm</description>
 <part name="PAD17" library="wirepad" deviceset="WIREPAD" device="2,54/1,1"/>
 <part name="PAD18" library="wirepad" deviceset="WIREPAD" device="2,54/1,1"/>
 <part name="JP1" library="jumper" deviceset="JP1E" device=""/>
+<part name="CE1" library="resistor" deviceset="CPOL-EU" device="E2-4"/>
+<part name="CE1." library="resistor" deviceset="CPOL-EU" device="E2-4"/>
 </parts>
 <sheets>
 <sheet>
@@ -18470,10 +18470,6 @@ between channel 12 and 13</text>
 <attribute name="VALUE" x="187.96" y="205.74" size="1.778" layer="96"/>
 </instance>
 <instance part="IC4" gate="A" x="243.84" y="195.58"/>
-<instance part="CE1" gate="G$1" x="2.54" y="205.74" smashed="yes" rot="R270">
-<attribute name="NAME" x="2.032" y="215.011" size="1.778" layer="95" rot="R180"/>
-<attribute name="VALUE" x="-2.159" y="204.216" size="1.778" layer="96" rot="R270"/>
-</instance>
 <instance part="RE2" gate="G$1" x="30.48" y="218.44" smashed="yes">
 <attribute name="NAME" x="29.718" y="214.8586" size="1.778" layer="95"/>
 <attribute name="VALUE" x="26.67" y="215.138" size="1.778" layer="96"/>
@@ -18778,10 +18774,6 @@ between channel 12 and 13</text>
 <attribute name="VALUE" x="187.96" y="68.58" size="1.778" layer="96"/>
 </instance>
 <instance part="IC4." gate="A" x="243.84" y="58.42"/>
-<instance part="CE1." gate="G$1" x="2.54" y="68.58" smashed="yes" rot="R270">
-<attribute name="NAME" x="0" y="75.819" size="1.778" layer="95"/>
-<attribute name="VALUE" x="-2.159" y="67.056" size="1.778" layer="96" rot="R270"/>
-</instance>
 <instance part="RE2." gate="G$1" x="30.48" y="81.28" smashed="yes">
 <attribute name="NAME" x="29.972" y="77.6986" size="1.778" layer="95"/>
 <attribute name="VALUE" x="26.67" y="77.978" size="1.778" layer="96"/>
@@ -18847,6 +18839,14 @@ between channel 12 and 13</text>
 <instance part="PAD17" gate="G$1" x="307.34" y="139.7" smashed="yes"/>
 <instance part="PAD18" gate="G$1" x="309.88" y="2.54" smashed="yes"/>
 <instance part="JP1" gate="A" x="205.74" y="246.38"/>
+<instance part="CE1" gate="G$1" x="0" y="205.74" smashed="yes" rot="R90">
+<attribute name="NAME" x="0" y="212.979" size="1.778" layer="95"/>
+<attribute name="VALUE" x="4.699" y="207.264" size="1.778" layer="96" rot="R90"/>
+</instance>
+<instance part="CE1." gate="G$1" x="0" y="68.58" smashed="yes" rot="R90">
+<attribute name="NAME" x="0" y="75.311" size="1.778" layer="95"/>
+<attribute name="VALUE" x="4.699" y="70.104" size="1.778" layer="96" rot="R90"/>
+</instance>
 </instances>
 <busses>
 </busses>
@@ -19152,13 +19152,13 @@ between channel 12 and 13</text>
 <pinref part="PAD5" gate="G$1" pin="P"/>
 <label x="-17.78" y="68.58" size="1.778" layer="95"/>
 <wire x1="-2.54" y1="68.58" x2="-22.86" y2="68.58" width="0.1524" layer="91"/>
-<pinref part="CE1." gate="G$1" pin="2"/>
+<pinref part="CE1." gate="G$1" pin="+"/>
 </segment>
 <segment>
-<pinref part="CE1" gate="G$1" pin="2"/>
 <pinref part="PAD6" gate="G$1" pin="P"/>
 <wire x1="-20.32" y1="205.74" x2="-2.54" y2="205.74" width="0.1524" layer="91"/>
 <label x="-17.78" y="205.74" size="1.778" layer="95"/>
+<pinref part="CE1" gate="G$1" pin="+"/>
 </segment>
 </net>
 <net name="N$4" class="0">
@@ -19744,11 +19744,11 @@ between channel 12 and 13</text>
 <net name="N$43" class="0">
 <segment>
 <pinref part="RE1" gate="G$1" pin="2"/>
-<pinref part="CE1" gate="G$1" pin="1"/>
 <wire x1="5.08" y1="205.74" x2="10.16" y2="205.74" width="0.1524" layer="91"/>
 <pinref part="P1" gate="G$1" pin="2"/>
 <junction x="10.16" y="205.74"/>
 <wire x1="10.16" y1="205.74" x2="7.62" y2="205.74" width="0.1524" layer="91"/>
+<pinref part="CE1" gate="G$1" pin="-"/>
 </segment>
 </net>
 <net name="N$44" class="0">
@@ -20230,11 +20230,11 @@ between channel 12 and 13</text>
 <net name="N$88" class="0">
 <segment>
 <pinref part="RE1." gate="G$1" pin="2"/>
-<pinref part="CE1." gate="G$1" pin="1"/>
 <wire x1="5.08" y1="68.58" x2="10.16" y2="68.58" width="0.1524" layer="91"/>
 <pinref part="P1." gate="G$1" pin="2"/>
 <junction x="10.16" y="68.58"/>
 <wire x1="10.16" y1="68.58" x2="7.62" y2="68.58" width="0.1524" layer="91"/>
+<pinref part="CE1." gate="G$1" pin="-"/>
 </segment>
 </net>
 <net name="N$89" class="0">
