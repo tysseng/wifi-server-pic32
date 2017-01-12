@@ -18302,7 +18302,7 @@ between channel 12 and 13</text>
 <attribute name="VALUE" x="75.819" y="222.504" size="1.778" layer="96" rot="R90"/>
 </instance>
 <instance part="GND1" gate="1" x="20.32" y="185.42"/>
-<instance part="GND2" gate="1" x="35.56" y="185.42"/>
+<instance part="GND2" gate="1" x="35.56" y="182.88"/>
 <instance part="GND3" gate="1" x="60.96" y="185.42"/>
 <instance part="GND4" gate="1" x="76.2" y="185.42"/>
 <instance part="IC2" gate="B" x="109.22" y="198.12" smashed="yes" rot="MR180">
@@ -18612,7 +18612,7 @@ between channel 12 and 13</text>
 <attribute name="VALUE" x="83.439" y="85.344" size="1.778" layer="96" rot="R90"/>
 </instance>
 <instance part="GND23" gate="1" x="20.32" y="48.26"/>
-<instance part="GND24" gate="1" x="35.56" y="48.26"/>
+<instance part="GND24" gate="1" x="35.56" y="45.72"/>
 <instance part="GND25" gate="1" x="60.96" y="48.26"/>
 <instance part="GND26" gate="1" x="76.2" y="48.26"/>
 <instance part="IC2." gate="B" x="109.22" y="60.96" smashed="yes" rot="MR180">
@@ -18901,6 +18901,7 @@ between channel 12 and 13</text>
 <wire x1="15.24" y1="190.5" x2="20.32" y2="190.5" width="0.1524" layer="91"/>
 <wire x1="20.32" y1="190.5" x2="20.32" y2="187.96" width="0.1524" layer="91"/>
 <pinref part="GND1" gate="1" pin="GND"/>
+<junction x="20.32" y="190.5"/>
 </segment>
 <segment>
 <pinref part="C6" gate="G$1" pin="1"/>
@@ -18922,6 +18923,7 @@ between channel 12 and 13</text>
 <pinref part="PR5" gate="1" pin="S"/>
 <wire x1="71.12" y1="129.54" x2="71.12" y2="124.46" width="0.1524" layer="91"/>
 <wire x1="71.12" y1="124.46" x2="76.2" y2="124.46" width="0.1524" layer="91"/>
+<junction x="76.2" y="124.46"/>
 </segment>
 <segment>
 <pinref part="R24" gate="G$1" pin="1"/>
@@ -18965,7 +18967,6 @@ between channel 12 and 13</text>
 <segment>
 <pinref part="GND2" gate="1" pin="GND"/>
 <pinref part="P4" gate="G$1" pin="1"/>
-<wire x1="35.56" y1="187.96" x2="35.56" y2="185.42" width="0.1524" layer="91"/>
 </segment>
 <segment>
 <pinref part="GND10" gate="1" pin="GND"/>
@@ -19005,6 +19006,7 @@ between channel 12 and 13</text>
 <wire x1="15.24" y1="53.34" x2="20.32" y2="53.34" width="0.1524" layer="91"/>
 <wire x1="20.32" y1="53.34" x2="20.32" y2="50.8" width="0.1524" layer="91"/>
 <pinref part="GND23" gate="1" pin="GND"/>
+<junction x="20.32" y="53.34"/>
 </segment>
 <segment>
 <pinref part="C6." gate="G$1" pin="1"/>
@@ -19026,6 +19028,7 @@ between channel 12 and 13</text>
 <pinref part="PR5." gate="1" pin="S"/>
 <wire x1="71.12" y1="-7.62" x2="71.12" y2="-12.7" width="0.1524" layer="91"/>
 <wire x1="71.12" y1="-12.7" x2="76.2" y2="-12.7" width="0.1524" layer="91"/>
+<junction x="76.2" y="-12.7"/>
 </segment>
 <segment>
 <pinref part="R24." gate="G$1" pin="1"/>
@@ -19069,7 +19072,6 @@ between channel 12 and 13</text>
 <segment>
 <pinref part="GND24" gate="1" pin="GND"/>
 <pinref part="P4." gate="G$1" pin="1"/>
-<wire x1="35.56" y1="50.8" x2="35.56" y2="48.26" width="0.1524" layer="91"/>
 </segment>
 <segment>
 <pinref part="GND32" gate="1" pin="GND"/>
@@ -19172,6 +19174,7 @@ between channel 12 and 13</text>
 <pinref part="R9" gate="G$1" pin="1"/>
 <wire x1="101.6" y1="215.9" x2="106.68" y2="215.9" width="0.1524" layer="91"/>
 <junction x="101.6" y="210.82"/>
+<junction x="101.6" y="200.66"/>
 </segment>
 </net>
 <net name="N$9" class="0">
@@ -19194,6 +19197,7 @@ between channel 12 and 13</text>
 <wire x1="121.92" y1="198.12" x2="127" y2="198.12" width="0.1524" layer="91"/>
 <pinref part="D2" gate="G$1" pin="C"/>
 <wire x1="127" y1="198.12" x2="127" y2="200.66" width="0.1524" layer="91"/>
+<junction x="121.92" y="198.12"/>
 </segment>
 </net>
 <net name="N$11" class="0">
@@ -19231,6 +19235,7 @@ between channel 12 and 13</text>
 <pinref part="R12" gate="G$1" pin="2"/>
 <pinref part="R13" gate="G$1" pin="1"/>
 <pinref part="C5" gate="G$1" pin="2"/>
+<junction x="162.56" y="213.36"/>
 </segment>
 </net>
 <net name="N$15" class="0">
@@ -19257,6 +19262,7 @@ between channel 12 and 13</text>
 <pinref part="C6" gate="G$1" pin="2"/>
 <wire x1="172.72" y1="213.36" x2="177.8" y2="213.36" width="0.1524" layer="91"/>
 <pinref part="IC3" gate="A" pin="+IN"/>
+<junction x="172.72" y="213.36"/>
 </segment>
 </net>
 <net name="VU_DETECTOR" class="0">
@@ -19269,6 +19275,7 @@ between channel 12 and 13</text>
 <wire x1="198.12" y1="241.3" x2="205.74" y2="241.3" width="0.1524" layer="91"/>
 <pinref part="JP1" gate="A" pin="1"/>
 <wire x1="205.74" y1="241.3" x2="205.74" y2="243.84" width="0.1524" layer="91"/>
+<junction x="198.12" y="241.3"/>
 </segment>
 </net>
 <net name="N$17" class="0">
@@ -19282,15 +19289,13 @@ between channel 12 and 13</text>
 </net>
 <net name="BIAS" class="0">
 <segment>
-<pinref part="R16" gate="G$1" pin="1"/>
-<wire x1="208.28" y1="208.28" x2="208.28" y2="220.98" width="0.1524" layer="91"/>
-</segment>
-<segment>
 <pinref part="R33" gate="G$1" pin="1"/>
 <pinref part="R34" gate="G$1" pin="2"/>
 <wire x1="220.98" y1="220.98" x2="208.28" y2="220.98" width="0.1524" layer="91"/>
 <label x="210.82" y="218.44" size="1.778" layer="95"/>
 <junction x="220.98" y="220.98"/>
+<pinref part="R16" gate="G$1" pin="1"/>
+<wire x1="208.28" y1="220.98" x2="208.28" y2="208.28" width="0.1524" layer="91"/>
 </segment>
 </net>
 <net name="N$18" class="0">
@@ -19342,6 +19347,7 @@ between channel 12 and 13</text>
 <pinref part="IC4" gate="A" pin="-IN"/>
 <pinref part="IC4" gate="A" pin="OUT"/>
 <junction x="251.46" y="195.58"/>
+<junction x="233.68" y="182.88"/>
 </segment>
 </net>
 <net name="N$21" class="0">
@@ -19353,6 +19359,7 @@ between channel 12 and 13</text>
 <pinref part="D4" gate="G$1" pin="C"/>
 <wire x1="256.54" y1="185.42" x2="256.54" y2="182.88" width="0.1524" layer="91"/>
 <wire x1="264.16" y1="185.42" x2="256.54" y2="185.42" width="0.1524" layer="91"/>
+<junction x="256.54" y="185.42"/>
 </segment>
 </net>
 <net name="N$22" class="0">
@@ -19363,6 +19370,7 @@ between channel 12 and 13</text>
 <wire x1="274.32" y1="185.42" x2="274.32" y2="193.04" width="0.1524" layer="91"/>
 <pinref part="PR2" gate="1" pin="E"/>
 <wire x1="274.32" y1="193.04" x2="276.86" y2="193.04" width="0.1524" layer="91"/>
+<junction x="274.32" y="193.04"/>
 </segment>
 </net>
 <net name="N$23" class="0">
@@ -19706,6 +19714,7 @@ between channel 12 and 13</text>
 <pinref part="C12" gate="G$1" pin="2"/>
 <pinref part="IC6" gate="A" pin="BUFF/OUT"/>
 <wire x1="246.38" y1="137.16" x2="266.7" y2="137.16" width="0.1524" layer="91"/>
+<junction x="266.7" y="137.16"/>
 </segment>
 </net>
 <net name="N$34" class="0">
@@ -19844,6 +19853,7 @@ between channel 12 and 13</text>
 <pinref part="P7." gate="G$1" pin="1"/>
 <wire x1="60.96" y1="60.96" x2="63.5" y2="60.96" width="0.1524" layer="91"/>
 <wire x1="63.5" y1="66.04" x2="60.96" y2="66.04" width="0.1524" layer="91"/>
+<junction x="60.96" y="66.04"/>
 </segment>
 </net>
 <net name="N$51" class="0">
@@ -19890,6 +19900,7 @@ between channel 12 and 13</text>
 <pinref part="R9." gate="G$1" pin="1"/>
 <wire x1="101.6" y1="78.74" x2="106.68" y2="78.74" width="0.1524" layer="91"/>
 <junction x="101.6" y="73.66"/>
+<junction x="101.6" y="63.5"/>
 </segment>
 </net>
 <net name="N$55" class="0">
@@ -19912,6 +19923,7 @@ between channel 12 and 13</text>
 <wire x1="121.92" y1="60.96" x2="127" y2="60.96" width="0.1524" layer="91"/>
 <pinref part="D2." gate="G$1" pin="C"/>
 <wire x1="127" y1="60.96" x2="127" y2="63.5" width="0.1524" layer="91"/>
+<junction x="121.92" y="60.96"/>
 </segment>
 </net>
 <net name="N$57" class="0">
@@ -19949,6 +19961,7 @@ between channel 12 and 13</text>
 <pinref part="R12." gate="G$1" pin="2"/>
 <pinref part="R13." gate="G$1" pin="1"/>
 <pinref part="C5." gate="G$1" pin="2"/>
+<junction x="162.56" y="76.2"/>
 </segment>
 </net>
 <net name="N$61" class="0">
@@ -19975,6 +19988,7 @@ between channel 12 and 13</text>
 <pinref part="C6." gate="G$1" pin="2"/>
 <wire x1="172.72" y1="76.2" x2="177.8" y2="76.2" width="0.1524" layer="91"/>
 <pinref part="IC3." gate="A" pin="+IN"/>
+<junction x="172.72" y="76.2"/>
 </segment>
 </net>
 <net name="N$63" class="0">
@@ -20019,6 +20033,7 @@ between channel 12 and 13</text>
 <pinref part="IC4." gate="A" pin="OUT"/>
 <junction x="251.46" y="58.42"/>
 <pinref part="IC5" gate="B" pin="+IN"/>
+<junction x="233.68" y="45.72"/>
 </segment>
 </net>
 <net name="N$67" class="0">
@@ -20030,6 +20045,7 @@ between channel 12 and 13</text>
 <wire x1="256.54" y1="48.26" x2="256.54" y2="45.72" width="0.1524" layer="91"/>
 <wire x1="264.16" y1="48.26" x2="256.54" y2="48.26" width="0.1524" layer="91"/>
 <pinref part="IC5" gate="B" pin="-IN"/>
+<junction x="256.54" y="48.26"/>
 </segment>
 </net>
 <net name="N$68" class="0">
@@ -20200,6 +20216,7 @@ between channel 12 and 13</text>
 <pinref part="C12." gate="G$1" pin="2"/>
 <wire x1="246.38" y1="0" x2="266.7" y2="0" width="0.1524" layer="91"/>
 <pinref part="IC6" gate="B" pin="BUFF/OUT"/>
+<junction x="266.7" y="0"/>
 </segment>
 </net>
 <net name="N$85" class="0">
@@ -20278,12 +20295,12 @@ between channel 12 and 13</text>
 <segment>
 <pinref part="R16." gate="G$1" pin="1"/>
 <wire x1="208.28" y1="71.12" x2="208.28" y2="83.82" width="0.1524" layer="91"/>
-</segment>
-<segment>
 <pinref part="R33." gate="G$1" pin="1"/>
 <pinref part="R34." gate="G$1" pin="2"/>
 <wire x1="223.52" y1="83.82" x2="208.28" y2="83.82" width="0.1524" layer="91"/>
 <label x="210.82" y="81.28" size="1.778" layer="95"/>
+<junction x="223.52" y="83.82"/>
+<junction x="208.28" y="83.82"/>
 </segment>
 </net>
 <net name="OUT1" class="0">
