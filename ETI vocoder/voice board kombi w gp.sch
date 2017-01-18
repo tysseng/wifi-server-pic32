@@ -13548,6 +13548,29 @@ single carbon potentiometer, 16 mm</description>
 <text x="-4.699" y="1.651" size="1.27" layer="25" ratio="10">&gt;NAME</text>
 <text x="-4.699" y="-2.794" size="1.27" layer="27" ratio="10">&gt;VALUE</text>
 </package>
+<package name="P050_075-030X100J">
+<wire x1="2.413" y1="1.27" x2="2.413" y2="0.762" width="0.1524" layer="21"/>
+<wire x1="2.413" y1="-0.762" x2="2.413" y2="-1.27" width="0.1524" layer="21"/>
+<wire x1="2.413" y1="0.254" x2="2.413" y2="-0.254" width="0.1524" layer="21"/>
+<wire x1="2.286" y1="0" x2="2.794" y2="0" width="0.1524" layer="21"/>
+<pad name="1" x="-3.81" y="0" drill="0.8128" shape="octagon"/>
+<pad name="3" x="3.81" y="0" drill="0.8128" shape="octagon"/>
+<pad name="2" x="1.27" y="0" drill="0.8128" shape="octagon"/>
+<wire x1="-4.953" y1="1.27" x2="-4.953" y2="-1.27" width="0.1524" layer="21"/>
+<wire x1="-4.699" y1="-1.524" x2="2.159" y2="-1.524" width="0.1524" layer="21"/>
+<wire x1="2.159" y1="1.524" x2="-4.699" y2="1.524" width="0.1524" layer="21"/>
+<wire x1="2.159" y1="1.524" x2="2.413" y2="1.27" width="0.1524" layer="21" curve="-90"/>
+<wire x1="2.159" y1="-1.524" x2="2.413" y2="-1.27" width="0.1524" layer="21" curve="90"/>
+<wire x1="-4.953" y1="-1.27" x2="-4.699" y2="-1.524" width="0.1524" layer="21" curve="90"/>
+<wire x1="-4.953" y1="1.27" x2="-4.699" y2="1.524" width="0.1524" layer="21" curve="-90"/>
+<text x="-2.921" y="-0.635" size="1.27" layer="25" ratio="10">&gt;NAME</text>
+<text x="-4.826" y="-3.048" size="1.27" layer="27" ratio="10">&gt;VALUE</text>
+<wire x1="2.921" y1="-1.524" x2="4.699" y2="-1.524" width="0.1524" layer="21"/>
+<wire x1="4.953" y1="-1.27" x2="4.953" y2="1.27" width="0.1524" layer="21"/>
+<wire x1="4.699" y1="1.524" x2="2.921" y2="1.524" width="0.1524" layer="21"/>
+<wire x1="4.699" y1="1.524" x2="4.953" y2="1.27" width="0.1524" layer="21" curve="-90"/>
+<wire x1="4.699" y1="-1.524" x2="4.953" y2="-1.27" width="0.1524" layer="21" curve="90"/>
+</package>
 </packages>
 <symbols>
 <symbol name="POT-J">
@@ -13620,6 +13643,15 @@ potentiometer, 16 mm w 5mm pitch and OMEG bracket, 17,8 x 7,5 mm</description>
 </gates>
 <devices>
 <device name="050_075-025X100" package="P050_075-025X100J">
+<connects>
+<connect gate="G$1" pin="1" pad="1"/>
+<connect gate="G$1" pin="2" pad="2 3"/>
+</connects>
+<technologies>
+<technology name=""/>
+</technologies>
+</device>
+<device name="050_075-030X100" package="P050_075-030X100J">
 <connects>
 <connect gate="G$1" pin="1" pad="1"/>
 <connect gate="G$1" pin="2" pad="2 3"/>
@@ -17816,8 +17848,8 @@ grid 5.08 mm</description>
 <part name="GND20" library="supply1" deviceset="GND" device=""/>
 <part name="P4" library="resistor" deviceset="C-EU" device="050-030X075"/>
 <part name="RE6" library="resistor" deviceset="R-US_" device="0204/7"/>
-<part name="P8" library="joakim" deviceset="C-OR-R" device="050_075-025X100"/>
-<part name="P16" library="joakim" deviceset="C-OR-R" device="050_075-025X100"/>
+<part name="P8" library="joakim" deviceset="C-OR-R" device="050_075-030X100" value="C-OR-R050_075-030X100"/>
+<part name="P16" library="joakim" deviceset="C-OR-R" device="050_075-030X100" value="C-OR-R050_075-030X100"/>
 <part name="RV1" library="joakim" deviceset="POT16_W_BRACKET" device="&quot;&quot;" value="100k log"/>
 <part name="P+5" library="supply1" deviceset="+12V" device=""/>
 <part name="P+6" library="supply1" deviceset="+12V" device=""/>
@@ -17849,18 +17881,18 @@ grid 5.08 mm</description>
 <part name="PAD16" library="wirepad" deviceset="WIREPAD" device="2,54/1,1"/>
 <part name="GND21" library="supply1" deviceset="GND" device=""/>
 <part name="IC1." library="linear" deviceset="TL072" device="P"/>
-<part name="P1." library="joakim" deviceset="C-OR-R" device="050_075-025X100"/>
+<part name="P1." library="joakim" deviceset="C-OR-R" device="050_075-030X100" value="C-OR-R050_075-030X100"/>
 <part name="RE3." library="resistor" deviceset="R-US_" device="0207/7"/>
-<part name="P5." library="joakim" deviceset="C-OR-R" device="050_075-025X100"/>
+<part name="P5." library="joakim" deviceset="C-OR-R" device="050_075-030X100" value="C-OR-R050_075-030X100"/>
 <part name="RE4." library="resistor" deviceset="R-US_" device="0207/7"/>
 <part name="RE5." library="resistor" deviceset="R-US_" device="0207/7"/>
 <part name="R7." library="resistor" deviceset="R-US_" device="0207/7"/>
 <part name="R8." library="resistor" deviceset="R-US_" device="0207/7"/>
 <part name="R9." library="resistor" deviceset="R-US_" device="0207/7"/>
 <part name="PR1." library="pot" deviceset="TRIM_EU-" device="CA9V"/>
-<part name="P2." library="joakim" deviceset="C-OR-R" device="050_075-025X100"/>
+<part name="P2." library="joakim" deviceset="C-OR-R" device="050_075-030X100" value="C-OR-R050_075-030X100"/>
 <part name="CE2." library="resistor" deviceset="C-EU" device="050-030X075"/>
-<part name="P6." library="joakim" deviceset="C-OR-R" device="050_075-025X100"/>
+<part name="P6." library="joakim" deviceset="C-OR-R" device="050_075-030X100" value="C-OR-R050_075-030X100"/>
 <part name="CE3." library="resistor" deviceset="C-EU" device="050-030X075"/>
 <part name="GND23" library="supply1" deviceset="GND" device=""/>
 <part name="GND24" library="supply1" deviceset="GND" device=""/>
@@ -17895,9 +17927,9 @@ grid 5.08 mm</description>
 <part name="Q2." library="transistor-neu-to92" deviceset="*-PNP-" device="TO92-ECB" value="BC212L"/>
 <part name="GND30" library="supply1" deviceset="GND" device=""/>
 <part name="R20." library="resistor" deviceset="R-US_" device="0207/7"/>
-<part name="P9." library="joakim" deviceset="C-OR-R" device="050_075-025X100"/>
+<part name="P9." library="joakim" deviceset="C-OR-R" device="050_075-030X100" value="C-OR-R050_075-030X100"/>
 <part name="RE8." library="resistor" deviceset="R-US_" device="0207/7"/>
-<part name="P13." library="joakim" deviceset="C-OR-R" device="050_075-025X100"/>
+<part name="P13." library="joakim" deviceset="C-OR-R" device="050_075-030X100" value="C-OR-R050_075-030X100"/>
 <part name="RE9." library="resistor" deviceset="R-US_" device="0207/7"/>
 <part name="RE10." library="resistor" deviceset="R-US_" device="0207/7"/>
 <part name="R27." library="resistor" deviceset="R-US_" device="0207/7"/>
@@ -17908,9 +17940,9 @@ grid 5.08 mm</description>
 <part name="R32." library="resistor" deviceset="R-US_" device="0207/7"/>
 <part name="PR4." library="pot" deviceset="TRIM_EU-" device="CA9V"/>
 <part name="PR5." library="pot" deviceset="TRIM_EU-" device="CA9V"/>
-<part name="P10." library="joakim" deviceset="C-OR-R" device="050_075-025X100"/>
+<part name="P10." library="joakim" deviceset="C-OR-R" device="050_075-030X100" value="C-OR-R050_075-030X100"/>
 <part name="CE5." library="resistor" deviceset="C-EU" device="050-030X075"/>
-<part name="P14." library="joakim" deviceset="C-OR-R" device="050_075-025X100"/>
+<part name="P14." library="joakim" deviceset="C-OR-R" device="050_075-030X100" value="C-OR-R050_075-030X100"/>
 <part name="CE6." library="resistor" deviceset="C-EU" device="050-030X075"/>
 <part name="C12." library="resistor" deviceset="C-EU" device="050-030X075"/>
 <part name="IC7." library="linear" deviceset="TL072" device="P"/>
@@ -18608,7 +18640,7 @@ B: N/C</text>
 <attribute name="NAME" x="105.41" y="16.7386" size="1.778" layer="95"/>
 <attribute name="VALUE" x="102.87" y="11.938" size="1.778" layer="96"/>
 </instance>
-<instance part="P13." gate="G$1" x="121.92" y="0" smashed="yes" rot="R90">
+<instance part="P13." gate="G$1" x="121.92" y="0" smashed="yes" rot="R270">
 <attribute name="NAME" x="118.364" y="8.001" size="1.778" layer="95"/>
 </instance>
 <instance part="RE9." gate="G$1" x="127" y="-10.16" smashed="yes" rot="R90">
@@ -19987,18 +20019,13 @@ B: N/C</text>
 </net>
 <net name="N$74" class="0">
 <segment>
-<pinref part="P13." gate="G$1" pin="2"/>
 <pinref part="P14." gate="G$1" pin="2"/>
-<pinref part="RE9." gate="G$1" pin="2"/>
 <pinref part="CE6." gate="G$1" pin="2"/>
 <wire x1="142.24" y1="17.78" x2="127" y2="17.78" width="0.1524" layer="91"/>
 <wire x1="127" y1="17.78" x2="127" y2="0" width="0.1524" layer="91"/>
 <wire x1="127" y1="0" x2="129.54" y2="0" width="0.1524" layer="91"/>
-<wire x1="127" y1="-5.08" x2="127" y2="0" width="0.1524" layer="91"/>
+<pinref part="P13." gate="G$1" pin="1"/>
 <junction x="127" y="0"/>
-<pinref part="P15." gate="G$1" pin="1"/>
-<wire x1="127" y1="-5.08" x2="132.08" y2="-5.08" width="0.1524" layer="91"/>
-<junction x="127" y="-5.08"/>
 </segment>
 </net>
 <net name="N$75" class="0">
@@ -20015,15 +20042,14 @@ B: N/C</text>
 </net>
 <net name="N$76" class="0">
 <segment>
-<pinref part="IC7." gate="A" pin="OUT"/>
-<pinref part="P13." gate="G$1" pin="1"/>
 <pinref part="CE5." gate="G$1" pin="1"/>
 <wire x1="106.68" y1="20.32" x2="116.84" y2="20.32" width="0.1524" layer="91"/>
 <wire x1="116.84" y1="20.32" x2="116.84" y2="15.24" width="0.1524" layer="91"/>
 <pinref part="RE8." gate="G$1" pin="2"/>
-<wire x1="116.84" y1="15.24" x2="116.84" y2="0" width="0.1524" layer="91"/>
 <wire x1="111.76" y1="15.24" x2="116.84" y2="15.24" width="0.1524" layer="91"/>
-<junction x="116.84" y="15.24"/>
+<pinref part="IC7." gate="A" pin="OUT"/>
+<pinref part="P13." gate="G$1" pin="2"/>
+<wire x1="116.84" y1="15.24" x2="116.84" y2="0" width="0.1524" layer="91"/>
 <junction x="116.84" y="0"/>
 </segment>
 </net>
@@ -20209,6 +20235,13 @@ B: N/C</text>
 <pinref part="JP1" gate="A" pin="2"/>
 <wire x1="208.28" y1="243.84" x2="208.28" y2="226.06" width="0.1524" layer="91"/>
 <label x="210.82" y="223.52" size="1.778" layer="95" rot="R90"/>
+</segment>
+</net>
+<net name="N$88" class="0">
+<segment>
+<pinref part="P15." gate="G$1" pin="1"/>
+<pinref part="RE9." gate="G$1" pin="2"/>
+<wire x1="127" y1="-5.08" x2="132.08" y2="-5.08" width="0.1524" layer="91"/>
 </segment>
 </net>
 </nets>
