@@ -18109,10 +18109,10 @@ H: R24</text>
 should be BF244C</text>
 <text x="180.34" y="175.26" size="1.778" layer="97">Error in parts list, 
 should be BF244C</text>
-<text x="-33.02" y="246.38" size="1.778" layer="97">Naming:
+<text x="-71.12" y="238.76" size="1.778" layer="97">Naming:
 P: Part - C, R, N/C or Short
-CE: Extra capacitor not on BP
-RE: Extra resistor not on BP
+CE: Capacitor that has different number on different channels
+RE: Resistor that has different number on different channels
 
 See B/H/L for article part numbers
 
@@ -18123,12 +18123,6 @@ channels except between
 9 and 10</text>
 <text x="162.56" y="251.46" size="1.778" layer="97">Do not connect vu detector 
 between channel 12 and 13</text>
-<text x="83.82" y="-30.48" size="1.778" layer="91">P12 eksisterer ikke, fikse?</text>
-<text x="-71.12" y="104.14" size="5.08" layer="91">TODO: ALLE CAPS: SJEKKE BREDDE!
-
-OG CLEARANCE TIL IC-SOKLER</text>
-<text x="-30.48" y="226.06" size="5.08" layer="91">CH1: LP</text>
-<text x="-20.32" y="15.24" size="5.08" layer="91">CH 14: HP</text>
 <text x="60.96" y="141.732" size="1.016" layer="97">L: C14
 B: short
 </text>
@@ -20051,6 +20045,7 @@ B: N/C</text>
 <pinref part="P13." gate="G$1" pin="2"/>
 <wire x1="116.84" y1="15.24" x2="116.84" y2="0" width="0.1524" layer="91"/>
 <junction x="116.84" y="0"/>
+<junction x="116.84" y="15.24"/>
 </segment>
 </net>
 <net name="N$77" class="0">
