@@ -18524,7 +18524,7 @@ B: N/C</text>
 <attribute name="NAME" x="21.59" y="54.229" size="1.778" layer="95"/>
 <attribute name="VALUE" x="24.13" y="62.23" size="1.778" layer="96" rot="R270"/>
 </instance>
-<instance part="P2." gate="G$1" x="27.94" y="68.58" smashed="yes" rot="R90">
+<instance part="P2." gate="G$1" x="27.94" y="68.58" smashed="yes" rot="R270">
 <attribute name="NAME" x="21.336" y="74.041" size="1.778" layer="95"/>
 </instance>
 <instance part="CE2." gate="G$1" x="38.1" y="86.36" smashed="yes" rot="R90">
@@ -18659,8 +18659,8 @@ B: N/C</text>
 <attribute name="NAME" x="77.47" y="-11.811" size="1.778" layer="95"/>
 <attribute name="VALUE" x="80.01" y="-3.81" size="1.778" layer="96" rot="R270"/>
 </instance>
-<instance part="P10." gate="G$1" x="83.82" y="2.54" smashed="yes" rot="R270">
-<attribute name="NAME" x="81.534" y="9.271" size="1.778" layer="95"/>
+<instance part="P10." gate="G$1" x="83.82" y="2.54" smashed="yes" rot="R90">
+<attribute name="NAME" x="78.994" y="9.271" size="1.778" layer="95"/>
 </instance>
 <instance part="CE5." gate="G$1" x="104.14" y="20.32" smashed="yes" rot="R270">
 <attribute name="NAME" x="101.092" y="28.321" size="1.778" layer="95"/>
@@ -19706,18 +19706,17 @@ B: N/C</text>
 <net name="N$47" class="0">
 <segment>
 <pinref part="IC1." gate="A" pin="-IN"/>
-<pinref part="P2." gate="G$1" pin="2"/>
 <pinref part="RE3." gate="G$1" pin="1"/>
-<wire x1="33.02" y1="68.58" x2="35.56" y2="68.58" width="0.1524" layer="91"/>
 <pinref part="RE2." gate="G$1" pin="2"/>
 <wire x1="35.56" y1="81.28" x2="35.56" y2="68.58" width="0.1524" layer="91"/>
-<junction x="35.56" y="68.58"/>
 <junction x="35.56" y="81.28"/>
+<pinref part="P2." gate="G$1" pin="1"/>
+<wire x1="33.02" y1="68.58" x2="35.56" y2="68.58" width="0.1524" layer="91"/>
+<junction x="35.56" y="68.58"/>
 </segment>
 </net>
 <net name="N$48" class="0">
 <segment>
-<pinref part="P2." gate="G$1" pin="1"/>
 <wire x1="20.32" y1="68.58" x2="20.32" y2="86.36" width="0.1524" layer="91"/>
 <pinref part="CE2." gate="G$1" pin="1"/>
 <wire x1="20.32" y1="86.36" x2="35.56" y2="86.36" width="0.1524" layer="91"/>
@@ -19726,9 +19725,10 @@ B: N/C</text>
 <pinref part="P3." gate="G$1" pin="1"/>
 <wire x1="25.4" y1="63.5" x2="20.32" y2="63.5" width="0.1524" layer="91"/>
 <junction x="20.32" y="63.5"/>
-<wire x1="22.86" y1="68.58" x2="20.32" y2="68.58" width="0.1524" layer="91"/>
 <pinref part="P1." gate="G$1" pin="1"/>
 <junction x="20.32" y="68.58"/>
+<pinref part="P2." gate="G$1" pin="2"/>
+<wire x1="22.86" y1="68.58" x2="20.32" y2="68.58" width="0.1524" layer="91"/>
 </segment>
 </net>
 <net name="N$49" class="0">
@@ -20000,15 +20000,15 @@ B: N/C</text>
 <pinref part="P9." gate="G$1" pin="2"/>
 <pinref part="PR5." gate="1" pin="A"/>
 <wire x1="76.2" y1="-2.54" x2="76.2" y2="2.54" width="0.1524" layer="91"/>
-<pinref part="P10." gate="G$1" pin="2"/>
 <wire x1="76.2" y1="2.54" x2="76.2" y2="20.32" width="0.1524" layer="91"/>
 <pinref part="CE5." gate="G$1" pin="2"/>
 <wire x1="76.2" y1="20.32" x2="99.06" y2="20.32" width="0.1524" layer="91"/>
-<wire x1="78.74" y1="2.54" x2="76.2" y2="2.54" width="0.1524" layer="91"/>
 <junction x="76.2" y="2.54"/>
 <junction x="76.2" y="-2.54"/>
 <pinref part="P11." gate="G$1" pin="1"/>
 <wire x1="76.2" y1="-2.54" x2="81.28" y2="-2.54" width="0.1524" layer="91"/>
+<pinref part="P10." gate="G$1" pin="1"/>
+<wire x1="76.2" y1="2.54" x2="78.74" y2="2.54" width="0.1524" layer="91"/>
 </segment>
 </net>
 <net name="N$74" class="0">
@@ -20024,14 +20024,14 @@ B: N/C</text>
 </net>
 <net name="N$75" class="0">
 <segment>
-<pinref part="P10." gate="G$1" pin="1"/>
 <pinref part="IC7." gate="A" pin="-IN"/>
 <pinref part="RE8." gate="G$1" pin="1"/>
 <wire x1="101.6" y1="15.24" x2="101.6" y2="2.54" width="0.1524" layer="91"/>
-<wire x1="88.9" y1="2.54" x2="101.6" y2="2.54" width="0.1524" layer="91"/>
-<junction x="101.6" y="2.54"/>
 <pinref part="RE7." gate="G$1" pin="2"/>
 <junction x="101.6" y="15.24"/>
+<pinref part="P10." gate="G$1" pin="2"/>
+<wire x1="88.9" y1="2.54" x2="101.6" y2="2.54" width="0.1524" layer="91"/>
+<junction x="101.6" y="2.54"/>
 </segment>
 </net>
 <net name="N$76" class="0">
