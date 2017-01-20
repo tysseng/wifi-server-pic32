@@ -6,7 +6,7 @@
 <setting alwaysvectorfont="yes"/>
 <setting verticaltext="up"/>
 </settings>
-<grid distance="0.0125" unitdist="inch" unit="inch" style="dots" multiple="1" display="yes" altdistance="0.025" altunitdist="inch" altunit="inch"/>
+<grid distance="0.0125" unitdist="inch" unit="mil" style="dots" multiple="1" display="yes" altdistance="0.025" altunitdist="inch" altunit="inch"/>
 <layers>
 <layer number="1" name="Top" color="4" fill="1" visible="yes" active="yes"/>
 <layer number="2" name="Route2" color="1" fill="3" visible="no" active="no"/>
@@ -68,10 +68,10 @@
 </layers>
 <board>
 <plain>
-<wire x1="0" y1="0" x2="160" y2="0" width="0" layer="20"/>
-<wire x1="160" y1="0" x2="160" y2="60.325" width="0" layer="20"/>
-<wire x1="160" y1="60.325" x2="0" y2="60.325" width="0" layer="20"/>
-<wire x1="0" y1="60.325" x2="0" y2="0" width="0" layer="20"/>
+<wire x1="0" y1="0.254" x2="160" y2="0.254" width="0" layer="20"/>
+<wire x1="160" y1="0.254" x2="160" y2="60.071" width="0" layer="20"/>
+<wire x1="160" y1="60.071" x2="0" y2="60.071" width="0" layer="20"/>
+<wire x1="0" y1="60.071" x2="0" y2="0.254" width="0" layer="20"/>
 <hole x="156.21" y="52.3875" drill="3.2"/>
 <circle x="156.21" y="52.3875" radius="3" width="0.254" layer="25"/>
 <hole x="156.21" y="7.9375" drill="3.2"/>
@@ -4553,6 +4553,8 @@ Please make sure your boards conform to these design rules.</description>
 <wire x1="52.705" y1="2.8575" x2="52.705" y2="1.905" width="0.6096" layer="16"/>
 <wire x1="52.705" y1="1.905" x2="53.0225" y2="1.5875" width="0.6096" layer="16"/>
 <wire x1="53.0225" y1="1.5875" x2="52.705" y2="1.5875" width="0.6096" layer="16"/>
+<via x="147.955" y="53.975" extent="1-16" drill="0.5"/>
+<via x="96.8375" y="8.5725" extent="1-16" drill="0.5"/>
 </signal>
 <signal name="N$5">
 <contactref element="P5" pad="2"/>
@@ -5352,10 +5354,10 @@ Please make sure your boards conform to these design rules.</description>
 <contactref element="R9." pad="1"/>
 <wire x1="99.695" y1="5.3975" x2="99.695" y2="2.2225" width="0.6096" layer="16"/>
 <wire x1="116.205" y1="11.1125" x2="116.205" y2="8.5725" width="0.6096" layer="1"/>
-<wire x1="116.205" y1="8.5725" x2="116.205" y2="2.2225" width="0.6096" layer="1"/>
-<wire x1="116.205" y1="2.2225" x2="114.935" y2="0.9525" width="0.6096" layer="1"/>
-<wire x1="114.935" y1="0.9525" x2="100.965" y2="0.9525" width="0.6096" layer="1"/>
-<wire x1="100.965" y1="0.9525" x2="99.695" y2="2.2225" width="0.6096" layer="1"/>
+<wire x1="116.205" y1="8.5725" x2="116.205" y2="5.08" width="0.6096" layer="1"/>
+<wire x1="116.205" y1="5.08" x2="114.935" y2="3.81" width="0.6096" layer="1"/>
+<wire x1="114.935" y1="3.81" x2="101.2825" y2="3.81" width="0.6096" layer="1"/>
+<wire x1="101.2825" y1="3.81" x2="99.695" y2="2.2225" width="0.6096" layer="1"/>
 <wire x1="117.475" y1="8.5725" x2="116.205" y2="8.5725" width="0.6096" layer="1"/>
 </signal>
 <signal name="N$55">
