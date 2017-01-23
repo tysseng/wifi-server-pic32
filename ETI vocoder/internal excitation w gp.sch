@@ -9854,6 +9854,15 @@ Source: www.farnell.com/datasheets/247.pdf</description>
 <technology name=""/>
 </technologies>
 </device>
+<device name="R0603" package="R0603">
+<connects>
+<connect gate="G$1" pin="1" pad="1"/>
+<connect gate="G$1" pin="2" pad="2"/>
+</connects>
+<technologies>
+<technology name=""/>
+</technologies>
+</device>
 </devices>
 </deviceset>
 <deviceset name="CPOL-EU" prefix="C" uservalue="yes">
@@ -16112,7 +16121,7 @@ Source: http://www.molex.com/pdm_docs/sd/026604100_sd.pdf</description>
 <part name="GND1" library="supply1" deviceset="GND" device=""/>
 <part name="GND2" library="supply1" deviceset="GND" device=""/>
 <part name="GND3" library="supply1" deviceset="GND" device=""/>
-<part name="C1" library="resistor" deviceset="C-EU" device="075-032X103" value="100n"/>
+<part name="C1" library="resistor" deviceset="C-EU" device="050-030X075" value="100n"/>
 <part name="RV5" library="joakim" deviceset="POT16_W_BRACKET" device="&quot;&quot;" value="10k"/>
 <part name="PR4" library="pot" deviceset="TRIM_EU-" device="CA9V" value="2k2"/>
 <part name="P+1" library="supply1" deviceset="+12V" device=""/>
@@ -16140,8 +16149,8 @@ Source: http://www.molex.com/pdm_docs/sd/026604100_sd.pdf</description>
 <part name="R21" library="resistor" deviceset="R-EU_" device="0207/7" value="22k"/>
 <part name="R23" library="resistor" deviceset="R-EU_" device="0207/7" value="27k"/>
 <part name="R22" library="resistor" deviceset="R-EU_" device="0207/7" value="330k"/>
-<part name="C8" library="resistor" deviceset="C-EU" device="075-032X103" value="10n"/>
-<part name="C6" library="resistor" deviceset="C-EU" device="075-032X103" value="33n"/>
+<part name="C8" library="resistor" deviceset="C-EU" device="050-030X075" value="10n"/>
+<part name="C6" library="resistor" deviceset="C-EU" device="050-030X075" value="33n"/>
 <part name="C5" library="resistor" deviceset="C-EU" device="025-025X050" value="220p"/>
 <part name="C7" library="resistor" deviceset="C-EU" device="025-025X050" value="100p"/>
 <part name="RV7" library="joakim" deviceset="POT16_W_BRACKET" device="&quot;&quot;" value="10k"/>

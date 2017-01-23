@@ -8,7 +8,7 @@
 </settings>
 <grid distance="0.0125" unitdist="inch" unit="mil" style="dots" multiple="1" display="yes" altdistance="0.025" altunitdist="inch" altunit="inch"/>
 <layers>
-<layer number="1" name="Top" color="4" fill="1" visible="yes" active="yes"/>
+<layer number="1" name="Top" color="4" fill="1" visible="no" active="yes"/>
 <layer number="2" name="Route2" color="1" fill="3" visible="no" active="no"/>
 <layer number="3" name="Route3" color="4" fill="3" visible="no" active="no"/>
 <layer number="14" name="Route14" color="1" fill="6" visible="no" active="no"/>
@@ -76,7 +76,7 @@
 <circle x="156.21" y="52.3875" radius="3" width="0.254" layer="25"/>
 <hole x="156.21" y="7.9375" drill="3.2"/>
 <circle x="156.21" y="7.9375" radius="3" width="0.254" layer="25"/>
-<text x="43.97375" y="6.985" size="1.778" layer="25" font="vector">4V&amp;B</text>
+<text x="62.38875" y="30.48" size="1.778" layer="25" font="vector">4V&amp;B</text>
 <text x="93.6625" y="55.5625" size="1.27" layer="26" font="vector" rot="MR270">Slew</text>
 <text x="98.425" y="55.5625" size="1.27" layer="26" font="vector" rot="MR270">V/UV</text>
 <text x="83.5025" y="55.5625" size="1.27" layer="26" font="vector" rot="MR270">Excit
@@ -1933,13 +1933,58 @@ ch
 <wire x1="42.2275" y1="1.905" x2="43.18" y2="1.42875" width="0.15" layer="25"/>
 <wire x1="43.18" y1="1.42875" x2="42.2275" y2="0.9525" width="0.15" layer="25"/>
 <wire x1="42.2275" y1="0.9525" x2="42.2275" y2="1.42875" width="0.15" layer="25"/>
-<text x="2.06375" y="2.8575" size="1.778" layer="25">Voice</text>
-<text x="2.06375" y="0.79375" size="1.778" layer="25">board</text>
-<text x="47.14875" y="30.48" size="1.778" layer="25">ETI</text>
-<text x="47.14875" y="28.2575" size="1.778" layer="25">Vocoder</text>
+<text x="0.47625" y="3.175" size="1.778" layer="25">ETI</text>
+<text x="0.47625" y="0.9525" size="1.778" layer="25">Vocoder</text>
 <text x="153.035" y="23.33625" size="1.27" layer="26" rot="MR270">ETI Vocoder</text>
 <text x="153.82875" y="48.10125" size="1.27" layer="26" rot="MR270">Dual voice
 board v1.0</text>
+<text x="50.8" y="27.6225" size="1.6764" layer="25" rot="R90">Analysis/
+synthesis</text>
+<text x="152.7175" y="53.0225" size="1.27" layer="25" rot="R180">speech
+gain</text>
+<text x="146.685" y="16.8275" size="1.27" layer="25" rot="R180">speech
+gain</text>
+<text x="70.485" y="10.4775" size="1.27" layer="25" rot="R90">Excit. gain</text>
+<text x="70.485" y="40.9575" size="1.27" layer="25" rot="R90">Excit. gain</text>
+<text x="46.355" y="50.8" size="1.27" layer="25">cv offset</text>
+<text x="43.815" y="20.32" size="1.27" layer="25">PR3 cv offset</text>
+<text x="52.07" y="9.525" size="1.27" layer="25" rot="R180">PR2 cv 
+gain</text>
+<text x="16.1925" y="42.2275" size="1.27" layer="25" rot="R90">vca offset</text>
+<text x="16.1925" y="11.43" size="1.27" layer="25" rot="R90">vca offset</text>
+<wire x1="43.815" y1="7.62" x2="40.005" y2="7.62" width="0.127" layer="25"/>
+<wire x1="40.005" y1="7.62" x2="39.37" y2="8.255" width="0.127" layer="25"/>
+<wire x1="39.37" y1="8.255" x2="39.37" y2="8.5725" width="0.127" layer="25"/>
+<wire x1="39.37" y1="8.5725" x2="38.735" y2="8.5725" width="0.127" layer="25"/>
+<wire x1="38.735" y1="8.5725" x2="39.37" y2="9.2075" width="0.127" layer="25"/>
+<wire x1="39.37" y1="9.2075" x2="40.005" y2="8.5725" width="0.127" layer="25"/>
+<wire x1="40.005" y1="8.5725" x2="39.37" y2="8.5725" width="0.127" layer="25"/>
+<wire x1="57.15" y1="20.0025" x2="57.15" y2="19.685" width="0.127" layer="25"/>
+<wire x1="57.15" y1="19.685" x2="56.8325" y2="19.3675" width="0.127" layer="25"/>
+<wire x1="56.8325" y1="19.3675" x2="56.515" y2="19.685" width="0.127" layer="25"/>
+<wire x1="56.515" y1="19.685" x2="56.515" y2="19.05" width="0.127" layer="25"/>
+<wire x1="56.515" y1="19.05" x2="57.15" y2="19.05" width="0.127" layer="25"/>
+<wire x1="57.15" y1="19.05" x2="56.8325" y2="19.3675" width="0.127" layer="25"/>
+<text x="36.83" y="38.735" size="1.27" layer="25" rot="R180">PR2 cv 
+gain</text>
+<wire x1="32.7025" y1="38.735" x2="33.655" y2="39.6875" width="0.127" layer="25"/>
+<wire x1="33.655" y1="39.6875" x2="33.3375" y2="40.005" width="0.127" layer="25"/>
+<wire x1="33.3375" y1="40.005" x2="33.9725" y2="40.005" width="0.127" layer="25"/>
+<wire x1="33.9725" y1="40.005" x2="33.9725" y2="39.37" width="0.127" layer="25"/>
+<wire x1="33.9725" y1="39.37" x2="33.655" y2="39.6875" width="0.127" layer="25"/>
+<wire x1="16.51" y1="45.4025" x2="17.4625" y2="45.4025" width="0.127" layer="25"/>
+<wire x1="17.4625" y1="45.4025" x2="17.4625" y2="46.0375" width="0.127" layer="25"/>
+<wire x1="17.4625" y1="46.0375" x2="18.0975" y2="45.4025" width="0.127" layer="25"/>
+<wire x1="18.0975" y1="45.4025" x2="17.4625" y2="44.7675" width="0.127" layer="25"/>
+<wire x1="17.4625" y1="44.7675" x2="17.4625" y2="45.4025" width="0.127" layer="25"/>
+<text x="18.0975" y="49.2125" size="1.27" layer="25" rot="R90">PR4</text>
+<text x="18.0975" y="18.7325" size="1.27" layer="25" rot="R90">PR4</text>
+<wire x1="16.51" y1="14.9225" x2="17.4625" y2="14.9225" width="0.127" layer="25"/>
+<wire x1="17.4625" y1="14.9225" x2="17.4625" y2="15.5575" width="0.127" layer="25"/>
+<wire x1="17.4625" y1="15.5575" x2="18.0975" y2="14.9225" width="0.127" layer="25"/>
+<wire x1="18.0975" y1="14.9225" x2="17.4625" y2="14.2875" width="0.127" layer="25"/>
+<wire x1="17.4625" y1="14.2875" x2="17.4625" y2="14.9225" width="0.127" layer="25"/>
+<text x="56.1975" y="40.3225" size="1.27" layer="25">PR3</text>
 </plain>
 <libraries>
 <library name="resistor">
@@ -3721,7 +3766,7 @@ Please make sure your boards conform to these design rules.</description>
 <attribute name="VALUE" x="121.031" y="46.0375" size="1.27" layer="27" ratio="10" rot="R180"/>
 </element>
 <element name="PR1" library="pot" package="CA9V" value="" x="152.4" y="44.1325" smashed="yes" rot="R270">
-<attribute name="NAME" x="153.67" y="47.0535" size="1.27" layer="25" ratio="10"/>
+<attribute name="NAME" x="150.8125" y="37.5285" size="1.27" layer="25" ratio="10"/>
 <attribute name="VALUE" x="147.32" y="37.4015" size="1.27" layer="27" ratio="10"/>
 </element>
 <element name="Q1" library="transistor-fet" package="TO-92" value="BF244C" x="87.63" y="55.88" smashed="yes" rot="R270">
@@ -3809,11 +3854,10 @@ Please make sure your boards conform to these design rules.</description>
 <attribute name="VALUE" x="33.5788" y="43.1165" size="1.27" layer="27" ratio="10" rot="R90"/>
 </element>
 <element name="D4" library="diode" package="D-5" value="" x="39.37" y="36.5125" smashed="yes">
-<attribute name="NAME" x="33.02" y="35.8775" size="1.27" layer="25" ratio="10"/>
+<attribute name="NAME" x="43.18" y="35.8775" size="1.27" layer="25" ratio="10"/>
 <attribute name="VALUE" x="37.465" y="33.9725" size="1.27" layer="27" ratio="10"/>
 </element>
 <element name="PR2" library="pot" package="CA9V" value="" x="39.37" y="45.4025" smashed="yes">
-<attribute name="NAME" x="36.449" y="46.0375" size="1.27" layer="25" ratio="10" rot="R90"/>
 <attribute name="VALUE" x="46.101" y="40.3225" size="1.27" layer="27" ratio="10" rot="R90"/>
 </element>
 <element name="R19" library="resistor" package="0207/7" value="" x="39.37" y="53.0225" smashed="yes">
@@ -3821,7 +3865,6 @@ Please make sure your boards conform to these design rules.</description>
 <attribute name="VALUE" x="37.084" y="52.4637" size="1.27" layer="27" ratio="10"/>
 </element>
 <element name="PR3" library="pot" package="CA9V" value="" x="50.8" y="45.4025" smashed="yes" rot="R90">
-<attribute name="NAME" x="46.355" y="48.3235" size="1.27" layer="25" ratio="10"/>
 <attribute name="VALUE" x="55.88" y="52.1335" size="1.27" layer="27" ratio="10" rot="R180"/>
 </element>
 <element name="Q2" library="transistor-neu-to92" package="TO92-ECB" value="BC212L" x="30.7975" y="53.0225" smashed="yes" rot="R180">
@@ -3881,11 +3924,10 @@ Please make sure your boards conform to these design rules.</description>
 <attribute name="VALUE" x="19.939" y="37.2237" size="1.27" layer="27" ratio="10"/>
 </element>
 <element name="PR4" library="pot" package="CA9V" value="" x="23.495" y="45.4025" smashed="yes" rot="R270">
-<attribute name="NAME" x="24.765" y="48.3235" size="1.27" layer="25" ratio="10"/>
 <attribute name="VALUE" x="18.415" y="38.6715" size="1.27" layer="27" ratio="10"/>
 </element>
 <element name="PR5" library="pot" package="CA9V" value="" x="76.2" y="45.4025" smashed="yes" rot="R180">
-<attribute name="NAME" x="73.279" y="40.9575" size="1.27" layer="25" ratio="10" rot="R90"/>
+<attribute name="NAME" x="78.105" y="38.989" size="1.27" layer="25" ratio="10" rot="R180"/>
 <attribute name="VALUE" x="69.469" y="50.4825" size="1.27" layer="27" ratio="10" rot="R270"/>
 </element>
 <element name="P10" library="resistor" package="C050-030X075" value="" x="73.9775" y="58.1025" smashed="yes" rot="R180">
@@ -4071,7 +4113,7 @@ Please make sure your boards conform to these design rules.</description>
 <attribute name="VALUE" x="101.219" y="4.8387" size="1.27" layer="27" ratio="10"/>
 </element>
 <element name="PR1." library="pot" package="CA9V" value="" x="152.4" y="16.1925" smashed="yes" rot="R270">
-<attribute name="NAME" x="153.67" y="19.1135" size="1.27" layer="25" ratio="10"/>
+<attribute name="NAME" x="150.8125" y="21.6535" size="1.27" layer="25" ratio="10"/>
 <attribute name="VALUE" x="147.32" y="9.4615" size="1.27" layer="27" ratio="10"/>
 </element>
 <element name="P2." library="joakim" package="P050_075-030X100J" value="C-OR-R050_075-030X100" x="130.175" y="24.4475" smashed="yes">
@@ -4163,7 +4205,6 @@ Please make sure your boards conform to these design rules.</description>
 <attribute name="VALUE" x="37.465" y="3.4925" size="1.27" layer="27" ratio="10"/>
 </element>
 <element name="PR2." library="pot" package="CA9V" value="" x="39.37" y="14.9225" smashed="yes">
-<attribute name="NAME" x="36.449" y="15.5575" size="1.27" layer="25" ratio="10" rot="R90"/>
 <attribute name="VALUE" x="46.101" y="9.8425" size="1.27" layer="27" ratio="10" rot="R90"/>
 </element>
 <element name="R19." library="resistor" package="0207/7" value="" x="39.37" y="22.5425" smashed="yes">
@@ -4171,7 +4212,6 @@ Please make sure your boards conform to these design rules.</description>
 <attribute name="VALUE" x="37.084" y="21.9837" size="1.27" layer="27" ratio="10"/>
 </element>
 <element name="PR3." library="pot" package="CA9V" value="" x="50.8" y="14.9225" smashed="yes" rot="R90">
-<attribute name="NAME" x="46.355" y="17.8435" size="1.27" layer="25" ratio="10"/>
 <attribute name="VALUE" x="55.88" y="21.6535" size="1.27" layer="27" ratio="10" rot="R180"/>
 </element>
 <element name="Q2." library="transistor-neu-to92" package="TO92-ECB" value="BC212L" x="31.115" y="7.62" smashed="yes" rot="R180">
@@ -4227,11 +4267,10 @@ Please make sure your boards conform to these design rules.</description>
 <attribute name="VALUE" x="19.939" y="6.7437" size="1.27" layer="27" ratio="10"/>
 </element>
 <element name="PR4." library="pot" package="CA9V" value="" x="23.495" y="14.9225" smashed="yes" rot="R270">
-<attribute name="NAME" x="24.765" y="17.8435" size="1.27" layer="25" ratio="10"/>
 <attribute name="VALUE" x="18.415" y="8.1915" size="1.27" layer="27" ratio="10"/>
 </element>
 <element name="PR5." library="pot" package="CA9V" value="" x="76.2" y="14.9225" smashed="yes" rot="R180">
-<attribute name="NAME" x="73.279" y="10.4775" size="1.27" layer="25" ratio="10" rot="R90"/>
+<attribute name="NAME" x="73.914" y="5.715" size="1.27" layer="25" ratio="10" rot="R90"/>
 <attribute name="VALUE" x="69.469" y="20.0025" size="1.27" layer="27" ratio="10" rot="R270"/>
 </element>
 <element name="P10." library="joakim" package="P050_075-030X100J" value="C-OR-R050_075-030X100" x="75.2475" y="27.6225" smashed="yes">
