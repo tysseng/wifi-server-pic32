@@ -8056,6 +8056,10 @@ are 6" or longer (according to the datasheet)</text>
 <text x="187.96" y="25.4" size="1.778" layer="97" rot="R90">Red</text>
 <text x="187.96" y="50.8" size="1.778" layer="97" rot="R90">Green</text>
 <text x="106.68" y="81.28" size="1.778" layer="97">R7 is misplaced in the schematics in the original article</text>
+<text x="129.54" y="2.54" size="1.778" layer="97">The shown combination of R7 and R8 
+will give an approximate led current 
+of 18.3mA (using the formulas in
+the LM3915 datasheet.</text>
 </plain>
 <instances>
 <instance part="IC1" gate="A" x="71.12" y="33.02" smashed="yes" rot="MR180">

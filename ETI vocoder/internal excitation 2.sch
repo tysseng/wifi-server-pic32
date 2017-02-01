@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE eagle SYSTEM "eagle.dtd">
-<eagle version="6.2">
+<eagle version="6.5.0">
 <drawing>
 <settings>
 <setting alwaysvectorfont="no"/>
@@ -12129,6 +12129,7 @@ Based on the following sources:
 <text x="-17.78" y="187.96" size="5.08" layer="91">Pots er sjekket</text>
 <text x="-17.78" y="180.34" size="5.08" layer="91">Kondensatorer sjekket</text>
 <text x="-17.78" y="198.12" size="1.778" layer="91">Sjekket mot artikkeø</text>
+<text x="-33.02" y="142.24" size="1.778" layer="97">Error: c11 is 22n in schematics and 220n in parts list</text>
 </plain>
 <instances>
 <instance part="IC2" gate="A" x="124.46" y="25.4" smashed="yes">

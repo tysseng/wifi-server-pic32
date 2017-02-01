@@ -18173,6 +18173,7 @@ B: R26
 </text>
 <text x="89.154" y="130.81" size="1.016" layer="97" rot="R180">L: R22
 B: N/C</text>
+<text x="231.14" y="213.36" size="3.81" layer="91">TODO: Replace BF244 with BF245!</text>
 </plain>
 <instances>
 <instance part="IC1" gate="A" x="43.18" y="203.2" smashed="yes" rot="MR180">
