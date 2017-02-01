@@ -1,0 +1,48 @@
+Input card (x2)
+51k resistors
+3 x 4pin angled connectors
+3 x 2pin angled connectors
+1 x 3pin KK 156 angled
+2 x jumpers
+
+Internal Excitation 2
+1 x 8pin angled (or 2x 4pin)
+3 x 4pin angled
+1 x 2pin angled
+1 x 3pin KK 156 angled
+2 x 100nF 5mm pitch
+1 x 1uF Narrower 
+2 x BC212L
+
+Internal Excitation
+1 x 2pin angled
+1 x 4pin angled
+1 x 3pin KK 156 angled
+2 x 100nF 5mm pitch¨
+
+LED board (x2)
+1 x 2pin angled
+1 x 4pin KK 156 angled
+220nF small footprint
+470nF small footprint
+Leds
+
+Output board
+2 x 5pin angled
+1 x 3pin KK 156 angled
+
+Slew rate
+1 x 3pin angled
+1 x 3 pin 156 angled
+
+Voice cards
+7 x 3pin 156 angled (to test each card in separation)
+
+= 
+2pin: 3 + 3 + 1 + 1 + 2 = 10x or 40x
+3pin: 1x or 4x- 10 x @15,- tayda
+4pin: 3 + 3 + 3 + 1 = 10x or 40x
+5pin: 2x or 8x
+8pin: 1x or 4x
+3pin 156: 2 + 1 + 1 + 1 + 1 + 1 = 7x or 28x 
+4pin 156: 2x or 8x
