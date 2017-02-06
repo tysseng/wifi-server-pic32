@@ -4,6 +4,8 @@ Input card (x2)
 3 x 2pin angled connectors
 1 x 3pin KK 156 angled
 2 x jumpers
+1 x 22k resistor
+2 x 51k resistor
 
 Internal Excitation 2
 1 x 8pin angled (or 2x 4pin)
@@ -26,6 +28,8 @@ LED board (x2)
 220nF small footprint
 470nF small footprint
 Leds
+2 x 200k resistor
+1 x 150R resistor
 
 Output board
 2 x 5pin angled
