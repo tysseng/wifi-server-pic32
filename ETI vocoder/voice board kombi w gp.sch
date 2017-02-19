@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE eagle SYSTEM "eagle.dtd">
-<eagle version="6.5.0">
+<eagle version="6.6.0">
 <drawing>
 <settings>
 <setting alwaysvectorfont="no"/>
@@ -17767,6 +17767,7 @@ B: N/C</text>
 <pinref part="P+14" gate="1" pin="+12V"/>
 <wire x1="91.44" y1="284.48" x2="99.06" y2="284.48" width="0.1524" layer="91"/>
 <junction x="99.06" y="284.48"/>
+<junction x="114.3" y="284.48"/>
 </segment>
 </net>
 <net name="-12V" class="0">
