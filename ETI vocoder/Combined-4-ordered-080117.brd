@@ -4820,7 +4820,7 @@ Please make sure your boards conform to these design rules.</description>
 <attribute name="NAME" x="74.785" y="33.9295" size="1.27" layer="25" ratio="10"/>
 <attribute name="VALUE" x="79.611" y="34.9963" size="1.27" layer="27" ratio="10" rot="R180"/>
 </element>
-<element name="C15" library="resistor" package="C050-025X075" value="22n" x="68.435" y="93.4925" smashed="yes" rot="R270">
+<element name="C15" library="resistor" package="C050-025X075" value="220n" x="68.435" y="93.4925" smashed="yes" rot="R270">
 <attribute name="NAME" x="71.356" y="89.9365" size="1.27" layer="25" ratio="10" rot="R90"/>
 <attribute name="VALUE" x="65.641" y="95.7785" size="1.27" layer="27" ratio="10" rot="R270"/>
 </element>
