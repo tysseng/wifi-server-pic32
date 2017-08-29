@@ -16,7 +16,7 @@
 <layer number="16" name="Bottom" color="1" fill="1" visible="yes" active="yes"/>
 <layer number="17" name="Pads" color="2" fill="1" visible="yes" active="yes"/>
 <layer number="18" name="Vias" color="2" fill="1" visible="yes" active="yes"/>
-<layer number="19" name="Unrouted" color="6" fill="1" visible="no" active="yes"/>
+<layer number="19" name="Unrouted" color="6" fill="1" visible="yes" active="yes"/>
 <layer number="20" name="Dimension" color="15" fill="1" visible="yes" active="yes"/>
 <layer number="21" name="tPlace" color="7" fill="1" visible="yes" active="yes"/>
 <layer number="22" name="bPlace" color="7" fill="1" visible="yes" active="yes"/>
@@ -3301,6 +3301,54 @@ Source: Mitsubishi M5218AL/P/FP</description>
 <rectangle x1="2.921" y1="1.9558" x2="3.429" y2="3.0988" layer="51"/>
 <rectangle x1="4.191" y1="1.9558" x2="4.699" y2="3.0988" layer="51"/>
 </package>
+<package name="SIP-PIN02-1J">
+<wire x1="-1.905" y1="1.27" x2="-2.54" y2="0.635" width="0.1524" layer="21"/>
+<pad name="1" x="-1.27" y="0" drill="1.016" shape="offset" rot="R270"/>
+<pad name="2" x="1.27" y="0" drill="1.016" shape="offset" rot="R270"/>
+<text x="-2.54" y="1.651" size="1.27" layer="25" ratio="10">&gt;NAME</text>
+<text x="-2.54" y="-4.191" size="1.27" layer="27" ratio="10">&gt;VALUE</text>
+<rectangle x1="1.016" y1="-0.254" x2="1.524" y2="0.254" layer="51"/>
+<rectangle x1="-1.524" y1="-0.254" x2="-1.016" y2="0.254" layer="51"/>
+<polygon width="0.1524" layer="21">
+<vertex x="-2.54" y="0.635"/>
+<vertex x="-2.54" y="1.27"/>
+<vertex x="-1.905" y="1.27"/>
+</polygon>
+</package>
+<package name="SIP-PIN03-1J">
+<wire x1="-3.175" y1="1.27" x2="-3.81" y2="0.635" width="0.1524" layer="21"/>
+<pad name="1" x="-2.54" y="0" drill="1.016" shape="offset" rot="R270"/>
+<pad name="2" x="0" y="0" drill="1.016" shape="offset" rot="R270"/>
+<text x="-3.81" y="1.651" size="1.27" layer="25" ratio="10">&gt;NAME</text>
+<text x="-3.81" y="-4.191" size="1.27" layer="27" ratio="10">&gt;VALUE</text>
+<rectangle x1="-0.254" y1="-0.254" x2="0.254" y2="0.254" layer="51"/>
+<rectangle x1="-2.794" y1="-0.254" x2="-2.286" y2="0.254" layer="51"/>
+<polygon width="0.1524" layer="21">
+<vertex x="-3.81" y="0.635"/>
+<vertex x="-3.81" y="1.27"/>
+<vertex x="-3.175" y="1.27"/>
+</polygon>
+<rectangle x1="2.286" y1="-0.254" x2="2.794" y2="0.254" layer="51"/>
+<pad name="3" x="2.54" y="0" drill="1.016" shape="offset" rot="R270"/>
+</package>
+<package name="SIP-PIN04-1J">
+<wire x1="-4.445" y1="1.27" x2="-5.08" y2="0.635" width="0.1524" layer="21"/>
+<pad name="1" x="-3.81" y="0" drill="1.016" shape="offset" rot="R270"/>
+<pad name="2" x="-1.27" y="0" drill="1.016" shape="offset" rot="R270"/>
+<text x="-5.08" y="1.651" size="1.27" layer="25" ratio="10">&gt;NAME</text>
+<text x="-5.08" y="-4.191" size="1.27" layer="27" ratio="10">&gt;VALUE</text>
+<rectangle x1="-1.524" y1="-0.254" x2="-1.016" y2="0.254" layer="51"/>
+<rectangle x1="-4.064" y1="-0.254" x2="-3.556" y2="0.254" layer="51"/>
+<polygon width="0.1524" layer="21">
+<vertex x="-5.08" y="0.635"/>
+<vertex x="-5.08" y="1.27"/>
+<vertex x="-4.445" y="1.27"/>
+</polygon>
+<rectangle x1="1.016" y1="-0.254" x2="1.524" y2="0.254" layer="51"/>
+<pad name="3" x="1.27" y="0" drill="1.016" shape="offset" rot="R270"/>
+<pad name="4" x="3.81" y="0" drill="1.016" shape="offset" rot="R270"/>
+<rectangle x1="3.556" y1="-0.254" x2="4.064" y2="0.254" layer="51"/>
+</package>
 </packages>
 <symbols>
 <symbol name="LED">
@@ -4930,7 +4978,7 @@ http://docs-europe.electrocomponents.com/webdocs/10ad/0900766b810adbed.pdf</desc
 <gate name="G$1" symbol="MA03-1J" x="0" y="0"/>
 </gates>
 <devices>
-<device name="" package="MA03-1J">
+<device name="C" package="MA03-1J">
 <connects>
 <connect gate="G$1" pin="1" pad="1"/>
 <connect gate="G$1" pin="2" pad="2"/>
@@ -4945,6 +4993,16 @@ http://docs-europe.electrocomponents.com/webdocs/10ad/0900766b810adbed.pdf</desc
 </technology>
 </technologies>
 </device>
+<device name="P" package="SIP-PIN03-1J">
+<connects>
+<connect gate="G$1" pin="1" pad="1"/>
+<connect gate="G$1" pin="2" pad="2"/>
+<connect gate="G$1" pin="3" pad="3"/>
+</connects>
+<technologies>
+<technology name=""/>
+</technologies>
+</device>
 </devices>
 </deviceset>
 <deviceset name="MA04-1J" prefix="SV" uservalue="yes">
@@ -4953,7 +5011,7 @@ http://docs-europe.electrocomponents.com/webdocs/10ad/0900766b810adbed.pdf</desc
 <gate name="1" symbol="MA04-1J" x="0" y="0"/>
 </gates>
 <devices>
-<device name="" package="MA04-1J">
+<device name="C" package="MA04-1J">
 <connects>
 <connect gate="1" pin="1" pad="1"/>
 <connect gate="1" pin="2" pad="2"/>
@@ -4967,6 +5025,17 @@ http://docs-europe.electrocomponents.com/webdocs/10ad/0900766b810adbed.pdf</desc
 <attribute name="OC_FARNELL" value="unknown" constant="no"/>
 <attribute name="OC_NEWARK" value="unknown" constant="no"/>
 </technology>
+</technologies>
+</device>
+<device name="P" package="SIP-PIN04-1J">
+<connects>
+<connect gate="1" pin="1" pad="1"/>
+<connect gate="1" pin="2" pad="2"/>
+<connect gate="1" pin="3" pad="3"/>
+<connect gate="1" pin="4" pad="4"/>
+</connects>
+<technologies>
+<technology name=""/>
 </technologies>
 </device>
 </devices>
@@ -5891,7 +5960,16 @@ Covers MAX5214 (14 bit), MAX5216 (16 bit)</description>
 <gate name="G$1" symbol="MA02-1J" x="0" y="2.54"/>
 </gates>
 <devices>
-<device name="" package="MA02-1J">
+<device name="C" package="MA02-1J">
+<connects>
+<connect gate="G$1" pin="1" pad="1"/>
+<connect gate="G$1" pin="2" pad="2"/>
+</connects>
+<technologies>
+<technology name=""/>
+</technologies>
+</device>
+<device name="P" package="SIP-PIN02-1J">
 <connects>
 <connect gate="G$1" pin="1" pad="1"/>
 <connect gate="G$1" pin="2" pad="2"/>

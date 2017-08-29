@@ -391,6 +391,54 @@ NS Package M08A</description>
 <rectangle x1="-0.88" y1="2" x2="-0.39" y2="3.1" layer="51"/>
 <rectangle x1="-2.15" y1="2" x2="-1.66" y2="3.1" layer="51"/>
 </package>
+<package name="SIP-PIN02-1J">
+<wire x1="-1.905" y1="1.27" x2="-2.54" y2="0.635" width="0.1524" layer="21"/>
+<pad name="1" x="-1.27" y="0" drill="1.016" shape="offset" rot="R270"/>
+<pad name="2" x="1.27" y="0" drill="1.016" shape="offset" rot="R270"/>
+<text x="-2.54" y="1.651" size="1.27" layer="25" ratio="10">&gt;NAME</text>
+<text x="-2.54" y="-4.191" size="1.27" layer="27" ratio="10">&gt;VALUE</text>
+<rectangle x1="1.016" y1="-0.254" x2="1.524" y2="0.254" layer="51"/>
+<rectangle x1="-1.524" y1="-0.254" x2="-1.016" y2="0.254" layer="51"/>
+<polygon width="0.1524" layer="21">
+<vertex x="-2.54" y="0.635"/>
+<vertex x="-2.54" y="1.27"/>
+<vertex x="-1.905" y="1.27"/>
+</polygon>
+</package>
+<package name="SIP-PIN03-1J">
+<wire x1="-3.175" y1="1.27" x2="-3.81" y2="0.635" width="0.1524" layer="21"/>
+<pad name="1" x="-2.54" y="0" drill="1.016" shape="offset" rot="R270"/>
+<pad name="2" x="0" y="0" drill="1.016" shape="offset" rot="R270"/>
+<text x="-3.81" y="1.651" size="1.27" layer="25" ratio="10">&gt;NAME</text>
+<text x="-3.81" y="-4.191" size="1.27" layer="27" ratio="10">&gt;VALUE</text>
+<rectangle x1="-0.254" y1="-0.254" x2="0.254" y2="0.254" layer="51"/>
+<rectangle x1="-2.794" y1="-0.254" x2="-2.286" y2="0.254" layer="51"/>
+<polygon width="0.1524" layer="21">
+<vertex x="-3.81" y="0.635"/>
+<vertex x="-3.81" y="1.27"/>
+<vertex x="-3.175" y="1.27"/>
+</polygon>
+<rectangle x1="2.286" y1="-0.254" x2="2.794" y2="0.254" layer="51"/>
+<pad name="3" x="2.54" y="0" drill="1.016" shape="offset" rot="R270"/>
+</package>
+<package name="SIP-PIN04-1J">
+<wire x1="-4.445" y1="1.27" x2="-5.08" y2="0.635" width="0.1524" layer="21"/>
+<pad name="1" x="-3.81" y="0" drill="1.016" shape="offset" rot="R270"/>
+<pad name="2" x="-1.27" y="0" drill="1.016" shape="offset" rot="R270"/>
+<text x="-5.08" y="1.651" size="1.27" layer="25" ratio="10">&gt;NAME</text>
+<text x="-5.08" y="-4.191" size="1.27" layer="27" ratio="10">&gt;VALUE</text>
+<rectangle x1="-1.524" y1="-0.254" x2="-1.016" y2="0.254" layer="51"/>
+<rectangle x1="-4.064" y1="-0.254" x2="-3.556" y2="0.254" layer="51"/>
+<polygon width="0.1524" layer="21">
+<vertex x="-5.08" y="0.635"/>
+<vertex x="-5.08" y="1.27"/>
+<vertex x="-4.445" y="1.27"/>
+</polygon>
+<rectangle x1="1.016" y1="-0.254" x2="1.524" y2="0.254" layer="51"/>
+<pad name="3" x="1.27" y="0" drill="1.016" shape="offset" rot="R270"/>
+<pad name="4" x="3.81" y="0" drill="1.016" shape="offset" rot="R270"/>
+<rectangle x1="3.556" y1="-0.254" x2="4.064" y2="0.254" layer="51"/>
+</package>
 </packages>
 <symbols>
 <symbol name="PIC16F18325">
@@ -614,7 +662,7 @@ Covers MAX5214 (14 bit), MAX5216 (16 bit)</description>
 <gate name="1" symbol="MA04-1J" x="0" y="0"/>
 </gates>
 <devices>
-<device name="" package="MA04-1J">
+<device name="C" package="MA04-1J">
 <connects>
 <connect gate="1" pin="1" pad="1"/>
 <connect gate="1" pin="2" pad="2"/>
@@ -630,6 +678,17 @@ Covers MAX5214 (14 bit), MAX5216 (16 bit)</description>
 </technology>
 </technologies>
 </device>
+<device name="P" package="SIP-PIN04-1J">
+<connects>
+<connect gate="1" pin="1" pad="1"/>
+<connect gate="1" pin="2" pad="2"/>
+<connect gate="1" pin="3" pad="3"/>
+<connect gate="1" pin="4" pad="4"/>
+</connects>
+<technologies>
+<technology name=""/>
+</technologies>
+</device>
 </devices>
 </deviceset>
 <deviceset name="MA03-1J" prefix="SV" uservalue="yes">
@@ -638,7 +697,7 @@ Covers MAX5214 (14 bit), MAX5216 (16 bit)</description>
 <gate name="G$1" symbol="MA03-1J" x="0" y="0"/>
 </gates>
 <devices>
-<device name="" package="MA03-1J">
+<device name="C" package="MA03-1J">
 <connects>
 <connect gate="G$1" pin="1" pad="1"/>
 <connect gate="G$1" pin="2" pad="2"/>
@@ -653,6 +712,16 @@ Covers MAX5214 (14 bit), MAX5216 (16 bit)</description>
 </technology>
 </technologies>
 </device>
+<device name="P" package="SIP-PIN03-1J">
+<connects>
+<connect gate="G$1" pin="1" pad="1"/>
+<connect gate="G$1" pin="2" pad="2"/>
+<connect gate="G$1" pin="3" pad="3"/>
+</connects>
+<technologies>
+<technology name=""/>
+</technologies>
+</device>
 </devices>
 </deviceset>
 <deviceset name="MA02-1J">
@@ -660,7 +729,16 @@ Covers MAX5214 (14 bit), MAX5216 (16 bit)</description>
 <gate name="G$1" symbol="MA02-1J" x="0" y="2.54"/>
 </gates>
 <devices>
-<device name="" package="MA02-1J">
+<device name="C" package="MA02-1J">
+<connects>
+<connect gate="G$1" pin="1" pad="1"/>
+<connect gate="G$1" pin="2" pad="2"/>
+</connects>
+<technologies>
+<technology name=""/>
+</technologies>
+</device>
+<device name="P" package="SIP-PIN02-1J">
 <connects>
 <connect gate="G$1" pin="1" pad="1"/>
 <connect gate="G$1" pin="2" pad="2"/>
@@ -8762,11 +8840,11 @@ BF959 corrected 2008.03.06&lt;br&gt;</description>
 <part name="Q2" library="crystal" deviceset="CRYSTAL" device="HC49S"/>
 <part name="SUPPLY14" library="supply2" deviceset="DGND" device=""/>
 <part name="SUPPLY15" library="supply2" deviceset="AGND" device=""/>
-<part name="COM" library="joakim" deviceset="MA04-1J" device=""/>
-<part name="CORE" library="joakim" deviceset="MA03-1J" device=""/>
-<part name="APWR" library="joakim" deviceset="MA03-1J" device=""/>
-<part name="DPWR" library="joakim" deviceset="MA02-1J" device="" value=""/>
-<part name="SYNC" library="joakim" deviceset="MA02-1J" device="" value=""/>
+<part name="COM" library="joakim" deviceset="MA04-1J" device="P"/>
+<part name="CORE" library="joakim" deviceset="MA03-1J" device="P"/>
+<part name="APWR" library="joakim" deviceset="MA03-1J" device="P"/>
+<part name="DPWR" library="joakim" deviceset="MA02-1J" device="P" value="MA02-1JP"/>
+<part name="SYNC" library="joakim" deviceset="MA02-1J" device="P" value="MA02-1JP"/>
 <part name="T1" library="transistor" deviceset="*-NPN-" device="SOT23-BEC" technology="MMBT3904LT1"/>
 <part name="R3" library="resistor" deviceset="R-EU_" device="R0805" value="100k"/>
 <part name="R5" library="resistor" deviceset="R-EU_" device="R0805" value="100k"/>
@@ -8839,8 +8917,12 @@ BF959 corrected 2008.03.06&lt;br&gt;</description>
 <instance part="COM" gate="1" x="147.32" y="10.16" rot="R180"/>
 <instance part="CORE" gate="G$1" x="147.32" y="-5.08" rot="R180"/>
 <instance part="APWR" gate="G$1" x="147.32" y="50.8" rot="R180"/>
-<instance part="DPWR" gate="G$1" x="147.32" y="30.48" rot="R180"/>
-<instance part="SYNC" gate="G$1" x="147.32" y="-20.32" rot="R180"/>
+<instance part="DPWR" gate="G$1" x="147.32" y="30.48" smashed="yes" rot="R180">
+<attribute name="NAME" x="148.59" y="27.178" size="1.778" layer="95" rot="R180"/>
+</instance>
+<instance part="SYNC" gate="G$1" x="147.32" y="-20.32" smashed="yes" rot="R180">
+<attribute name="NAME" x="148.59" y="-23.622" size="1.778" layer="95" rot="R180"/>
+</instance>
 <instance part="T1" gate="G$1" x="45.72" y="-12.7" rot="R270"/>
 <instance part="R3" gate="G$1" x="7.62" y="-22.86" smashed="yes">
 <attribute name="NAME" x="3.81" y="-21.3614" size="1.778" layer="95"/>
