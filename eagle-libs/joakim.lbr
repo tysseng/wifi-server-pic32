@@ -3387,6 +3387,12 @@ chip</description>
 <vertex x="0.254" y="0"/>
 </polygon>
 </package>
+<package name="SIP-PIN01-1J">
+<pad name="1" x="0" y="0" drill="1.016" shape="offset" rot="R270"/>
+<text x="-1.27" y="1.651" size="1.27" layer="25" ratio="10">&gt;NAME</text>
+<text x="-1.27" y="-4.191" size="1.27" layer="27" ratio="10">&gt;VALUE</text>
+<rectangle x1="-0.254" y1="-0.254" x2="0.254" y2="0.254" layer="51"/>
+</package>
 </packages>
 <symbols>
 <symbol name="LED">
@@ -5141,7 +5147,15 @@ http://docs-europe.electrocomponents.com/webdocs/10ad/0900766b810adbed.pdf</desc
 <gate name="G$1" symbol="MA01-1J" x="0" y="0"/>
 </gates>
 <devices>
-<device name="" package="MA01-1J">
+<device name="C" package="MA01-1J">
+<connects>
+<connect gate="G$1" pin="1" pad="1"/>
+</connects>
+<technologies>
+<technology name=""/>
+</technologies>
+</device>
+<device name="P" package="SIP-PIN01-1J">
 <connects>
 <connect gate="G$1" pin="1" pad="1"/>
 </connects>
