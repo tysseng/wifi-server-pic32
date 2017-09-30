@@ -7281,6 +7281,12 @@ diameter 2 mm, horizontal, grid 7.62 mm</description>
 <wire x1="-1.27" y1="0.635" x2="-1.27" y2="-0.635" width="0.1524" layer="21"/>
 <wire x1="1.27" y1="0.635" x2="1.27" y2="-0.635" width="0.1524" layer="21"/>
 </package>
+<package name="SIP-PIN01-1J">
+<pad name="1" x="0" y="0" drill="1.016" shape="offset" rot="R270"/>
+<text x="-1.27" y="1.651" size="1.27" layer="25" ratio="10">&gt;NAME</text>
+<text x="-1.27" y="-4.191" size="1.27" layer="27" ratio="10">&gt;VALUE</text>
+<rectangle x1="-0.254" y1="-0.254" x2="0.254" y2="0.254" layer="51"/>
+</package>
 </packages>
 <symbols>
 <symbol name="4013">
@@ -7501,7 +7507,15 @@ high speed (Philips)</description>
 <gate name="G$1" symbol="MA01-1J" x="0" y="0"/>
 </gates>
 <devices>
-<device name="" package="MA01-1J">
+<device name="C" package="MA01-1J">
+<connects>
+<connect gate="G$1" pin="1" pad="1"/>
+</connects>
+<technologies>
+<technology name=""/>
+</technologies>
+</device>
+<device name="P" package="SIP-PIN01-1J">
 <connects>
 <connect gate="G$1" pin="1" pad="1"/>
 </connects>
@@ -7612,7 +7626,7 @@ high speed (Philips)</description>
 <part name="D2" library="joakim" deviceset="1N4148" device="0805"/>
 <part name="D3" library="joakim" deviceset="1N4148" device="0805"/>
 <part name="D4" library="joakim" deviceset="1N4148" device="0805"/>
-<part name="C8" library="resistor" deviceset="C-EU" device="C0603K" value="100nF"/>
+<part name="C16" library="resistor" deviceset="C-EU" device="C0603K" value="100nF"/>
 <part name="C9" library="resistor" deviceset="C-EU" device="C0603K" value="100nF"/>
 <part name="C10" library="resistor" deviceset="C-EU" device="C0603K" value="100nF"/>
 <part name="C11" library="resistor" deviceset="C-EU" device="C0603K" value="100nF"/>
@@ -7623,33 +7637,33 @@ high speed (Philips)</description>
 <part name="GND25" library="supply1" deviceset="GND" device=""/>
 <part name="SUPPLY6" library="supply2" deviceset="+15V" device=""/>
 <part name="SUPPLY7" library="supply2" deviceset="-15V" device=""/>
-<part name="C16" library="resistor" deviceset="C-EU" device="C0805" value="100nF"/>
-<part name="PULSE" library="joakim" deviceset="MA01-1J" device=""/>
-<part name="SINE" library="joakim" deviceset="MA01-1J" device=""/>
-<part name="TRIANGLE" library="joakim" deviceset="MA01-1J" device=""/>
-<part name="INV_SAW" library="joakim" deviceset="MA01-1J" device=""/>
-<part name="SAW" library="joakim" deviceset="MA01-1J" device=""/>
-<part name="SUB_SQR_1" library="joakim" deviceset="MA01-1J" device=""/>
-<part name="SUB_SAW_1" library="joakim" deviceset="MA01-1J" device=""/>
-<part name="SUB_SQR2" library="joakim" deviceset="MA01-1J" device=""/>
-<part name="SUB_SAW_2" library="joakim" deviceset="MA01-1J" device=""/>
-<part name="PULSE_AMP_CV" library="joakim" deviceset="MA01-1J" device=""/>
-<part name="PW_CV" library="joakim" deviceset="MA01-1J" device=""/>
-<part name="DCO_IN" library="joakim" deviceset="MA01-1J" device=""/>
-<part name="+15V" library="joakim" deviceset="MA01-1J" device=""/>
-<part name="GND" library="joakim" deviceset="MA01-1J" device=""/>
-<part name="-15V" library="joakim" deviceset="MA01-1J" device=""/>
-<part name="+5V" library="joakim" deviceset="MA01-1J" device=""/>
-<part name="DCO_TIMER" library="joakim" deviceset="MA01-1J" device=""/>
+<part name="C8" library="resistor" deviceset="C-EU" device="C0805" value="100nF"/>
+<part name="PULSE" library="joakim" deviceset="MA01-1J" device="P"/>
+<part name="SINE" library="joakim" deviceset="MA01-1J" device="P"/>
+<part name="TRIANGLE" library="joakim" deviceset="MA01-1J" device="P"/>
+<part name="INV_SAW" library="joakim" deviceset="MA01-1J" device="P"/>
+<part name="SAW" library="joakim" deviceset="MA01-1J" device="P"/>
+<part name="SUB_SQR_1" library="joakim" deviceset="MA01-1J" device="P"/>
+<part name="SUB_SAW_1" library="joakim" deviceset="MA01-1J" device="P"/>
+<part name="SUB_SQR_2" library="joakim" deviceset="MA01-1J" device="P"/>
+<part name="SUB_SAW_2" library="joakim" deviceset="MA01-1J" device="P"/>
+<part name="PULSE_AMP_CV" library="joakim" deviceset="MA01-1J" device="P"/>
+<part name="PW_CV" library="joakim" deviceset="MA01-1J" device="P"/>
+<part name="DCO_IN" library="joakim" deviceset="MA01-1J" device="P"/>
+<part name="+15V" library="joakim" deviceset="MA01-1J" device="P"/>
+<part name="GND" library="joakim" deviceset="MA01-1J" device="P"/>
+<part name="-15V" library="joakim" deviceset="MA01-1J" device="P"/>
+<part name="+5V" library="joakim" deviceset="MA01-1J" device="P"/>
+<part name="DCO_TIMER" library="joakim" deviceset="MA01-1J" device="P"/>
 <part name="9" library="resistor" deviceset="R-EU_" device="R0805" value="330k"/>
-<part name="CENTER" library="joakim" deviceset="MA01-1J" device=""/>
-<part name="SYMMETRY" library="joakim" deviceset="MA01-1J" device=""/>
-<part name="ST1" library="joakim" deviceset="MA01-1J" device=""/>
-<part name="ST2" library="joakim" deviceset="MA01-1J" device=""/>
-<part name="ST3" library="joakim" deviceset="MA01-1J" device=""/>
-<part name="ST4" library="joakim" deviceset="MA01-1J" device=""/>
+<part name="CENTER" library="joakim" deviceset="MA01-1J" device="P"/>
+<part name="SYMMETRY" library="joakim" deviceset="MA01-1J" device="P"/>
+<part name="ST1" library="joakim" deviceset="MA01-1J" device="P"/>
+<part name="ST2" library="joakim" deviceset="MA01-1J" device="P"/>
+<part name="ST3" library="joakim" deviceset="MA01-1J" device="P"/>
+<part name="ST4" library="joakim" deviceset="MA01-1J" device="P"/>
 <part name="GND26" library="supply1" deviceset="GND" device=""/>
-<part name="GND27" library="joakim" deviceset="MA01-1J" device=""/>
+<part name="GND27" library="joakim" deviceset="MA01-1J" device="P"/>
 <part name="GND28" library="supply1" deviceset="GND" device=""/>
 </parts>
 <sheets>
@@ -7829,7 +7843,7 @@ high speed (Philips)</description>
 <instance part="D4" gate="G$1" x="86.36" y="50.8" smashed="yes" rot="R90">
 <attribute name="NAME" x="83.82" y="56.3626" size="1.778" layer="95"/>
 </instance>
-<instance part="C8" gate="G$1" x="134.62" y="43.18" smashed="yes" rot="R180">
+<instance part="C16" gate="G$1" x="134.62" y="43.18" smashed="yes" rot="R180">
 <attribute name="NAME" x="132.461" y="51.816" size="1.778" layer="95" rot="R270"/>
 </instance>
 <instance part="C9" gate="G$1" x="139.7" y="43.18" smashed="yes" rot="R180">
@@ -7856,7 +7870,7 @@ high speed (Philips)</description>
 <instance part="GND25" gate="1" x="154.94" y="38.1"/>
 <instance part="SUPPLY6" gate="+15V" x="154.94" y="50.8"/>
 <instance part="SUPPLY7" gate="G$1" x="154.94" y="30.48"/>
-<instance part="C16" gate="G$1" x="160.02" y="73.66" smashed="yes" rot="R180">
+<instance part="C8" gate="G$1" x="160.02" y="73.66" smashed="yes" rot="R180">
 <attribute name="NAME" x="157.861" y="72.136" size="1.778" layer="95" rot="R270"/>
 <attribute name="VALUE" x="162.179" y="65.024" size="1.778" layer="96" rot="R90"/>
 </instance>
@@ -7867,7 +7881,7 @@ high speed (Philips)</description>
 <instance part="SAW" gate="G$1" x="99.06" y="12.7" rot="R180"/>
 <instance part="SUB_SQR_1" gate="G$1" x="99.06" y="-20.32" rot="R180"/>
 <instance part="SUB_SAW_1" gate="G$1" x="99.06" y="-40.64" rot="R180"/>
-<instance part="SUB_SQR2" gate="G$1" x="99.06" y="-78.74" rot="R180"/>
+<instance part="SUB_SQR_2" gate="G$1" x="99.06" y="-78.74" rot="R180"/>
 <instance part="SUB_SAW_2" gate="G$1" x="99.06" y="-99.06" rot="R180"/>
 <instance part="PULSE_AMP_CV" gate="G$1" x="-35.56" y="104.14"/>
 <instance part="PW_CV" gate="G$1" x="-35.56" y="91.44"/>
@@ -8017,7 +8031,7 @@ high speed (Philips)</description>
 <segment>
 <pinref part="IC5" gate="P" pin="VSS"/>
 <pinref part="GND21" gate="1" pin="GND"/>
-<pinref part="C16" gate="G$1" pin="1"/>
+<pinref part="C8" gate="G$1" pin="1"/>
 <wire x1="160.02" y1="71.12" x2="160.02" y2="66.04" width="0.1524" layer="91"/>
 <wire x1="160.02" y1="66.04" x2="152.4" y2="66.04" width="0.1524" layer="91"/>
 <junction x="152.4" y="66.04"/>
@@ -8043,7 +8057,7 @@ high speed (Philips)</description>
 <pinref part="GND24" gate="1" pin="GND"/>
 </segment>
 <segment>
-<pinref part="C8" gate="G$1" pin="1"/>
+<pinref part="C16" gate="G$1" pin="1"/>
 <pinref part="C12" gate="G$1" pin="2"/>
 <wire x1="134.62" y1="40.64" x2="139.7" y2="40.64" width="0.1524" layer="91"/>
 <pinref part="GND25" gate="1" pin="GND"/>
@@ -8333,7 +8347,7 @@ high speed (Philips)</description>
 <wire x1="25.4" y1="-60.96" x2="33.02" y2="-60.96" width="0.1524" layer="91"/>
 <wire x1="33.02" y1="-60.96" x2="33.02" y2="-68.58" width="0.1524" layer="91"/>
 <junction x="33.02" y="-68.58"/>
-<pinref part="SUB_SQR2" gate="G$1" pin="1"/>
+<pinref part="SUB_SQR_2" gate="G$1" pin="1"/>
 </segment>
 </net>
 <net name="N$19" class="0">
@@ -8634,7 +8648,7 @@ high speed (Philips)</description>
 <segment>
 <pinref part="IC5" gate="P" pin="VDD"/>
 <pinref part="SUPPLY3" gate="+5V" pin="+5V"/>
-<pinref part="C16" gate="G$1" pin="2"/>
+<pinref part="C8" gate="G$1" pin="2"/>
 <wire x1="160.02" y1="78.74" x2="160.02" y2="81.28" width="0.1524" layer="91"/>
 <wire x1="160.02" y1="81.28" x2="152.4" y2="81.28" width="0.1524" layer="91"/>
 <junction x="152.4" y="81.28"/>
@@ -8708,7 +8722,7 @@ high speed (Philips)</description>
 <junction x="132.08" y="81.28"/>
 </segment>
 <segment>
-<pinref part="C8" gate="G$1" pin="2"/>
+<pinref part="C16" gate="G$1" pin="2"/>
 <wire x1="134.62" y1="48.26" x2="139.7" y2="48.26" width="0.1524" layer="91"/>
 <pinref part="SUPPLY6" gate="+15V" pin="+15V"/>
 <pinref part="+15V" gate="G$1" pin="1"/>
