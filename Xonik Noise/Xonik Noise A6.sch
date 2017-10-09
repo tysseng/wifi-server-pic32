@@ -5803,7 +5803,7 @@ need to adjust R3.
 <instance part="GND" gate="G$1" x="45.72" y="27.94" rot="R180"/>
 <instance part="-15V" gate="G$1" x="45.72" y="17.78" rot="R180"/>
 <instance part="SUPPLY1" gate="+15V" x="12.7" y="40.64"/>
-<instance part="SUPPLY2" gate="+15V" x="60.96" y="119.38"/>
+<instance part="SUPPLY2" gate="+15V" x="60.96" y="124.46"/>
 <instance part="SUPPLY3" gate="G$1" x="12.7" y="15.24"/>
 <instance part="GND1" gate="1" x="83.82" y="93.98"/>
 <instance part="GND2" gate="1" x="116.84" y="93.98"/>
@@ -5929,10 +5929,6 @@ need to adjust R3.
 </net>
 <net name="+15V" class="0">
 <segment>
-<pinref part="R1" gate="G$1" pin="2"/>
-<pinref part="SUPPLY2" gate="+15V" pin="+15V"/>
-</segment>
-<segment>
 <pinref part="SUPPLY1" gate="+15V" pin="+15V"/>
 <pinref part="C10" gate="G$1" pin="2"/>
 <wire x1="12.7" y1="38.1" x2="27.94" y2="38.1" width="0.1524" layer="91"/>
@@ -5942,6 +5938,11 @@ need to adjust R3.
 <wire x1="12.7" y1="38.1" x2="12.7" y2="35.56" width="0.1524" layer="91"/>
 <junction x="27.94" y="38.1"/>
 <junction x="12.7" y="38.1"/>
+</segment>
+<segment>
+<pinref part="R1" gate="G$1" pin="2"/>
+<pinref part="SUPPLY2" gate="+15V" pin="+15V"/>
+<wire x1="60.96" y1="116.84" x2="60.96" y2="121.92" width="0.1524" layer="91"/>
 </segment>
 </net>
 <net name="N$7" class="0">
@@ -6082,6 +6083,7 @@ need to adjust R3.
 <junction x="134.62" y="27.94"/>
 <pinref part="RED_OUT" gate="G$1" pin="1"/>
 <wire x1="134.62" y1="15.24" x2="144.78" y2="15.24" width="0.1524" layer="91"/>
+<junction x="134.62" y="15.24"/>
 </segment>
 </net>
 <net name="-15V" class="0">
